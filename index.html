@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v1.92 — Race Card Reader</title>
+<title>Overlay Board v1.93 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -338,6 +338,10 @@
     margin-bottom:10px; font-size:13px; color:var(--ink-soft); background:var(--paper-dim);
   }
   .pick-none b{color:var(--ink);}
+  .mon-race{margin-bottom:14px; padding:10px 12px; background:#fff; border:1px solid var(--paper-line); border-left:5px solid var(--board-900); border-radius:4px;}
+  .mon-head{font-family:var(--mono); font-size:11px; letter-spacing:.06em; text-transform:uppercase; margin-bottom:6px;}
+  .mon-item{font-size:12.5px; line-height:1.55; margin-bottom:5px;}
+  .mon-item:last-child{margin-bottom:0;}
   .pace-contender{margin-top:7px; padding-top:6px; border-top:1px solid var(--paper-line); font-size:13px;}
   .pick-card.tier2{border-left-color:#5C7A8A;}
   .pp-turf{
@@ -984,7 +988,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v1.92</span> · released 19 September 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v1.93</span> · released 19 September 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -1080,10 +1084,17 @@
     <div class="tabbar no-print" id="tabbar" style="display:none;">
       <button data-tab="picks" id="tabPicks">Decision board<span class="tab-count" id="pickCount">0</span></button>
       <button data-tab="cards" class="on">Race cards</button>
+      <button data-tab="monitor">Monitor<span class="tab-count" id="monCount">0</span></button>
       <button data-tab="field">Full field</button>
       <button data-tab="help">Help</button>
       <button data-tab="print">Printable page</button>
     </div>
+
+    <section id="monitorSection" style="display:none;">
+      <h2><span class="step-num">◉</span> Monitor</h2>
+      <div class="rss-info" style="margin:0 0 14px;">Things being logged race by race, to be checked against the result afterwards. Nothing here is a pick, and none of it changes one. Each line states only what the data file says.</div>
+      <div id="monitorList"></div>
+    </section>
 
     <section id="picksSection" style="display:none;">
       <h2><span class="step-num">▦</span> Decision board</h2>
@@ -2848,6 +2859,7 @@ document.getElementById('computeBtn').addEventListener('click', () => {
   window.__ccRaceSummaries = raceSummaries;
   renderRaceCard(raceSummaries, scratchedCount);
   renderPicks(raceSummaries);
+  renderMonitor(raceSummaries);
   document.getElementById('tabbar').style.display = 'flex';
   document.getElementById('reportToolbar').style.display = 'flex';
   renderFullField(currentSort);
@@ -5621,6 +5633,7 @@ function readLevelFor(raceKey){
 
 const TABS = {
   picks: ['picksSection'],
+  monitor: ['monitorSection'],
   print: ['printSection'],
   cards: ['resultsSection'],
   field: ['fieldSection'],
@@ -5857,6 +5870,52 @@ function buildBoardIndex(raceSummaries){
     </div>`;
    }
   }).join('') + '</div>';
+}
+
+// MONITOR. One place for the standing watch items, so they can be read off a
+// card and checked later instead of being hunted through the race cards:
+// the projected uncontested leader, a figure near-tie with both riders, and —
+// once final odds are entered — which contenders drifted off the morning line.
+function buildMonitor(raceSummaries){
+  const rowsOut = [];
+  raceSummaries.forEach(rs => {
+    const items = [];
+    const u = uncontestedLeader(rs);
+    if (u) items.push({tag: u.shape, cls: 'badge-amber',
+      txt: `<b>${escHtml(u.h.horse)}</b> (${escHtml(u.h.oddsStr || '')}) ${escHtml(u.why)}.`});
+    const nt = nearTieWatch(rs);
+    if (nt){
+      const pctBit = v => v != null ? ` ${Math.round(v)}%` : '';
+      items.push({tag: 'Figure near-tie', cls: 'badge-blue',
+        txt: `<b>${escHtml(nt.fav.horse)}</b> (${nt.favV.toFixed(2)}) is the market's choice, `
+           + `${nt.gap.toFixed(2)} behind <b>${escHtml(nt.lead.horse)}</b> (${nt.leadV.toFixed(2)}). `
+           + `Riders: ${escHtml(nt.favJky || 'unlisted')}${pctBit(nt.favPct)} and ${escHtml(nt.leadJky || 'unlisted')}${pctBit(nt.leadPct)}.`});
+    }
+    const split = contenderSplit(rs);
+    if (split){
+      // drift is already computed per horse when a final price is typed in:
+      // final / morning line. Above 1.25 is the drifted group.
+      const drifted = split.contenders.filter(x => x.h.drift != null && x.h.drift > 1.25);
+      if (drifted.length) items.push({tag: 'Drifted contenders', cls: 'badge-red',
+        txt: drifted.map(x => `${escHtml(x.h.horse)} ${escHtml(x.h.mlOddsStr || '')}\u2192${escHtml(x.h.finalOddsStr || '')}`).join(' \u00b7 ')});
+    }
+    if (!items.length) return;
+    rowsOut.push(`<div class="mon-race">
+      <div class="mon-head"><a class="race-jump" data-jump="${escAttr(rs.race)}">Race ${escHtml(rs.race)}</a></div>
+      ${items.map(i => `<div class="mon-item"><span class="badge ${i.cls}">${escHtml(i.tag)}</span>${i.txt}</div>`).join('')}
+    </div>`);
+  });
+  const el = document.getElementById('monCount');
+  if (el) el.textContent = rowsOut.length;
+  return rowsOut.length ? rowsOut.join('')
+    : `<div class="pick-none"><b>Nothing to monitor on this card.</b> No race produced a projected uncontested leader or a figure near-tie.</div>`;
+}
+
+function renderMonitor(raceSummaries){
+  const list = document.getElementById('monitorList');
+  if (!list) return;
+  list.innerHTML = buildMonitor(raceSummaries);
+  bindTapHandlers(list);
 }
 
 function renderPicks(raceSummaries){
@@ -6509,7 +6568,7 @@ function renderPrintView(){
 
 renderRows();
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v1.92 · released 19 September 2026 · build 2026-09-19-d</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v1.93 · released 19 September 2026 · build 2026-09-19-e</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
