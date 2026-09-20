@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v1.98 — Race Card Reader</title>
+<title>Overlay Board v1.99 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -988,7 +988,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v1.98</span> · released 19 September 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v1.99</span> · released 19 September 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -1798,6 +1798,11 @@ function parseBrisnetSingleFile(text){
       else if (tr > rr) classMove = 'up';
     }
 
+    const surfRec = n => {
+      const st = num(n);
+      if (st == null || st <= 0) return null;
+      return {starts: st, wins: num(n + 1), places: num(n + 2), shows: num(n + 3), earn: num(n + 4)};
+    };
     const yearRec = n => {
       const st = num(n);
       if (st == null || st <= 0) return null;
@@ -1829,6 +1834,10 @@ function parseBrisnetSingleFile(text){
       // file also carries full-year records: 1147-1151 trainer this year,
       // 1152-1156 trainer last year, 1157-1161 jockey this year, 1162-1166
       // jockey last year, each as starts / wins / places / shows / ROI.
+      // RECORD AT EACH SURFACE: starts, wins, places, shows, earnings.
+      // Verified on this file against the lifetime block (96-100) and the
+      // surfaces carried in each horse's own past lines.
+      dirtRec: surfRec(65), wetRec: surfRec(70), turfRec: surfRec(75),
       trnYr: yearRec(1147), trnPrev: yearRec(1152),
       jkyYr: yearRec(1157), jkyPrev: yearRec(1162),
       // BREEDING. Names only — this file carries no progeny statistics for a
@@ -2688,6 +2697,7 @@ document.getElementById('computeBtn').addEventListener('click', () => {
       jockey: r.jockey || '', jkyStarts: r.jkyStarts, jkyWins: r.jkyWins,
       jkyPlaces: r.jkyPlaces, jkyShows: r.jkyShows,
       trainer: r.trainer || '', trnStarts: r.trnStarts, trnWins: r.trnWins,
+      dirtRec: r.dirtRec || null, wetRec: r.wetRec || null, turfRec: r.turfRec || null,
       trnYr: r.trnYr || null, trnPrev: r.trnPrev || null,
       jkyYr: r.jkyYr || null, jkyPrev: r.jkyPrev || null,
       sire: r.sire || '', sireSire: r.sireSire || '', dam: r.dam || '',
@@ -3791,6 +3801,16 @@ function uncontestedLeader(rs){
   return null;
 }
 
+// The horse's record at TODAY'S surface, straight from the data file.
+function surfaceRecordOf(h){
+  const code = String(h.surface || '').toUpperCase();
+  const pick = code === 'T' ? ['turfRec', 'turf'] : code === 'A' ? ['turfRec', 'all-weather'] : ['dirtRec', 'dirt'];
+  const rec = h[pick[0]];
+  if (!rec || !rec.starts) return null;
+  const itm = (rec.wins || 0) + (rec.places || 0) + (rec.shows || 0);
+  return {rec, itm, word: pick[1]};
+}
+
 function contenderSplit(rs){
   const horses = (rs.horses || []).filter(h => h.decimalOdds != null);
   if (horses.length < 4) return null;
@@ -3846,6 +3866,20 @@ function contenderSplit(rs){
       // pretender claims more than the data supports.
       const fitOK = h.classFit != null && (h.classSeen || 0) >= 3 && h.classFit >= 2;
       const debut = !(h.ppRaces && h.ppRaces.length);
+      // A PRICED-OUT HORSE GETS ITS RECORD READ BEFORE IT IS CALLED A
+      // PRETENDER. A horse with a real record at today's surface — three or
+      // more starts, in the money in at least two thirds of them — is filed as
+      // Questionable with that record stated. Belmont 19 Sep R2: Queen Martina
+      // was 12-1 and called a pretender while carrying six turf starts and six
+      // in the money; she ran second. The price still counts against her, so
+      // she is not promoted to contender.
+      const sr = surfaceRecordOf(h);
+      const surfOK = sr && sr.rec.starts >= 3 && (sr.itm / sr.rec.starts) >= (2 / 3);
+      if (surfOK){
+        out.questionable.push({h, why: [why.join(', '),
+          `but ${sr.rec.starts} ${sr.word} start${sr.rec.starts === 1 ? '' : 's'}, ${sr.itm} in the money`]});
+        return;
+      }
       if (fitOK || debut){
         out.questionable.push({h, why: why.concat([
           debut ? 'first-time starter — no form to judge'
@@ -6659,7 +6693,7 @@ function renderPrintView(){
 
 renderRows();
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v1.98 · released 19 September 2026 · build 2026-09-19-j</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v1.99 · released 19 September 2026 · build 2026-09-19-k</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
@@ -6668,4 +6702,3 @@ renderRows();
 </div>
 </body>
 </html>
-
