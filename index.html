@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v1.97 — Race Card Reader</title>
+<title>Overlay Board v1.98 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -988,7 +988,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v1.97</span> · released 19 September 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v1.98</span> · released 19 September 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -1078,6 +1078,7 @@
         <button class="primary-btn" id="raceCardBtn">▤ Race card</button>
         <button class="ghost-btn" id="printBtn">🖨 Printable page</button>
         <label class="clean-toggle" id="diagToggleLabel"><input type="checkbox" id="diagToggle"> Show diagnostics</label>
+        <label class="clean-toggle" id="shortToggleLabel" title="Cut the contender list by share of the pool instead of by market rank: work down the morning line until the listed horses hold 80% of the race, never fewer than three, never more than five."><input type="checkbox" id="shortToggle"> Short list</label>
       </div>
     <div class="status no-print" id="printStatus"></div>
 
@@ -2557,6 +2558,19 @@ let oddsSourceMode = 'ml';
   });
 });
 
+// SHORT LIST. Same walk down the morning line, but the stopping point is a
+// share of the pool rather than a fixed rank: add horses until they hold 80%
+// of the race, with a floor of three and a ceiling of five. Long lists then
+// happen only in races that are genuinely open, and chalky races get short
+// ones. Off by default — the rank cut stays the shipped behaviour.
+let shortListMode = false;
+document.getElementById('shortToggle').addEventListener('change', function(){
+  shortListMode = this.checked;
+  document.getElementById('shortToggleLabel').classList.toggle('on', this.checked);
+  if (typeof recomputeAll === 'function' && computedRaces.length) recomputeAll();
+  else document.getElementById('computeBtn').click();
+});
+
 document.getElementById('diagToggle').addEventListener('change', function(){
   document.body.classList.toggle('diag', this.checked);
   document.getElementById('diagToggleLabel').classList.toggle('on', this.checked);
@@ -3787,15 +3801,38 @@ function contenderSplit(rs){
   // filed as priced out. Display only: it changes who is worth reading, not
   // the Pick, which never used pace.
   const paceLead = uncontestedLeader(rs);
-  const ranked = (rs.byMarket || []).filter(h => h.decimalOdds != null);
+  // When the short list is on, membership is decided here instead of by rank:
+  // the same order, stopped on pool share.
+  let shortKeep = null;
+  if (shortListMode){
+    const byPrice = horses.slice().sort((a, b) => a.decimalOdds - b.decimalOdds);
+    const total = byPrice.reduce((t, h) => t + (h.marketProb || 0), 0) || 1;
+    shortKeep = new Set(); let acc = 0;
+    for (const h of byPrice){
+      if (shortKeep.size >= 5) break;
+      if (shortKeep.size >= 3 && acc >= 0.80) break;
+      if (shortKeep.size >= 3 && (h.decimalOdds - 1) >= 12) break;
+      shortKeep.add(h); acc += (h.marketProb || 0) / total;
+    }
+  }
+  // byMarket is set by the renderer; fall back to sorting here so the split
+  // gives the same answer when called directly (the short list needs a real
+  // rank, and "0th choice of 0" was the sign it wasn't getting one).
+  const ranked = ((rs.byMarket && rs.byMarket.length) ? rs.byMarket : horses.slice().sort((a, b) => a.decimalOdds - b.decimalOdds))
+                   .filter(h => h.decimalOdds != null);
   const rankOf = h => ranked.indexOf(h) + 1;
   const out = {contenders: [], questionable: [], pretenders: []};
   horses.forEach(h => {
     const rank = rankOf(h);
     const price = h.decimalOdds - 1;          // decimal to "to one"
     const why = [];
-    if (price >= 12) why.push(`${h.oddsStr} — priced out`);
-    if (rank > 5) why.push(`${rank}th choice of ${ranked.length}`);
+    if (shortKeep){
+      // Short list: one reason, the pool share, so the line says why plainly.
+      if (!shortKeep.has(h)) why.push(`${rank}th choice of ${ranked.length} — outside the short list`);
+    } else {
+      if (price >= 12) why.push(`${h.oddsStr} — priced out`);
+      if (rank > 5) why.push(`${rank}th choice of ${ranked.length}`);
+    }
     if (why.length && paceLead && h === paceLead.h){
       out.contenders.push({h, why: [paceLead.why, why.join(', ')]});
       return;
@@ -5927,8 +5964,12 @@ function buildMonitor(raceSummaries){
     // list, and it does not add anyone to it unless the price filter had cut
     // that horse, which the line says explicitly when it happens.
     if (u){
-      const split0 = contenderSplit(rs);
-      const rescued = split0 && split0.contenders.some(x => x.h === u.h && x.why.length);
+      // "Rescued" means the PRICE FILTER would have cut this horse — 12-1 or
+      // longer, or 6th choice or worse. Reading it off the contender's stored
+      // reason does not work: the pace leader always carries one.
+      const priced = (rs.byMarket || rs.horses || []).filter(h => !h.scratched && h.decimalOdds != null);
+      const mktRank = priced.slice().sort((a, b) => a.decimalOdds - b.decimalOdds).indexOf(u.h) + 1;
+      const rescued = (u.h.decimalOdds != null && (u.h.decimalOdds - 1) >= 12) || (mktRank > 5);
       items.push({tag: 'Projected to lead', cls: 'badge-amber',
         txt: `${monHorse(rs, u.h)} (${escHtml(u.h.oddsStr || '')}) ${escHtml(u.why)}.`
            + (rescued ? ' Kept in the contenders on this alone — its price would otherwise have cut it.' : '')});
@@ -6618,7 +6659,7 @@ function renderPrintView(){
 
 renderRows();
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v1.97 · released 19 September 2026 · build 2026-09-19-i</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v1.98 · released 19 September 2026 · build 2026-09-19-j</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
@@ -6627,3 +6668,4 @@ renderRows();
 </div>
 </body>
 </html>
+
