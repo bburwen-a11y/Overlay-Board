@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v2.02 — Race Card Reader</title>
+<title>Overlay Board v2.04 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -990,7 +990,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v2.02</span> · released 19 September 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v2.04</span> · released 19 September 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -1102,6 +1102,7 @@
           <div style="margin-bottom:4px;"><span class="badge badge-amber">Lone speed</span><span class="badge badge-amber">No clear speed</span><span class="badge badge-grey">Pressed</span><span class="badge badge-grey">Duel</span><span class="badge badge-grey">Contested</span> the projected shape, then the order out of the gate with each horse's run style and Quirin points. Quirin measures how quickly a horse leaves, not how good it is. <b>What to check after the race:</b> did the horse listed first actually lead, and did the shape hold.</div>
           <div style="margin-bottom:4px;"><span class="badge badge-amber">Projected to lead</span> the single horse the pace ranking puts on an uncontested lead. It names one horse by construction and is <b>not</b> the contender list — the contenders are in the race card. It says so on the line when that horse was kept among the contenders on this alone. <b>Check after:</b> did it lead, where did it finish, at what price.</div>
           <div style="margin-bottom:4px;"><span class="badge badge-blue">Figure near-tie</span> the market's choice and the recent-figure leader are within a point, so the figure cannot separate them. Both riders are shown with their season record. <b>Check after:</b> which of the two beat the other, not whether either won.</div>
+          <div style="margin-bottom:4px;"><span class="badge badge-blue">Excused beating</span> a horse beaten more than ten lengths in its last comparable start whose chart comment on that same line reports trouble. It stays Questionable either way — the flag is not lifted. <b>Check after:</b> did it outrun the margin or confirm it.</div>
           <div style="margin-bottom:4px;"><span class="badge badge-red">Thin figures</span> fewer than four in five runners carry a recent figure, so a large part of the field is invisible to every figure line on the card. It changes no pick. <b>Check after:</b> whether an unfigured runner won or hit the board.</div>
           <div><span class="badge badge-red">Drifted contenders</span> appears once final odds are entered: contenders whose price drifted more than a quarter above the morning line. <b>Check after:</b> where they finished.</div>
         </div>
@@ -3937,11 +3938,22 @@ function contenderSplit(rs){
       return;
     }
     if (h.lastFinMargin != null && h.lastFinMargin > 10){
+      // THE EXCUSE TRAVELS WITH THE MARGIN. The chart comment for that very
+      // race is already parsed and the trouble flag already set; printing the
+      // margin alone hid the reason for it. Belmont 19 Sep R8: Magnanimous Max
+      // was filed on "beaten 14.75L" while the same line held "Bumped st" —
+      // he won. Stated, not scored: the demotion still stands.
+      const beat = [`beaten ${h.lastFinMargin}L last comparable start`];
+      if (h.lastFinComment){
+        beat.push(h.hadTrouble
+          ? `trouble in that race — \u201c${escHtml(h.lastFinComment)}\u201d`
+          : `that trip read \u201c${escHtml(h.lastFinComment)}\u201d`);
+      }
       if (paceLead && h === paceLead.h){
-        out.contenders.push({h, why: [paceLead.why, `beaten ${h.lastFinMargin}L last comparable start`]});
+        out.contenders.push({h, why: [paceLead.why].concat(beat)});
         return;
       }
-      out.questionable.push({h, why: [`beaten ${h.lastFinMargin}L last comparable start`]});
+      out.questionable.push({h, why: beat});
       return;
     }
     out.contenders.push({h, why: paceLead && h === paceLead.h ? [paceLead.why] : []});
@@ -6056,6 +6068,16 @@ function buildMonitor(raceSummaries){
   const rowsOut = [];
   raceSummaries.forEach(rs => {
     const items = [];
+    // Big beaten margin WITH a trouble comment on the same line. Logged so it
+    // can be counted: do these horses outrun the margin or confirm it?
+    const split1 = contenderSplit(rs);
+    if (split1){
+      const excused = split1.contenders.concat(split1.questionable)
+        .filter(x => x.h.lastFinMargin != null && x.h.lastFinMargin > 10 && x.h.hadTrouble);
+      if (excused.length) items.push({tag: 'Excused beating', cls: 'badge-blue',
+        txt: excused.map(x => `${monHorse(rs, x.h)} (${escHtml(x.h.oddsStr || '')}) beaten ${x.h.lastFinMargin}L, `
+          + `\u201c${escHtml(x.h.lastFinComment || '')}\u201d`).join('<br>')});
+    }
     const cov = figureCoverage(rs);
     if (cov && cov.thin) items.push({tag: 'Thin figures', cls: 'badge-red',
       txt: `${cov.rated} of ${cov.live} runners carry a recent figure. <b>Check after:</b> whether the unfigured runners featured.`});
@@ -6762,7 +6784,7 @@ function renderPrintView(){
 
 renderRows();
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v2.02 · released 19 September 2026 · build 2026-09-20-a</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v2.04 · released 19 September 2026 · build 2026-09-20-c</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
