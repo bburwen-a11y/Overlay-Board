@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v1.93 — Race Card Reader</title>
+<title>Overlay Board v1.96 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -988,7 +988,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v1.93</span> · released 19 September 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v1.96</span> · released 19 September 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -1092,8 +1092,16 @@
 
     <section id="monitorSection" style="display:none;">
       <h2><span class="step-num">◉</span> Monitor</h2>
-      <div class="rss-info" style="margin:0 0 14px;">Things being logged race by race, to be checked against the result afterwards. Nothing here is a pick, and none of it changes one. Each line states only what the data file says.</div>
       <div id="monitorList"></div>
+      <div class="rss-info" style="margin:18px 0 0;">
+        <b>How to read this.</b> One block per race, in race order. Every line is read straight off the data file, and none of it is a selection — the Decision board is the only place a horse is named as one. Tap any horse for its past performances; tap its name at the top to come back here.
+        <div style="margin-top:8px;">
+          <div style="margin-bottom:4px;"><span class="badge badge-amber">Lone speed</span><span class="badge badge-amber">No clear speed</span><span class="badge badge-grey">Pressed</span><span class="badge badge-grey">Duel</span><span class="badge badge-grey">Contested</span> the projected shape, then the order out of the gate with each horse's run style and Quirin points. Quirin measures how quickly a horse leaves, not how good it is. <b>What to check after the race:</b> did the horse listed first actually lead, and did the shape hold.</div>
+          <div style="margin-bottom:4px;"><span class="badge badge-amber">Contender on shape</span> a horse the projection puts on an uncontested lead that the price filter would otherwise have cut from the contenders. <b>Check after:</b> where it finished, and at what price.</div>
+          <div style="margin-bottom:4px;"><span class="badge badge-blue">Figure near-tie</span> the market's choice and the recent-figure leader are within a point, so the figure cannot separate them. Both riders are shown with their season record. <b>Check after:</b> which of the two beat the other, not whether either won.</div>
+          <div><span class="badge badge-red">Drifted contenders</span> appears once final odds are entered: contenders whose price drifted more than a quarter above the morning line. <b>Check after:</b> where they finished.</div>
+        </div>
+      </div>
     </section>
 
     <section id="picksSection" style="display:none;">
@@ -1208,8 +1216,7 @@
 
 
     <div class="disclaimer">
-      <strong>How to read this:</strong> odds are converted to an implied win probability and normalized across the field to strip out the track's built-in edge. The tool does not know track bias, late scratches, trip trouble or today's pace shape — mark scratches in the Scr column, rebuild, and read the past performances yourself before betting.<br><br>
-      This is an analytical aid, not advice, and it carries no guarantee of accuracy. Wagering involves real financial risk. If gambling stops being fun or starts causing problems, the National Problem Gambling Helpline (1-800-522-4700) is free and confidential.
+      Analytical aid, not advice, and no guarantee of accuracy. Wagering involves real financial risk. National Problem Gambling Helpline 1-800-522-4700, free and confidential.
     </div>
   </main>
 </div>
@@ -5876,19 +5883,54 @@ function buildBoardIndex(raceSummaries){
 // card and checked later instead of being hunted through the race cards:
 // the projected uncontested leader, a figure near-tie with both riders, and —
 // once final odds are entered — which contenders drifted off the morning line.
+// PACE EXPECTATION for the monitor: the projected shape and the order out of
+// the gate, on EVERY race, not only the ones with an uncontested leader. Same
+// ranking as the race card's pace panel, so the two cannot disagree.
+function monitorPace(rs){
+  const field = (rs.byMarket || rs.horses || []).filter(h => !h.scratched);
+  const rated = field.map(h => ({h, r: paceRank(h), q: h.quirin}))
+                     .filter(x => x.r != null).sort((a, b) => b.r - a.r);
+  if (rated.length < 4) return null;
+  const speed = rated.filter(x => x.q >= 5);
+  const top = rated[0], second = rated[1];
+  let shape;
+  if (speed.length === 0) shape = 'NO CLEAR SPEED';
+  else if (speed.length === 1 && (top.r - second.r) >= 2) shape = 'LONE SPEED';
+  else if (speed.length === 1) shape = 'PRESSED';
+  else if (speed.length === 2) shape = 'DUEL';
+  else shape = 'CONTESTED';
+  const order = rated.slice(0, 4).map(x =>
+    `${monHorse(rs, x.h)} <span class="muted">(${escHtml(x.h.runStyle || '\u2014')}${x.q != null ? ', ' + x.q : ''})</span>`
+  ).join(' \u2192 ');
+  return {shape, order};
+}
+
+// Horse name as a tap target, so a name in the monitor opens its past
+// performances and the header taps straight back to this spot.
+function monHorse(rs, h){
+  const body = `<b>${escHtml(h.horse)}</b>`;
+  const hasPP = (h.ppRaces && h.ppRaces.length) || (h.ppWorks && h.ppWorks.length);
+  if (!hasPP) return body;
+  return `<a class="pp-link horse-tap" data-pp-race="${escAttr(h.race || rs.race)}" data-pp-horse="${escAttr(h.horse)}"`
+    + ` title="Tap for past performances">${body}</a>`;
+}
+
 function buildMonitor(raceSummaries){
   const rowsOut = [];
   raceSummaries.forEach(rs => {
     const items = [];
+    const pace = monitorPace(rs);
+    if (pace) items.push({tag: pace.shape, cls: pace.shape === 'LONE SPEED' || pace.shape === 'NO CLEAR SPEED' ? 'badge-amber' : 'badge-grey',
+      txt: `Order out of the gate: ${pace.order}`});
     const u = uncontestedLeader(rs);
-    if (u) items.push({tag: u.shape, cls: 'badge-amber',
-      txt: `<b>${escHtml(u.h.horse)}</b> (${escHtml(u.h.oddsStr || '')}) ${escHtml(u.why)}.`});
+    if (u) items.push({tag: 'Contender on shape', cls: 'badge-amber',
+      txt: `${monHorse(rs, u.h)} (${escHtml(u.h.oddsStr || '')}) ${escHtml(u.why)}.`});
     const nt = nearTieWatch(rs);
     if (nt){
       const pctBit = v => v != null ? ` ${Math.round(v)}%` : '';
       items.push({tag: 'Figure near-tie', cls: 'badge-blue',
-        txt: `<b>${escHtml(nt.fav.horse)}</b> (${nt.favV.toFixed(2)}) is the market's choice, `
-           + `${nt.gap.toFixed(2)} behind <b>${escHtml(nt.lead.horse)}</b> (${nt.leadV.toFixed(2)}). `
+        txt: `${monHorse(rs, nt.fav)} (${nt.favV.toFixed(2)}) is the market's choice, `
+           + `${nt.gap.toFixed(2)} behind ${monHorse(rs, nt.lead)} (${nt.leadV.toFixed(2)}). `
            + `Riders: ${escHtml(nt.favJky || 'unlisted')}${pctBit(nt.favPct)} and ${escHtml(nt.leadJky || 'unlisted')}${pctBit(nt.leadPct)}.`});
     }
     const split = contenderSplit(rs);
@@ -5897,7 +5939,7 @@ function buildMonitor(raceSummaries){
       // final / morning line. Above 1.25 is the drifted group.
       const drifted = split.contenders.filter(x => x.h.drift != null && x.h.drift > 1.25);
       if (drifted.length) items.push({tag: 'Drifted contenders', cls: 'badge-red',
-        txt: drifted.map(x => `${escHtml(x.h.horse)} ${escHtml(x.h.mlOddsStr || '')}\u2192${escHtml(x.h.finalOddsStr || '')}`).join(' \u00b7 ')});
+        txt: drifted.map(x => `${monHorse(rs, x.h)} ${escHtml(x.h.mlOddsStr || '')}\u2192${escHtml(x.h.finalOddsStr || '')}`).join(' \u00b7 ')});
     }
     if (!items.length) return;
     rowsOut.push(`<div class="mon-race">
@@ -5908,7 +5950,7 @@ function buildMonitor(raceSummaries){
   const el = document.getElementById('monCount');
   if (el) el.textContent = rowsOut.length;
   return rowsOut.length ? rowsOut.join('')
-    : `<div class="pick-none"><b>Nothing to monitor on this card.</b> No race produced a projected uncontested leader or a figure near-tie.</div>`;
+    : `<div class="pick-none"><b>Nothing to monitor on this card.</b> Too few runners carry the data these lines are read from.</div>`;
 }
 
 function renderMonitor(raceSummaries){
@@ -6568,7 +6610,7 @@ function renderPrintView(){
 
 renderRows();
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v1.93 · released 19 September 2026 · build 2026-09-19-e</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v1.96 · released 19 September 2026 · build 2026-09-19-h</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
