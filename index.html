@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v1.96 — Race Card Reader</title>
+<title>Overlay Board v1.97 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -988,7 +988,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v1.96</span> · released 19 September 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v1.97</span> · released 19 September 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -1097,7 +1097,7 @@
         <b>How to read this.</b> One block per race, in race order. Every line is read straight off the data file, and none of it is a selection — the Decision board is the only place a horse is named as one. Tap any horse for its past performances; tap its name at the top to come back here.
         <div style="margin-top:8px;">
           <div style="margin-bottom:4px;"><span class="badge badge-amber">Lone speed</span><span class="badge badge-amber">No clear speed</span><span class="badge badge-grey">Pressed</span><span class="badge badge-grey">Duel</span><span class="badge badge-grey">Contested</span> the projected shape, then the order out of the gate with each horse's run style and Quirin points. Quirin measures how quickly a horse leaves, not how good it is. <b>What to check after the race:</b> did the horse listed first actually lead, and did the shape hold.</div>
-          <div style="margin-bottom:4px;"><span class="badge badge-amber">Contender on shape</span> a horse the projection puts on an uncontested lead that the price filter would otherwise have cut from the contenders. <b>Check after:</b> where it finished, and at what price.</div>
+          <div style="margin-bottom:4px;"><span class="badge badge-amber">Projected to lead</span> the single horse the pace ranking puts on an uncontested lead. It names one horse by construction and is <b>not</b> the contender list — the contenders are in the race card. It says so on the line when that horse was kept among the contenders on this alone. <b>Check after:</b> did it lead, where did it finish, at what price.</div>
           <div style="margin-bottom:4px;"><span class="badge badge-blue">Figure near-tie</span> the market's choice and the recent-figure leader are within a point, so the figure cannot separate them. Both riders are shown with their season record. <b>Check after:</b> which of the two beat the other, not whether either won.</div>
           <div><span class="badge badge-red">Drifted contenders</span> appears once final odds are entered: contenders whose price drifted more than a quarter above the morning line. <b>Check after:</b> where they finished.</div>
         </div>
@@ -5058,7 +5058,7 @@ function confidenceBlock(rs, h){
 function paceContenderNote(rs){
   const u = uncontestedLeader(rs);
   if (!u || !u.h) return '';
-  return `<div class="callout callout-amber"><div class="callout-head">Contender on the projected shape</div>`
+  return `<div class="callout callout-amber"><div class="callout-head">Projected to lead</div>`
     + `<span class="badge badge-amber">${escHtml(u.shape)}</span>`
     + `<b>${escHtml(u.h.horse)}</b> (${escHtml(u.h.oddsStr || '')}) ${escHtml(u.why)}. `
     + `Listed as a horse to read, not a pick.</div>`;
@@ -5923,8 +5923,16 @@ function buildMonitor(raceSummaries){
     if (pace) items.push({tag: pace.shape, cls: pace.shape === 'LONE SPEED' || pace.shape === 'NO CLEAR SPEED' ? 'badge-amber' : 'badge-grey',
       txt: `Order out of the gate: ${pace.order}`});
     const u = uncontestedLeader(rs);
-    if (u) items.push({tag: 'Contender on shape', cls: 'badge-amber',
-      txt: `${monHorse(rs, u.h)} (${escHtml(u.h.oddsStr || '')}) ${escHtml(u.why)}.`});
+    // NAMES ONE HORSE ONLY — the projected leader. It is not the contender
+    // list, and it does not add anyone to it unless the price filter had cut
+    // that horse, which the line says explicitly when it happens.
+    if (u){
+      const split0 = contenderSplit(rs);
+      const rescued = split0 && split0.contenders.some(x => x.h === u.h && x.why.length);
+      items.push({tag: 'Projected to lead', cls: 'badge-amber',
+        txt: `${monHorse(rs, u.h)} (${escHtml(u.h.oddsStr || '')}) ${escHtml(u.why)}.`
+           + (rescued ? ' Kept in the contenders on this alone — its price would otherwise have cut it.' : '')});
+    }
     const nt = nearTieWatch(rs);
     if (nt){
       const pctBit = v => v != null ? ` ${Math.round(v)}%` : '';
@@ -6610,7 +6618,7 @@ function renderPrintView(){
 
 renderRows();
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v1.96 · released 19 September 2026 · build 2026-09-19-h</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v1.97 · released 19 September 2026 · build 2026-09-19-i</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
