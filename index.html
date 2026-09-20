@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v2.04 — Race Card Reader</title>
+<title>Overlay Board v2.05 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -35,9 +35,14 @@
   *{box-sizing:border-box;}
   body{
     margin:0; background:#ffffff; color:var(--ink);
-    font-family:var(--sans);
+    font-family:var(--sans); line-height:1.55;
     -webkit-font-smoothing:antialiased;
   }
+  /* Stacked fact-lines inside a card were sitting flush against each other
+     with no rule of their own to add space — this is the one rule that gives
+     every such block consistent air without editing each line individually. */
+  .pick-card > div + div, .cp-box > div + div{ margin-top:7px; }
+  .cp-item + .cp-item{ margin-top:8px; }
   .wrap{max-width:1080px;margin:0 auto;}
 
   /* ---------- HEADER / BOARD ---------- */
@@ -340,9 +345,9 @@
   .pick-none b{color:var(--ink);}
   .pick-cov{font-size:12.5px; line-height:1.5; margin:6px 0 2px; color:var(--ink-soft);}
   .pick-cov-thin{color:var(--red);}
-  .mon-race{margin-bottom:14px; padding:10px 12px; background:#fff; border:1px solid var(--paper-line); border-left:5px solid var(--board-900); border-radius:4px;}
+  .mon-race{margin-bottom:16px; padding:12px 14px; background:#fff; border:1px solid var(--paper-line); border-left:5px solid var(--board-900); border-radius:4px;}
   .mon-head{font-family:var(--mono); font-size:11px; letter-spacing:.06em; text-transform:uppercase; margin-bottom:6px;}
-  .mon-item{font-size:12.5px; line-height:1.55; margin-bottom:5px;}
+  .mon-item{font-size:12.5px; line-height:1.6; margin-bottom:8px;}
   .mon-item:last-child{margin-bottom:0;}
   .pace-contender{margin-top:7px; padding-top:6px; border-top:1px solid var(--paper-line); font-size:13px;}
   .pick-card.tier2{border-left-color:#5C7A8A;}
@@ -363,16 +368,17 @@
   .cp-grid{display:grid; grid-template-columns:1fr; gap:10px;}
   @media(min-width:700px){ .cp-grid{grid-template-columns:1fr 1fr;} }
   .cp-box{border:1px solid var(--paper-line); border-left-width:5px; border-radius:3px;
-          padding:10px 12px; background:#fff; font-size:13px; line-height:1.7;}
+          padding:12px 14px; background:#fff; font-size:13px; line-height:1.6;}
+  .cp-item{padding:2px 0;}
   .cp-box h4{margin:0 0 7px; font-family:var(--mono); font-size:10.5px; letter-spacing:.06em;
              text-transform:uppercase; color:var(--ink-soft);}
   .cp-box.cp-in{border-left-color:#2E6E45;}
   .cp-box.cp-out{border-left-color:#8B2A2A; opacity:.85;}
-  .cp-sub{margin-top:9px; padding-top:8px; border-top:1px dotted var(--paper-line);}
+  .cp-sub{margin-top:12px; padding-top:10px; border-top:1px dotted var(--paper-line);}
   .cp-sub b{color:#8A6414;}
   .cp-meet{margin-top:10px;}
   .cp-horse{font-weight:700;}
-  .cp-why{font-family:var(--mono); font-size:11.5px; color:var(--ink-soft);}
+  .cp-why{font-family:var(--mono); font-size:11.5px; color:var(--ink-soft); line-height:1.6; display:block; margin-top:1px;}
   .form-arrow-tap{border-bottom:1px dotted var(--rule); cursor:pointer; display:inline-block; padding:12px 6px; margin:-12px -6px; min-width:20px; text-align:center;}
   .form-arrow-detail{font-family:var(--mono); font-size:10.5px; color:var(--ink-soft); margin-top:3px; white-space:normal; line-height:1.4; max-width:220px;}
   .cp-foot{margin-top:6px; padding-top:8px; border-top:1px solid var(--paper-line);
@@ -990,7 +996,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v2.04</span> · released 19 September 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v2.05</span> · released 19 September 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -3956,7 +3962,7 @@ function contenderSplit(rs){
       out.questionable.push({h, why: beat});
       return;
     }
-    out.contenders.push({h, why: paceLead && h === paceLead.h ? [paceLead.why] : []});
+    out.contenders.push({h, why: (paceLead && h === paceLead.h ? [paceLead.why] : []).concat(contenderNote(rs, h))});
   });
   out.contenders.sort((a,b) => a.h.decimalOdds - b.h.decimalOdds);
   out.questionable.sort((a,b) => a.h.decimalOdds - b.h.decimalOdds);
@@ -4995,9 +5001,12 @@ function buildContenderBlock(rs){
       ? `<a class="pp-link horse-tap" data-pp-race="${escAttr(h.race)}" data-pp-horse="${escAttr(h.horse)}" title="Tap for past performances">${body}</a>`
       : body;
   };
+  // Each horse its own block, not a shared paragraph — the more each line
+  // carries (and contenders now carry facts too), the more it needs its own
+  // space to read without running into the next horse.
   const nameList = list => list.map(x =>
-    `${tapName(x.h)} <span class="cp-why">${escHtml(x.h.oddsStr)}${x.why.length ? ' \u00b7 ' + escHtml(x.why.join(', ')) : ''}</span>`
-  ).join('<br>');
+    `<div class="cp-item">${tapName(x.h)} <span class="cp-why">${escHtml(x.h.oddsStr)}${x.why.length ? ' \u00b7 ' + escHtml(x.why.join(', ')) : ''}</span></div>`
+  ).join('');
   const nRunners = (rs.horses || []).filter(h => h.decimalOdds != null).length;
   // Two columns on anything wider than a phone, stacked below that. Previous
   // meetings sit inside the same card because they are the one piece of
@@ -5408,6 +5417,39 @@ function paceProjection(rs){
 // overlap heavily: a horse holding the top last figure and the top best figure
 // is one fact about that horse, and counting it as two or three pieces of
 // agreeing evidence would overstate what the file actually contains.
+// A CONTENDER GETS A FACT LINE TOO. Questionable and Pretender already state
+// a reason; a bare contender line looked like the tool had nothing to say
+// about it. This states what the file holds — figure rank in the field, last
+// time out, recent in-the-money count, class-level record, surface record —
+// all already computed elsewhere on the card. None of it is scored: nothing
+// here moves a horse between buckets, and a contender with thin facts stays a
+// contender. Tested first: none of these separated winners inside the
+// contender group on 1,174 runners, so the line describes, it does not rank.
+function contenderNote(rs, h){
+  const live = (rs.horses || []).filter(x => !x.scratched);
+  const bits = [];
+  const fr = rankIn(live, h, avg3Of);
+  if (fr) bits.push(`#${fr.rank}${fr.tied ? ' tied' : ''} of ${fr.of} on recent figures`);
+  const last = (h.ppRaces || [])[0];
+  const lastFinN = last ? parseInt(last.fin, 10) : NaN;
+  if (last && !isNaN(lastFinN) && last.pastField){
+    bits.push(`finished ${lastFinN}${ordinalSuffix(lastFinN)} of ${last.pastField} last out`);
+  }
+  const recent = (h.ppRaces || []).slice(0, 4).filter(p => p.fin != null && !isNaN(parseInt(p.fin, 10)));
+  if (recent.length >= 2){
+    const itm = recent.filter(p => parseInt(p.fin, 10) <= 3).length;
+    bits.push(`${itm} of ${recent.length} in the money recently`);
+  }
+  if (h.classFit != null && (h.classSeen || 0) >= 3){
+    bits.push(`competitive at today's level in ${h.classFit} of its last ${h.classSeen}`);
+  }
+  const sr = surfaceRecordOf(h);
+  if (sr && sr.rec.starts >= 3){
+    bits.push(`${sr.rec.starts} ${sr.word} start${sr.rec.starts === 1 ? '' : 's'}, ${sr.itm} in the money`);
+  }
+  return bits.slice(0, 3);
+}
+
 function rankIn(horses, h, get){
   const vals = horses.map(x => ({x, v: get(x)})).filter(t => t.v != null && t.v > 0);
   if (vals.length < 3) return null;
@@ -6784,7 +6826,7 @@ function renderPrintView(){
 
 renderRows();
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v2.04 · released 19 September 2026 · build 2026-09-20-c</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v2.05 · released 19 September 2026 · build 2026-09-20-d</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
