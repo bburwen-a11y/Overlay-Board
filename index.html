@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v2.01 — Race Card Reader</title>
+<title>Overlay Board v2.02 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -990,7 +990,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v2.01</span> · released 19 September 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v2.02</span> · released 19 September 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -2032,10 +2032,33 @@ document.getElementById('drfInput').addEventListener('change', e => {
       statusEl.className = 'status err';
       return;
     }
+    // A SECOND CARD REPLACES THE FIRST. Loading one file on top of another
+    // used to APPEND, so a 121-row Friday card plus a 102-row Saturday card
+    // became one 223-row race meeting: Race 1 held both fields at once and the
+    // scratch feed then matched program numbers against the wrong horses. The
+    // exception is a multi-part export of the SAME card (.DRF/.DR2/.DR3/.DR4),
+    // which is meant to accumulate — same track, same date, so it merges.
+    let replacedNote = '';
+    const already = rows.filter(r => (r.horse || '').trim() && r.trackCode && r.raceDateYmd);
+    if (already.length){
+      const newTrack = (extracted.find(h => h.trackCode) || {}).trackCode || '';
+      const newDate = (extracted.find(h => h.raceDateYmd) || {}).raceDateYmd || '';
+      const oldTrack = already[0].trackCode, oldDate = already[0].raceDateYmd;
+      const sameCard = newTrack === oldTrack && newDate === oldDate;
+      if (!sameCard){
+        rows.length = 0;
+        replacedNote = ` Replaced the ${escHtml(oldTrack)} ${fmtRaceDate(oldDate)} card that was loaded \u2014 one card at a time.`;
+        const rssRep = document.getElementById('rssReport');
+        if (rssRep) rssRep.innerHTML = '';
+        const rssSt = document.getElementById('rssStatus');
+        if (rssSt) rssSt.textContent = '';
+        document.getElementById('rssPaste').value = '';
+      }
+    }
     extracted.forEach(h => rows.push(newRow(h)));
     renderRows();
     const raceCount = new Set(extracted.map(h => h.race)).size;
-    const formatNote = viaMulti ? ' \u00b7 multi-part export, four files assembled' : '';
+    const formatNote = (viaMulti ? ' \u00b7 multi-part export, four files assembled' : '') + replacedNote;
     const withOdds = extracted.filter(h => parseOdds(h.odds) != null).length;
     // Name the card that just loaded. Uploading the wrong date's file has
     // happened, and silently analysing it is worse than a wasted upload.
@@ -5196,7 +5219,8 @@ function buildPick(rs){
           + `<span class="badge ${cov.thin ? 'badge-red' : 'badge-green'}">${cov.rated} of ${cov.live} figured</span>`
           + (cov.thin
               ? `Under four in five runners carry a recent figure, so much of this field is unreadable to the rule.`
-              : `Every runner but ${cov.live - cov.rated === 0 ? 'none' : cov.live - cov.rated} carries a recent figure.`)
+              : (cov.live === cov.rated ? `Every runner carries a recent figure.`
+                                        : `All but ${cov.live - cov.rated} carry a recent figure.`))
           + `</div>`;
       })()}
       ${h.jockey || h.riderChange || h.trainer ? `<div class="pick-jky">${h.riderChange ? '' : (h.jockey ? 'Jockey ' : '')}${jockeyLine(h)}${(h.jockey || h.riderChange) && h.trainer ? ' &nbsp;\u00b7&nbsp; ' : ''}${h.trainer ? 'Trainer ' + trainerLine(h) : ''}</div>` : ''}
@@ -5211,6 +5235,15 @@ function buildPick(rs){
     <div>The market's choice, and <b>second in the field on career earnings at ${money(p.eps)} per start</b>${epsBasis(p.h)} — behind ${escHtml(lead.h.horse)} at ${money(lead.eps)}, who the crowd does not make favourite.${p.nearTie ? ` Those two are within 5% of each other, which is not really a first and a second — on this measure they are level.` : ''}</div>
     <div class="price-warn"><b>Unproven line.</b> Fires only where the Pick filters fail, and is scored separately.</div>
     ${raceCardJumpLink(rs)}
+    ${(() => {
+      const cov = figureCoverage(rs);
+      if (!cov) return '';
+      return `<div class="pick-cov${cov.thin ? ' pick-cov-thin' : ''}">`
+        + `<span class="badge ${cov.thin ? 'badge-red' : 'badge-green'}">${cov.rated} of ${cov.live} figured</span>`
+        + (cov.thin ? `Under four in five runners carry a recent figure.`
+                    : (cov.live === cov.rated ? `Every runner carries a recent figure.` : `All but ${cov.live - cov.rated} carry a recent figure.`))
+        + `</div>`;
+    })()}
     ${confidenceBlock(rs, p.h)}
     ${pickContext(rs, p.h)}
     ${buildEvidenceBlock(rs, h)}
@@ -6729,7 +6762,7 @@ function renderPrintView(){
 
 renderRows();
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v2.01 · released 19 September 2026 · build 2026-09-19-m</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v2.02 · released 19 September 2026 · build 2026-09-20-a</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
