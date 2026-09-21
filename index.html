@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v2.05 — Race Card Reader</title>
+<title>Overlay Board v2.07 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -996,7 +996,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v2.05</span> · released 19 September 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v2.07</span> · released 20 September 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -1093,27 +1093,10 @@
     <div class="tabbar no-print" id="tabbar" style="display:none;">
       <button data-tab="picks" id="tabPicks">Decision board<span class="tab-count" id="pickCount">0</span></button>
       <button data-tab="cards" class="on">Race cards</button>
-      <button data-tab="monitor">Monitor<span class="tab-count" id="monCount">0</span></button>
       <button data-tab="field">Full field</button>
       <button data-tab="help">Help</button>
       <button data-tab="print">Printable page</button>
     </div>
-
-    <section id="monitorSection" style="display:none;">
-      <h2><span class="step-num">◉</span> Monitor</h2>
-      <div id="monitorList"></div>
-      <div class="rss-info" style="margin:18px 0 0;">
-        <b>How to read this.</b> One block per race, in race order. Every line is read straight off the data file, and none of it is a selection — the Decision board is the only place a horse is named as one. Tap any horse for its past performances; tap its name at the top to come back here.
-        <div style="margin-top:8px;">
-          <div style="margin-bottom:4px;"><span class="badge badge-amber">Lone speed</span><span class="badge badge-amber">No clear speed</span><span class="badge badge-grey">Pressed</span><span class="badge badge-grey">Duel</span><span class="badge badge-grey">Contested</span> the projected shape, then the order out of the gate with each horse's run style and Quirin points. Quirin measures how quickly a horse leaves, not how good it is. <b>What to check after the race:</b> did the horse listed first actually lead, and did the shape hold.</div>
-          <div style="margin-bottom:4px;"><span class="badge badge-amber">Projected to lead</span> the single horse the pace ranking puts on an uncontested lead. It names one horse by construction and is <b>not</b> the contender list — the contenders are in the race card. It says so on the line when that horse was kept among the contenders on this alone. <b>Check after:</b> did it lead, where did it finish, at what price.</div>
-          <div style="margin-bottom:4px;"><span class="badge badge-blue">Figure near-tie</span> the market's choice and the recent-figure leader are within a point, so the figure cannot separate them. Both riders are shown with their season record. <b>Check after:</b> which of the two beat the other, not whether either won.</div>
-          <div style="margin-bottom:4px;"><span class="badge badge-blue">Excused beating</span> a horse beaten more than ten lengths in its last comparable start whose chart comment on that same line reports trouble. It stays Questionable either way — the flag is not lifted. <b>Check after:</b> did it outrun the margin or confirm it.</div>
-          <div style="margin-bottom:4px;"><span class="badge badge-red">Thin figures</span> fewer than four in five runners carry a recent figure, so a large part of the field is invisible to every figure line on the card. It changes no pick. <b>Check after:</b> whether an unfigured runner won or hit the board.</div>
-          <div><span class="badge badge-red">Drifted contenders</span> appears once final odds are entered: contenders whose price drifted more than a quarter above the morning line. <b>Check after:</b> where they finished.</div>
-        </div>
-      </div>
-    </section>
 
     <section id="picksSection" style="display:none;">
       <h2><span class="step-num">▦</span> Decision board</h2>
@@ -2923,7 +2906,6 @@ document.getElementById('computeBtn').addEventListener('click', () => {
   window.__ccRaceSummaries = raceSummaries;
   renderRaceCard(raceSummaries, scratchedCount);
   renderPicks(raceSummaries);
-  renderMonitor(raceSummaries);
   document.getElementById('tabbar').style.display = 'flex';
   document.getElementById('reportToolbar').style.display = 'flex';
   renderFullField(currentSort);
@@ -3854,6 +3836,36 @@ function figureCoverage(rs){
   const rated = live.filter(h => avg3Of(h) != null);
   return {rated: rated.length, live: live.length, share: rated.length / live.length,
           thin: (rated.length / live.length) < 0.8};
+}
+
+// EARNINGS LEADER ISN'T THE FAVOURITE. The market's choice can sit second on
+// career earnings per start behind a horse the market itself doesn't favour —
+// the exact shape the Price play is built on. Computed independently of
+// pickFor so it applies whether a Pick fires, a Price play fires, or neither.
+// Purely descriptive: both horses' own numbers, nothing scored, no pick moved.
+function earningsMismatchOf(rs){
+  const horses = rs.horses || [];
+  const mlOf = x => parseOdds(x.mlOddsStr);
+  const priced = horses.filter(x => !x.scratched && mlOf(x) != null);
+  if (!priced.length) return null;
+  const fav = priced.reduce((a, b) => (mlOf(b) < mlOf(a) ? b : a));
+  const el = earningsLeader(horses);
+  const usableEl = el && !el.noForm ? el : null;
+  if (!usableEl) return null;
+  const favRow = usableEl.ranked.find(r => r.h === fav);
+  if (!favRow) return null;
+  const above = usableEl.ranked.filter(r => r.eps > favRow.eps);
+  if (above.length !== 1) return null;          // exactly second, not tied, not third+
+  return {fav, favEps: favRow.eps, leader: above[0].h, leaderEps: above[0].eps};
+}
+
+function earningsMismatchBlock(rs){
+  const m = earningsMismatchOf(rs);
+  if (!m) return '';
+  return `<div class="callout callout-blue"><div class="callout-head">Earnings leader isn't the favourite</div>`
+    + `${horseLabel(m.leader)} tops career earnings at ${money(m.leaderEps)} per start, ahead of the market's choice `
+    + `${horseLabel(m.fav)} at ${money(m.favEps)} per start, second on that column. `
+    + `Shown together for reading; it changes no pick.</div>`;
 }
 
 function contenderSplit(rs){
@@ -5227,7 +5239,8 @@ function buildPick(rs){
       ${head}
       <div>${p.eps == null ? `The market's choice.` : (p.epsRank === 1
         ? `Top career earnings in the field at <b>${money(p.eps)} per start</b>${epsBasis(h)}, <b>and</b> the market's choice.${second ? ` Next best on earnings is ${escHtml(second.h.horse)} at ${money(second.eps)}${gap && gap >= 1.5 ? `, a ${gap.toFixed(1)}\u00d7 gap` : ''}.` : ''}`
-        : `The market's choice, and <b>${ordinalOf(p.epsRank)}</b> in the field on career earnings at <b>${money(p.eps)} per start</b>${epsBasis(h)}${p.epsOf ? ` of ${p.epsOf} runners with a record` : ''}.${p.epsAhead ? ` ${escHtml(p.epsAhead.h.horse)} leads that column at ${money(p.epsAhead.eps)}.` : ''}`)}</div>
+        : `The market's choice, and <b>${ordinalOf(p.epsRank)}</b> in the field on career earnings at <b>${money(p.eps)} per start</b>${epsBasis(h)}${p.epsOf ? ` of ${p.epsOf} runners with a record` : ''}.${(p.epsAhead && p.epsRank !== 2) ? ` ${escHtml(p.epsAhead.h.horse)} leads that column at ${money(p.epsAhead.eps)}.` : ''}`)}</div>
+      ${p.epsRank === 2 ? earningsMismatchBlock(rs) : ''}
       ${raceCardJumpLink(rs)}
       ${confidenceBlock(rs, h)}
       ${pickContext(rs, h)}
@@ -5253,7 +5266,8 @@ function buildPick(rs){
   const lead = p.leader;
   return `<div class="pick-card tier2 race-anchor-target" id="pick-r${escAttr(rs.race)}">
     ${head}
-    <div>The market's choice, and <b>second in the field on career earnings at ${money(p.eps)} per start</b>${epsBasis(p.h)} — behind ${escHtml(lead.h.horse)} at ${money(lead.eps)}, who the crowd does not make favourite.${p.nearTie ? ` Those two are within 5% of each other, which is not really a first and a second — on this measure they are level.` : ''}</div>
+    <div>The market's choice, and <b>second in the field on career earnings at ${money(p.eps)} per start</b>${epsBasis(p.h)}.${p.nearTie ? ` It and ${escHtml(lead.h.horse)} are within 5% of each other, which is not really a first and a second — on this measure they are level.` : ''}</div>
+    ${earningsMismatchBlock(rs)}
     <div class="price-warn"><b>Unproven line.</b> Fires only where the Pick filters fail, and is scored separately.</div>
     ${raceCardJumpLink(rs)}
     ${(() => {
@@ -5688,6 +5702,9 @@ function buildReadPanel(rs){
       + `<span class="fig-note">The figure is not separating these two. Shown for reading; it changes no pick.</span></div>`);
   }
 
+  const em = earningsMismatchBlock(rs);
+  if (em) lines.push(em);
+
   // SAME BARN. Logged, watch-only, feeding nothing. When a trainer runs more
   // than one in a race, the split between them is worth seeing rather than
   // assuming the shorter price is the stable's opinion. Shown as information
@@ -5709,10 +5726,25 @@ function buildReadPanel(rs){
       + `<span class="fig-note">Noted, not counted.</span></div>`);
   }
 
-  // Lone speed: top Quirin, 2+ clear of the next horse. Display only.
-  const shape = speedShape(horses);
-  if (shape && shape.lone){
-    lines.push(`<div class="bet-line"><span class="bet-tag place">LONE SPEED</span> ${horseLabel(shape.top)} — ${shape.top.quirin} speed pts, ${shape.gap} clear of ${shape.second ? escHtml(shape.second.horse) : 'the field'}.</div>`);
+  // FIGURE COVERAGE. What share of the field the tool can actually read —
+  // not the horse, the race. buildShapeBoard's table (below) already shows
+  // pace shape, order out of the gate and a per-horse drift tag via
+  // paceProjection; this is the one thing it doesn't state as a race-level
+  // fact, so it's the one addition here.
+  const cov = figureCoverage(rs);
+  if (cov && cov.thin){
+    lines.push(`<div class="callout callout-amber"><div class="callout-head">Thin figures</div>`
+      + `<span class="badge badge-red">${cov.rated} of ${cov.live} figured</span>`
+      + `Under four in five runners carry a recent figure, so much of this field is unreadable to the rule.</div>`);
+  }
+
+  // DRIFTED. The shape-board table flags each drifted horse individually in
+  // its Money column; this is the same fact gathered into one line, matching
+  // the existing BET DOWN line's format rather than a separate box.
+  const splitD = contenderSplit(rs);
+  const drifted = splitD ? splitD.contenders.filter(x => x.h.drift != null && x.h.drift > 1.25) : [];
+  if (drifted.length){
+    lines.push(`<div class="bet-line"><span class="bet-tag skip">DRIFTED</span> ${drifted.slice(0, 4).map(x => horseLabel(x.h)).join(' \u00b7 ')}</div>`);
   }
 
   if (!lines.length){
@@ -5831,7 +5863,6 @@ function readLevelFor(raceKey){
 
 const TABS = {
   picks: ['picksSection'],
-  monitor: ['monitorSection'],
   print: ['printSection'],
   cards: ['resultsSection'],
   field: ['fieldSection'],
@@ -6070,111 +6101,6 @@ function buildBoardIndex(raceSummaries){
   }).join('') + '</div>';
 }
 
-// MONITOR. One place for the standing watch items, so they can be read off a
-// card and checked later instead of being hunted through the race cards:
-// the projected uncontested leader, a figure near-tie with both riders, and —
-// once final odds are entered — which contenders drifted off the morning line.
-// PACE EXPECTATION for the monitor: the projected shape and the order out of
-// the gate, on EVERY race, not only the ones with an uncontested leader. Same
-// ranking as the race card's pace panel, so the two cannot disagree.
-function monitorPace(rs){
-  const field = (rs.byMarket || rs.horses || []).filter(h => !h.scratched);
-  const rated = field.map(h => ({h, r: paceRank(h), q: h.quirin}))
-                     .filter(x => x.r != null).sort((a, b) => b.r - a.r);
-  if (rated.length < 4) return null;
-  const speed = rated.filter(x => x.q >= 5);
-  const top = rated[0], second = rated[1];
-  let shape;
-  if (speed.length === 0) shape = 'NO CLEAR SPEED';
-  else if (speed.length === 1 && (top.r - second.r) >= 2) shape = 'LONE SPEED';
-  else if (speed.length === 1) shape = 'PRESSED';
-  else if (speed.length === 2) shape = 'DUEL';
-  else shape = 'CONTESTED';
-  const order = rated.slice(0, 4).map(x =>
-    `${monHorse(rs, x.h)} <span class="muted">(${escHtml(x.h.runStyle || '\u2014')}${x.q != null ? ', ' + x.q : ''})</span>`
-  ).join(' \u2192 ');
-  return {shape, order};
-}
-
-// Horse name as a tap target, so a name in the monitor opens its past
-// performances and the header taps straight back to this spot.
-function monHorse(rs, h){
-  const body = `<b>${escHtml(h.horse)}</b>`;
-  const hasPP = (h.ppRaces && h.ppRaces.length) || (h.ppWorks && h.ppWorks.length);
-  if (!hasPP) return body;
-  return `<a class="pp-link horse-tap" data-pp-race="${escAttr(h.race || rs.race)}" data-pp-horse="${escAttr(h.horse)}"`
-    + ` title="Tap for past performances">${body}</a>`;
-}
-
-function buildMonitor(raceSummaries){
-  const rowsOut = [];
-  raceSummaries.forEach(rs => {
-    const items = [];
-    // Big beaten margin WITH a trouble comment on the same line. Logged so it
-    // can be counted: do these horses outrun the margin or confirm it?
-    const split1 = contenderSplit(rs);
-    if (split1){
-      const excused = split1.contenders.concat(split1.questionable)
-        .filter(x => x.h.lastFinMargin != null && x.h.lastFinMargin > 10 && x.h.hadTrouble);
-      if (excused.length) items.push({tag: 'Excused beating', cls: 'badge-blue',
-        txt: excused.map(x => `${monHorse(rs, x.h)} (${escHtml(x.h.oddsStr || '')}) beaten ${x.h.lastFinMargin}L, `
-          + `\u201c${escHtml(x.h.lastFinComment || '')}\u201d`).join('<br>')});
-    }
-    const cov = figureCoverage(rs);
-    if (cov && cov.thin) items.push({tag: 'Thin figures', cls: 'badge-red',
-      txt: `${cov.rated} of ${cov.live} runners carry a recent figure. <b>Check after:</b> whether the unfigured runners featured.`});
-    const pace = monitorPace(rs);
-    if (pace) items.push({tag: pace.shape, cls: pace.shape === 'LONE SPEED' || pace.shape === 'NO CLEAR SPEED' ? 'badge-amber' : 'badge-grey',
-      txt: `Order out of the gate: ${pace.order}`});
-    const u = uncontestedLeader(rs);
-    // NAMES ONE HORSE ONLY — the projected leader. It is not the contender
-    // list, and it does not add anyone to it unless the price filter had cut
-    // that horse, which the line says explicitly when it happens.
-    if (u){
-      // "Rescued" means the PRICE FILTER would have cut this horse — 12-1 or
-      // longer, or 6th choice or worse. Reading it off the contender's stored
-      // reason does not work: the pace leader always carries one.
-      const priced = (rs.byMarket || rs.horses || []).filter(h => !h.scratched && h.decimalOdds != null);
-      const mktRank = priced.slice().sort((a, b) => a.decimalOdds - b.decimalOdds).indexOf(u.h) + 1;
-      const rescued = (u.h.decimalOdds != null && (u.h.decimalOdds - 1) >= 12) || (mktRank > 5);
-      items.push({tag: 'Projected to lead', cls: 'badge-amber',
-        txt: `${monHorse(rs, u.h)} (${escHtml(u.h.oddsStr || '')}) ${escHtml(u.why)}.`
-           + (rescued ? ' Kept in the contenders on this alone — its price would otherwise have cut it.' : '')});
-    }
-    const nt = nearTieWatch(rs);
-    if (nt){
-      const pctBit = v => v != null ? ` ${Math.round(v)}%` : '';
-      items.push({tag: 'Figure near-tie', cls: 'badge-blue',
-        txt: `${monHorse(rs, nt.fav)} (${nt.favV.toFixed(2)}) is the market's choice, `
-           + `${nt.gap.toFixed(2)} behind ${monHorse(rs, nt.lead)} (${nt.leadV.toFixed(2)}). `
-           + `Riders: ${escHtml(nt.favJky || 'unlisted')}${pctBit(nt.favPct)} and ${escHtml(nt.leadJky || 'unlisted')}${pctBit(nt.leadPct)}.`});
-    }
-    const split = contenderSplit(rs);
-    if (split){
-      // drift is already computed per horse when a final price is typed in:
-      // final / morning line. Above 1.25 is the drifted group.
-      const drifted = split.contenders.filter(x => x.h.drift != null && x.h.drift > 1.25);
-      if (drifted.length) items.push({tag: 'Drifted contenders', cls: 'badge-red',
-        txt: drifted.map(x => `${monHorse(rs, x.h)} ${escHtml(x.h.mlOddsStr || '')}\u2192${escHtml(x.h.finalOddsStr || '')}`).join(' \u00b7 ')});
-    }
-    if (!items.length) return;
-    rowsOut.push(`<div class="mon-race">
-      <div class="mon-head"><a class="race-jump" data-jump="${escAttr(rs.race)}">Race ${escHtml(rs.race)}</a></div>
-      ${items.map(i => `<div class="mon-item"><span class="badge ${i.cls}">${escHtml(i.tag)}</span>${i.txt}</div>`).join('')}
-    </div>`);
-  });
-  const el = document.getElementById('monCount');
-  if (el) el.textContent = rowsOut.length;
-  return rowsOut.length ? rowsOut.join('')
-    : `<div class="pick-none"><b>Nothing to monitor on this card.</b> Too few runners carry the data these lines are read from.</div>`;
-}
-
-function renderMonitor(raceSummaries){
-  const list = document.getElementById('monitorList');
-  if (!list) return;
-  list.innerHTML = buildMonitor(raceSummaries);
-  bindTapHandlers(list);
-}
 
 function renderPicks(raceSummaries){
   const list = document.getElementById('pickList');
@@ -6826,7 +6752,7 @@ function renderPrintView(){
 
 renderRows();
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v2.05 · released 19 September 2026 · build 2026-09-20-d</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v2.07 · released 20 September 2026 · build 2026-09-20-f</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
