@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v2.34 — Race Card Reader</title>
+<title>Overlay Board v2.35 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1027,7 +1027,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v2.34</span> · released 26 September 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v2.35</span> · released 26 September 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -1200,7 +1200,7 @@
       <div class="help-block">
         <h3>Reading a past-performance line</h3>
         <p>Date, track, distance, surface, post, class move (▲ tougher · = about the same · ▼ easier than today), finish, who won/placed/showed, the BRIS speed figure, <b>Pace</b>, class text, trip comment.</p>
-        <p><b>Pace</b> shows the BRIS pace-call figures for that race in order (2-call, 4-call, 6-call, 8-call, late pace — same rating scale as Speed) plus a plain read of the shape: <b>faded late</b> if the early number drops off, <b>closed late</b> if it climbs, <b>even shape</b> otherwise. A fact about that one race, not a score. See "Worth a second look" above for where the shape is used.</p>
+        <p><b>Pace</b> shows the BRIS pace-call figures for that race in order (2-call, 4-call, 6-call, 8-call, late pace — same rating scale as Speed) plus a plain read of the shape from the running line: <b>closed late</b> if the horse gained 2 or more lengths between the second call and the finish, <b>faded late</b> if it lost 2 or more, <b>even shape</b> otherwise. A fact about that one race, not a score. See "Worth a second look" above for where the shape is used.</p>
       </div>
 
       <div class="help-block">
@@ -1715,7 +1715,7 @@ function parseBrisnetSingleFile(text){
       const finTxt = get(616+i);
       const rawMargin = num(736+i);
       const wonIt = String(finTxt).trim() === '1';
-      ppRaces.push({date: d, track: get(276+i), raceNum: get(296+i), distYds: num(316+i), surf: get(326+i), fin: finTxt, margin: rawMargin, won: wonIt, lenBehind: (rawMargin == null ? null : (wonIt ? -rawMargin : rawMargin)), comment: get(396+i), pastPost: num(356+i), pastField: num(346+i), winner: get(406+i), second: get(416+i), third: get(426+i), rtype: get(1086+i), claim: num(546+i), classTxt: get(536+i), spd: num(846+i), pace2: num(766+i), pace4: num(776+i), pace6: num(786+i), pace8: num(796+i), latePace: num(816+i), purse: num(556+i), trackCond: get(306+i),
+      ppRaces.push({date: d, track: get(276+i), raceNum: get(296+i), distYds: num(316+i), surf: get(326+i), fin: finTxt, margin: rawMargin, won: wonIt, lenBehind: (rawMargin == null ? null : (wonIt ? -rawMargin : rawMargin)), comment: get(396+i), pastPost: num(356+i), pastField: num(346+i), winner: get(406+i), second: get(416+i), third: get(426+i), rtype: get(1086+i), claim: num(546+i), classTxt: get(536+i), spd: num(846+i), pace2: num(766+i), pace4: num(776+i), pace6: num(786+i), pace8: num(796+i), latePace: num(816+i), c1pos: num(576+i), c1bl: num(656+i), c2pos: num(586+i), c2bl: num(676+i), strpos: num(606+i), strbl: num(716+i), purse: num(556+i), trackCond: get(306+i),
         // WHO RODE THAT DAY. Fields 1066-1075 carry the rider of each past
         // race and 1056-1065 the trainer, so a line can be read against the
         // rider who was on it — verified on this file against today's rider
@@ -3094,7 +3094,7 @@ function ratingOf(h){
 
 // Prefers starts within 2f of today's trip; falls back to all starts if there
 // are fewer than three of those, and says which it used.
-// FORM DIRECTION. v2.34 (Robert, GP 26 Sep R2 Breezey Z): the read used to
+// FORM DIRECTION. v2.35 (Robert, GP 26 Sep R2 Breezey Z): the read used to
 // take the last four starts at a similar distance and compare only the
 // oldest with the newest. That labelled Breezey Z CLOSING off a 10.8L start
 // from BEFORE a nine-month layoff, when both starts since the layoff were on
@@ -6877,13 +6877,27 @@ function paceCallsText(p){
   if (p.latePace != null && p.latePace > 0) parts.push(p.latePace.toFixed(0));
   return parts.join('-');
 }
+// v2.35 (Robert, GP 26 Sep R2 Starship Vengeance): the shape used to be read
+// by subtracting the late-pace figure from the early pace figure. Those are
+// different BRIS scales — late pace sits well below E1/E2 for almost every
+// horse — so nearly every line read "faded late", including a race where the
+// horse was 4½ lengths back at the second call and finished a neck away,
+// "gaining fast". The shape is now read from the running line itself:
+// lengths behind at the second call (first call if missing) against lengths
+// behind at the finish. Gained 2+ lengths = closed late; lost 2+ = faded late.
+function callBehind(pos, bl){
+  if (bl == null && pos == null) return null;
+  if (pos === 1) return bl != null ? -Math.abs(bl) : 0;   // leading: margin ahead
+  return bl;
+}
 function paceShapeText(p){
-  const early = [p.pace2, p.pace4].find(v => v != null && v > 0);
-  const late = (p.latePace != null && p.latePace > 0) ? p.latePace : [p.pace8, p.pace6].find(v => v != null && v > 0);
-  if (early == null || late == null) return '';
-  const gap = early - late;
-  if (gap >= 6) return 'faded late';
-  if (gap <= -6) return 'closed late';
+  let call = callBehind(p.c2pos, p.c2bl);
+  if (call == null) call = callBehind(p.c1pos, p.c1bl);
+  const fin = p.lenBehind;
+  if (call == null || fin == null) return '';
+  const gain = call - fin;
+  if (gain >= 2) return 'closed late';
+  if (gain <= -2) return 'faded late';
   return 'even shape';
 }
 
@@ -6918,7 +6932,7 @@ function ppHorseBlock(h, race, standalone, inModal){
     ${breedingLine(h)}
     ${ppRecordLine(h)}
     ${races ? `<div class="pp-section">Last ${(h.ppRaces||[]).length} starts${h.ltStarts != null && h.ltStarts > (h.ppRaces||[]).length ? ` <span style="text-transform:none;letter-spacing:0;font-weight:400;">(of ${h.ltStarts} career — the data file carries 10)</span>` : ''}</div>
-    <div class="pp-table-wrap"><table class="pp-table"><thead><tr><th>Date</th><th>Trk</th><th>Dist</th><th>Class</th><th title="Post position that day, and the number of starters. Validated on 8,182 past starts.">PP</th><th>Fin</th><th>Btn</th><th title="BRIS speed rating for that race, as supplied by the data file">Spd</th><th title="BRIS pace-call figures for that race: 2-call, 4-call, 6-call, 8-call, late pace, in order supplied. Same rating scale as Speed — a fall-off from early to late reads as faded, a rise reads as closed.">Pace</th><th title="Who rode that day. Bold = the rider on the horse today, so the horse's record for this rider can be read against its record for others.">Jky</th><th>Trip comment</th><th title="Who finished first, second and third in that race. Highlighted = a contender in today's race; bold = another runner in it.">W / P / S</th></tr></thead><tbody>${races}</tbody></table></div>` : `<p class="pp-sub">No past races in the data file — first-time starter.</p>`}
+    <div class="pp-table-wrap"><table class="pp-table"><thead><tr><th>Date</th><th>Trk</th><th>Dist</th><th>Class</th><th title="Post position that day, and the number of starters. Validated on 8,182 past starts.">PP</th><th>Fin</th><th>Btn</th><th title="BRIS speed rating for that race, as supplied by the data file">Spd</th><th title="BRIS pace-call figures for that race: 2-call, 4-call, 6-call, 8-call, late pace, in order supplied. The shape word beside them is read from lengths behind at the second call against the finish, not from these figures.">Pace</th><th title="Who rode that day. Bold = the rider on the horse today, so the horse's record for this rider can be read against its record for others.">Jky</th><th>Trip comment</th><th title="Who finished first, second and third in that race. Highlighted = a contender in today's race; bold = another runner in it.">W / P / S</th></tr></thead><tbody>${races}</tbody></table></div>` : `<p class="pp-sub">No past races in the data file — first-time starter.</p>`}
     ${riderSplitLine(h)}
     ${works ? `<div class="pp-section">Last ${Math.min((h.ppWorks||[]).length, PP_WORK_LIMIT)} workouts (● = bullet)</div><div class="pp-works">${works}</div>` : ''}`;
 }
@@ -7266,7 +7280,7 @@ function renderPrintView(){
 
 renderRows();
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v2.34 · released 26 September 2026 · build 2026-09-26-c</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v2.35 · released 26 September 2026 · build 2026-09-26-d</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
