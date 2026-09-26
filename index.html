@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v2.32 — Race Card Reader</title>
+<title>Overlay Board v2.34 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -582,6 +582,8 @@
   .tb-trend.closing{color:#2E6E45;}
   .tb-trend.widening{color:var(--red);}
   .tb-trend.flat{color:var(--ink-soft);}
+  .tb-trend.mixed{color:#8a5a00;}
+  .tb-context{font-size:12px; color:var(--ink-soft);}
   .tb-excuse{color:var(--amber-dim); font-style:italic;}
   .tb-foot{margin-top:7px; font-size:11.5px; color:var(--ink-soft); font-style:italic;}
   .matchup{
@@ -605,6 +607,7 @@
   .form-arrow{font-family:var(--mono); font-size:13px; font-weight:800;}
   .form-arrow.closing{color:#2E6E45;}
   .form-arrow.widening{color:var(--red);}
+  .form-arrow.mixed{color:#8a5a00;}
   .form-arrow.flat, .form-arrow.none{color:var(--ink-soft); font-weight:400;}
 
   .score-compare{
@@ -1024,7 +1027,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v2.32</span> · released 26 September 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v2.34</span> · released 26 September 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -3091,17 +3094,65 @@ function ratingOf(h){
 
 // Prefers starts within 2f of today's trip; falls back to all starts if there
 // are fewer than three of those, and says which it used.
+// FORM DIRECTION. v2.34 (Robert, GP 26 Sep R2 Breezey Z): the read used to
+// take the last four starts at a similar distance and compare only the
+// oldest with the newest. That labelled Breezey Z CLOSING off a 10.8L start
+// from BEFORE a nine-month layoff, when both starts since the layoff were on
+// turf, today is dirt, and the latest step went the wrong way. Now:
+//  1. a layoff of 90+ days starts the record over — only starts since the
+//     most recent layoff are read (the break itself is reported);
+//  2. starts on today's surface AND within 2f of today's trip are preferred;
+//     if fewer than two exist, the read falls back and says why;
+//  3. if the newest step points the other way from the overall change, the
+//     label is MIXED, not CLOSING or LOSING GROUND;
+//  4. the newest start's chart comment is always shown beside the read.
+// Display only; it feeds no pick.
+const LAYOFF_DAYS = 90;
 function formRead(h){
-  const all = (h.ppRaces || []).filter(p => p.lenBehind != null);
-  if (all.length < 2) return null;
+  const all0 = (h.ppRaces || []).filter(p => p.lenBehind != null);
+  if (all0.length < 1) return null;
   const today = h.raceDistYds;
-  let starts = (today != null)
-    ? all.filter(p => p.distYds != null && Math.abs(p.distYds - today) <= 440)
-    : all.slice();
+  const todaySfc = ai3_surfaceGroup(h.surface || '');
+  const sfcOf = p => ai3_surfaceGroup(p.surf || p.ai3Surf || '');
+  const sfcWord = g => g === 'T' ? 'turf' : g === 'A' ? 'all-weather' : g === 'D' ? 'dirt' : 'unknown surface';
+  const context = [];
+
+  // 1. cut at the most recent layoff
+  let all = all0, layoff = null;
+  for (let i = 0; i < Math.min(all0.length - 1, 4); i++){
+    const a = parseCYMD(all0[i].date), b = parseCYMD(all0[i+1].date);
+    if (a && b && (a - b) / 86400000 >= LAYOFF_DAYS){
+      layoff = {days: Math.round((a - b) / 86400000), from: all0[i+1].date, to: all0[i].date, since: i + 1};
+      break;
+    }
+  }
+  if (layoff){
+    const mo = Math.round(layoff.days / 30.4);
+    const since = all0.slice(0, layoff.since);
+    context.push(`back from a ${mo >= 2 ? mo + '-month' : layoff.days + '-day'} layoff \u2014 ${since.length} start${since.length === 1 ? '' : 's'} since`);
+    if (since.length >= 2) all = since;
+    else context.push('too few starts since the layoff to read a direction, so older form is included');
+  }
+  if (all.length < 2) return null;
+
+  // 2. prefer today's trip (within 2f); surface is labelled, not filtered —
+  //    dropping recent off-surface starts would hide the newest form.
+  const near = p => today == null || (p.distYds != null && Math.abs(p.distYds - today) <= 440);
+  const sameSfc = p => !todaySfc || sfcOf(p) === todaySfc;
+  let starts = all.filter(near);
   let comparable = true;
-  if (starts.length < 3){ starts = all.slice(); comparable = false; }
+  if (starts.length < 2){ starts = all; comparable = false; }
+  {
+    const window4 = starts.slice(0, 4);
+    const off = window4.filter(p => !sameSfc(p));
+    if (todaySfc && off.length){
+      const groups = [...new Set(off.map(sfcOf))].map(sfcWord).join('/');
+      context.push(off.length === window4.length
+        ? `all ${off.length} on ${groups}; today is ${sfcWord(todaySfc)}`
+        : `${off.length} of ${window4.length} on ${groups}; today is ${sfcWord(todaySfc)}`);
+    }
+  }
   starts = starts.slice(0, 4);
-  if (starts.length < 2) return null;
   const chron = starts.slice().reverse();
 
   const margins = chron.map(p => p.lenBehind);
@@ -3109,6 +3160,12 @@ function formRead(h){
   let trend = 'flat';
   if (last <= first - 1.5) trend = 'closing';
   else if (last >= first + 1.5) trend = 'widening';
+  // 3. newest step against the overall change
+  if (margins.length >= 3){
+    const step = last - margins[margins.length - 2];
+    if (trend === 'closing' && step > 0.5) trend = 'mixed';
+    else if (trend === 'widening' && step < -0.5) trend = 'mixed';
+  }
 
   let better = 0, worse = 0;
   for (let i = 1; i < margins.length; i++){
@@ -3117,29 +3174,30 @@ function formRead(h){
   }
 
   const fins = chron.map(p => (p.fin || '?'));
-  const seq = chron.map(p => (p.won ? 'won by ' + (Math.round(p.margin*10)/10) : (Math.round(p.lenBehind*10)/10) + 'L')).join(' \u2192 ');
+  const mixedSfc = todaySfc && chron.some(p => !sameSfc(p));
+  const seq = chron.map(p => (p.won ? 'won by ' + (Math.round(p.margin*10)/10) : (Math.round(p.lenBehind*10)/10) + 'L')
+    + (mixedSfc ? ' (' + (sfcOf(p) || '?').toLowerCase() + ')' : '')).join(' \u2192 ');
 
   const worst = starts.reduce((a,b) => (b.lenBehind > a.lenBehind ? b : a), starts[0]);
   const objective = [];
   if (today != null && worst.distYds != null && Math.abs(worst.distYds - today) > 440){
     objective.push(`worst result (${worst.won ? 'a win by ' + Math.round(worst.margin*10)/10 : Math.round(worst.lenBehind*10)/10 + 'L'}) came at ${fmtDistY(worst.distYds)}, not today's ${fmtDistY(today)}`);
   }
-  if (!comparable && today != null){
-    objective.push(`no start within 2f of today's distance in the last ${all.length}`);
-  }
   let subjective = '';
   const cmt = (worst.comment || '').toLowerCase();
   if (cmt && TROUBLE_WORDS.some(k => cmt.includes(k))) subjective = worst.comment;
+  // 4. the newest start's own chart comment
+  const lastComment = (all0[0] && all0[0].comment) ? all0[0].comment : '';
 
-  return {trend, better, worse, seq, fins, comparable, objective, subjective,
+  return {trend, better, worse, seq, fins, comparable, objective, subjective, context, lastComment,
           n: starts.length, worstMargin: worst.lenBehind};
 }
 
 function formArrow(h){
   const f = formRead(h);
   if (!f) return '<span class="form-arrow none">\u2014</span>';
-  const glyph = f.trend === 'closing' ? '\u25B2' : f.trend === 'widening' ? '\u25BC' : '\u2013';
-  const detail = `Beaten lengths, oldest to newest: ${f.seq} (${f.n} starts${f.comparable ? ' at a comparable distance' : ', mixed distances'}). Display only.`;
+  const glyph = f.trend === 'closing' ? '\u25B2' : f.trend === 'widening' ? '\u25BC' : f.trend === 'mixed' ? '\u2195' : '\u2013';
+  const detail = `Beaten lengths, oldest to newest: ${f.seq} (${f.n} starts${f.comparable ? ' at a comparable trip and surface' : ''})${f.context.length ? '; ' + f.context.join('; ') : ''}${f.lastComment ? '. Last out: "' + f.lastComment + '"' : ''}. Display only.`;
   // title= is a hover tooltip and never fires on a touch screen, so the
   // sequence behind the arrow was effectively invisible on the phone this
   // tool is built for. Tapping now reveals the same text inline instead.
@@ -3325,14 +3383,16 @@ function buildTiebreakRead(rs){
     const f = formRead(h);
     const head = `<b>#${escHtml(h.post || '?')} ${escHtml(h.horse)}</b> (${escHtml(h.oddsStr)}) \u00b7 rating ${Math.round(ratingOf(h)*10)/10}`;
     if (!f) return `<div class="tb-row">${head} \u2014 not enough past starts with a beaten margin to read a direction.</div>`;
-    const label = f.trend === 'closing' ? 'CLOSING' : f.trend === 'widening' ? 'LOSING GROUND' : 'FLAT';
+    const label = f.trend === 'closing' ? 'CLOSING' : f.trend === 'widening' ? 'LOSING GROUND' : f.trend === 'mixed' ? 'MIXED' : 'FLAT';
     const steps = `${f.better} of ${f.n - 1} step${f.n - 1 === 1 ? '' : 's'} the right way`;
     const excuses = [];
     f.objective.forEach(o => excuses.push(`<span class="tb-excuse">excuse: ${escHtml(o)}</span>`));
-    if (f.subjective) excuses.push(`<span class="tb-excuse">chart comment on the worst race: "${escHtml(f.subjective)}"</span>`);
+    if (f.subjective && f.subjective !== f.lastComment) excuses.push(`<span class="tb-excuse">chart comment on the worst race: "${escHtml(f.subjective)}"</span>`);
     return `<div class="tb-row">${head}<br>
       <span class="tb-seq">${escHtml(f.seq)}</span> <span class="tb-trend ${f.trend}">${label}</span> \u00b7
-      finishes ${escHtml(f.fins.join('-'))} \u00b7 ${steps}${f.comparable ? '' : ' \u00b7 mixed distances'}
+      finishes ${escHtml(f.fins.join('-'))} \u00b7 ${steps}
+      ${f.context.length ? '<br><span class="tb-context">' + f.context.map(escHtml).join(' \u00b7 ') + '</span>' : ''}
+      ${f.lastComment ? '<br><span class="tb-context">last out: \u201c' + escHtml(f.lastComment) + '\u201d</span>' : ''}
       ${excuses.length ? '<br>' + excuses.join(' \u00b7 ') : ''}</div>`;
   }).join('');
 
@@ -3786,7 +3846,7 @@ function nearTieCallout(rs){
   const jkyBit = x => x ? escHtml(x) : 'rider unlisted';
   const pctBit = v => v != null ? ` ${Math.round(v)}%` : '';
   return `<div class="callout callout-amber"><div class="callout-head">Figure near-tie</div>`
-    + `${horseLabel(nt.fav)} (${nt.favV.toFixed(2)}) is the market's choice and sits ${nt.gap.toFixed(2)} behind `
+    + `${horseLabel(nt.fav)} (${nt.favV.toFixed(2)}) is the market's choice and ${nt.gap < 0.005 ? 'is level with' : 'sits ' + nt.gap.toFixed(2) + ' behind'} `
     + `${horseLabel(nt.lead)} (${nt.leadV.toFixed(2)}) on the recent-figure mean. `
     + `Riders: ${jkyBit(nt.favJky)}${pctBit(nt.favPct)} on ${escHtml(nt.fav.horse)}, `
     + `${jkyBit(nt.leadJky)}${pctBit(nt.leadPct)} on ${escHtml(nt.lead.horse)}.`
@@ -6480,7 +6540,7 @@ function buildBoardIndex(raceSummaries){
       bits.push(`<b>Pace:</b> ${escHtml(paceShape.toLowerCase())}${shapeLead ? ` (${escHtml(shapeLead.h.horse)})` : ''}`);
     }
     const ntw = nearTieWatch(rs);
-    if (ntw) bits.push(`<b class="nt-flag">Near tie:</b> ${escHtml(ntw.fav.horse)} ${ntw.gap.toFixed(2)} behind ${escHtml(ntw.lead.horse)}`);
+    if (ntw) bits.push(`<b class="nt-flag">Near tie:</b> ${escHtml(ntw.fav.horse)} ${ntw.gap < 0.005 ? 'level with' : ntw.gap.toFixed(2) + ' behind'} ${escHtml(ntw.lead.horse)}`);
     const dist = rs.raceDistYds || (horses[0] && horses[0].raceDistYds);
     const sfc = ai3_surfaceGroup((horses[0] && horses[0].surface) || '');
     const sWord = sfc === 'T' ? 'turf' : sfc === 'A' ? 'all-weather' : sfc === 'D' ? 'dirt' : '';
@@ -7206,7 +7266,7 @@ function renderPrintView(){
 
 renderRows();
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v2.32 · released 26 September 2026 · build 2026-09-26-a</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v2.34 · released 26 September 2026 · build 2026-09-26-c</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
