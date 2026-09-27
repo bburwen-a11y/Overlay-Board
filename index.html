@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v2.32 — Race Card Reader</title>
+<title>Overlay Board v2.39 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -424,6 +424,11 @@
   .pace-line{margin:4px 0 2px; padding:5px 9px; border-left:3px solid var(--amber-dim);
     background:rgba(0,0,0,.03); font-size:12.5px; color:var(--ink-soft);}
   .pace-line b{color:var(--ink);}
+  .pick-pass{margin:6px 0 4px; padding:7px 10px; background:rgba(150,40,30,.10); border-left:4px solid var(--red);
+    font-size:13.5px; color:var(--ink);}
+  .pick-pass b{color:var(--red); letter-spacing:.04em;}
+  .bo-pass{font-size:12px; color:var(--red); font-weight:600;}
+  .btag-pass{background:var(--red); color:#fff;}
   .nt-flag{color:#8a5a00; background:rgba(217,167,59,.18); padding:0 4px; border-radius:2px;}
   /* Race-number bar inside the past-performance view, frozen at the top of
      the overlay's own scroll so any race is one tap away without closing. */
@@ -582,6 +587,8 @@
   .tb-trend.closing{color:#2E6E45;}
   .tb-trend.widening{color:var(--red);}
   .tb-trend.flat{color:var(--ink-soft);}
+  .tb-trend.mixed{color:#8a5a00;}
+  .tb-context{font-size:12px; color:var(--ink-soft);}
   .tb-excuse{color:var(--amber-dim); font-style:italic;}
   .tb-foot{margin-top:7px; font-size:11.5px; color:var(--ink-soft); font-style:italic;}
   .matchup{
@@ -605,6 +612,7 @@
   .form-arrow{font-family:var(--mono); font-size:13px; font-weight:800;}
   .form-arrow.closing{color:#2E6E45;}
   .form-arrow.widening{color:var(--red);}
+  .form-arrow.mixed{color:#8a5a00;}
   .form-arrow.flat, .form-arrow.none{color:var(--ink-soft); font-weight:400;}
 
   .score-compare{
@@ -897,6 +905,13 @@
   .conf-inline.conf-high{color:#3C7A4A;}
   .conf-inline.conf-probable{color:#B08A16;}
   .conf-inline.conf-questionable{color:#B4541A;}
+  .conf-inline.conf-pass{color:var(--red);}
+  .pass-read{margin-top:8px; padding:8px 10px; border:1px dashed var(--red); background:rgba(150,40,30,.05);}
+  .pass-read .pr-head{font-weight:800; color:var(--red); letter-spacing:.04em;}
+  .pass-read .pr-item{margin-top:7px; padding-top:6px; border-top:1px solid rgba(0,0,0,.08);}
+  .pass-read .pr-item.pr-pick{border-top:none; padding-top:0;}
+  .pass-read .pr-role{font-family:var(--mono); font-size:10px; letter-spacing:.06em; text-transform:uppercase; opacity:.75; margin-right:6px;}
+  .pass-read .pr-more{font-size:12px; line-height:1.45; margin-top:2px;}
   .pick-fig{margin-top:8px; font-size:12.5px; line-height:1.5;}
   .fig-note{display:block; margin-top:4px; font-size:11px; color:var(--ink-soft); line-height:1.45;}
   .pp-filter{display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin:10px 0 14px;}
@@ -1024,7 +1039,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v2.32</span> · released 26 September 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v2.39</span> · released 27 September 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -1197,7 +1212,7 @@
       <div class="help-block">
         <h3>Reading a past-performance line</h3>
         <p>Date, track, distance, surface, post, class move (▲ tougher · = about the same · ▼ easier than today), finish, who won/placed/showed, the BRIS speed figure, <b>Pace</b>, class text, trip comment.</p>
-        <p><b>Pace</b> shows the BRIS pace-call figures for that race in order (2-call, 4-call, 6-call, 8-call, late pace — same rating scale as Speed) plus a plain read of the shape: <b>faded late</b> if the early number drops off, <b>closed late</b> if it climbs, <b>even shape</b> otherwise. A fact about that one race, not a score. See "Worth a second look" above for where the shape is used.</p>
+        <p><b>Pace</b> shows the BRIS pace-call figures for that race in order (2-call, 4-call, 6-call, 8-call, late pace — same rating scale as Speed) plus a plain read of the shape from the running line: <b>closed late</b> if the horse gained 2 or more lengths between the second call and the finish, <b>faded late</b> if it lost 2 or more, <b>even shape</b> otherwise. A fact about that one race, not a score. See "Worth a second look" above for where the shape is used.</p>
       </div>
 
       <div class="help-block">
@@ -1712,7 +1727,7 @@ function parseBrisnetSingleFile(text){
       const finTxt = get(616+i);
       const rawMargin = num(736+i);
       const wonIt = String(finTxt).trim() === '1';
-      ppRaces.push({date: d, track: get(276+i), raceNum: get(296+i), distYds: num(316+i), surf: get(326+i), fin: finTxt, margin: rawMargin, won: wonIt, lenBehind: (rawMargin == null ? null : (wonIt ? -rawMargin : rawMargin)), comment: get(396+i), pastPost: num(356+i), pastField: num(346+i), winner: get(406+i), second: get(416+i), third: get(426+i), rtype: get(1086+i), claim: num(546+i), classTxt: get(536+i), spd: num(846+i), pace2: num(766+i), pace4: num(776+i), pace6: num(786+i), pace8: num(796+i), latePace: num(816+i), purse: num(556+i), trackCond: get(306+i),
+      ppRaces.push({date: d, track: get(276+i), raceNum: get(296+i), distYds: num(316+i), surf: get(326+i), fin: finTxt, margin: rawMargin, won: wonIt, lenBehind: (rawMargin == null ? null : (wonIt ? -rawMargin : rawMargin)), comment: get(396+i), pastPost: num(356+i), pastField: num(346+i), winner: get(406+i), second: get(416+i), third: get(426+i), rtype: get(1086+i), claim: num(546+i), classTxt: get(536+i), spd: num(846+i), pace2: num(766+i), pace4: num(776+i), pace6: num(786+i), pace8: num(796+i), latePace: num(816+i), c1pos: num(576+i), c1bl: num(656+i), c2pos: num(586+i), c2bl: num(676+i), strpos: num(606+i), strbl: num(716+i), purse: num(556+i), trackCond: get(306+i),
         // WHO RODE THAT DAY. Fields 1066-1075 carry the rider of each past
         // race and 1056-1065 the trainer, so a line can be read against the
         // rider who was on it — verified on this file against today's rider
@@ -3091,17 +3106,65 @@ function ratingOf(h){
 
 // Prefers starts within 2f of today's trip; falls back to all starts if there
 // are fewer than three of those, and says which it used.
+// FORM DIRECTION. v2.38 (Robert, GP 26 Sep R2 Breezey Z): the read used to
+// take the last four starts at a similar distance and compare only the
+// oldest with the newest. That labelled Breezey Z CLOSING off a 10.8L start
+// from BEFORE a nine-month layoff, when both starts since the layoff were on
+// turf, today is dirt, and the latest step went the wrong way. Now:
+//  1. a layoff of 90+ days starts the record over — only starts since the
+//     most recent layoff are read (the break itself is reported);
+//  2. starts on today's surface AND within 2f of today's trip are preferred;
+//     if fewer than two exist, the read falls back and says why;
+//  3. if the newest step points the other way from the overall change, the
+//     label is MIXED, not CLOSING or LOSING GROUND;
+//  4. the newest start's chart comment is always shown beside the read.
+// Display only; it feeds no pick.
+const LAYOFF_DAYS = 90;
 function formRead(h){
-  const all = (h.ppRaces || []).filter(p => p.lenBehind != null);
-  if (all.length < 2) return null;
+  const all0 = (h.ppRaces || []).filter(p => p.lenBehind != null);
+  if (all0.length < 1) return null;
   const today = h.raceDistYds;
-  let starts = (today != null)
-    ? all.filter(p => p.distYds != null && Math.abs(p.distYds - today) <= 440)
-    : all.slice();
+  const todaySfc = ai3_surfaceGroup(h.surface || '');
+  const sfcOf = p => ai3_surfaceGroup(p.surf || p.ai3Surf || '');
+  const sfcWord = g => g === 'T' ? 'turf' : g === 'A' ? 'all-weather' : g === 'D' ? 'dirt' : 'unknown surface';
+  const context = [];
+
+  // 1. cut at the most recent layoff
+  let all = all0, layoff = null;
+  for (let i = 0; i < Math.min(all0.length - 1, 4); i++){
+    const a = parseCYMD(all0[i].date), b = parseCYMD(all0[i+1].date);
+    if (a && b && (a - b) / 86400000 >= LAYOFF_DAYS){
+      layoff = {days: Math.round((a - b) / 86400000), from: all0[i+1].date, to: all0[i].date, since: i + 1};
+      break;
+    }
+  }
+  if (layoff){
+    const mo = Math.round(layoff.days / 30.4);
+    const since = all0.slice(0, layoff.since);
+    context.push(`back from a ${mo >= 2 ? mo + '-month' : layoff.days + '-day'} layoff \u2014 ${since.length} start${since.length === 1 ? '' : 's'} since`);
+    if (since.length >= 2) all = since;
+    else context.push('too few starts since the layoff to read a direction, so older form is included');
+  }
+  if (all.length < 2) return null;
+
+  // 2. prefer today's trip (within 2f); surface is labelled, not filtered —
+  //    dropping recent off-surface starts would hide the newest form.
+  const near = p => today == null || (p.distYds != null && Math.abs(p.distYds - today) <= 440);
+  const sameSfc = p => !todaySfc || sfcOf(p) === todaySfc;
+  let starts = all.filter(near);
   let comparable = true;
-  if (starts.length < 3){ starts = all.slice(); comparable = false; }
+  if (starts.length < 2){ starts = all; comparable = false; }
+  {
+    const window4 = starts.slice(0, 4);
+    const off = window4.filter(p => !sameSfc(p));
+    if (todaySfc && off.length){
+      const groups = [...new Set(off.map(sfcOf))].map(sfcWord).join('/');
+      context.push(off.length === window4.length
+        ? `all ${off.length} on ${groups}; today is ${sfcWord(todaySfc)}`
+        : `${off.length} of ${window4.length} on ${groups}; today is ${sfcWord(todaySfc)}`);
+    }
+  }
   starts = starts.slice(0, 4);
-  if (starts.length < 2) return null;
   const chron = starts.slice().reverse();
 
   const margins = chron.map(p => p.lenBehind);
@@ -3109,6 +3172,12 @@ function formRead(h){
   let trend = 'flat';
   if (last <= first - 1.5) trend = 'closing';
   else if (last >= first + 1.5) trend = 'widening';
+  // 3. newest step against the overall change
+  if (margins.length >= 3){
+    const step = last - margins[margins.length - 2];
+    if (trend === 'closing' && step > 0.5) trend = 'mixed';
+    else if (trend === 'widening' && step < -0.5) trend = 'mixed';
+  }
 
   let better = 0, worse = 0;
   for (let i = 1; i < margins.length; i++){
@@ -3117,29 +3186,30 @@ function formRead(h){
   }
 
   const fins = chron.map(p => (p.fin || '?'));
-  const seq = chron.map(p => (p.won ? 'won by ' + (Math.round(p.margin*10)/10) : (Math.round(p.lenBehind*10)/10) + 'L')).join(' \u2192 ');
+  const mixedSfc = todaySfc && chron.some(p => !sameSfc(p));
+  const seq = chron.map(p => (p.won ? 'won by ' + (Math.round(p.margin*10)/10) : (Math.round(p.lenBehind*10)/10) + 'L')
+    + (mixedSfc ? ' (' + (sfcOf(p) || '?').toLowerCase() + ')' : '')).join(' \u2192 ');
 
   const worst = starts.reduce((a,b) => (b.lenBehind > a.lenBehind ? b : a), starts[0]);
   const objective = [];
   if (today != null && worst.distYds != null && Math.abs(worst.distYds - today) > 440){
     objective.push(`worst result (${worst.won ? 'a win by ' + Math.round(worst.margin*10)/10 : Math.round(worst.lenBehind*10)/10 + 'L'}) came at ${fmtDistY(worst.distYds)}, not today's ${fmtDistY(today)}`);
   }
-  if (!comparable && today != null){
-    objective.push(`no start within 2f of today's distance in the last ${all.length}`);
-  }
   let subjective = '';
   const cmt = (worst.comment || '').toLowerCase();
   if (cmt && TROUBLE_WORDS.some(k => cmt.includes(k))) subjective = worst.comment;
+  // 4. the newest start's own chart comment
+  const lastComment = (all0[0] && all0[0].comment) ? all0[0].comment : '';
 
-  return {trend, better, worse, seq, fins, comparable, objective, subjective,
+  return {trend, better, worse, seq, fins, comparable, objective, subjective, context, lastComment,
           n: starts.length, worstMargin: worst.lenBehind};
 }
 
 function formArrow(h){
   const f = formRead(h);
   if (!f) return '<span class="form-arrow none">\u2014</span>';
-  const glyph = f.trend === 'closing' ? '\u25B2' : f.trend === 'widening' ? '\u25BC' : '\u2013';
-  const detail = `Beaten lengths, oldest to newest: ${f.seq} (${f.n} starts${f.comparable ? ' at a comparable distance' : ', mixed distances'}). Display only.`;
+  const glyph = f.trend === 'closing' ? '\u25B2' : f.trend === 'widening' ? '\u25BC' : f.trend === 'mixed' ? '\u2195' : '\u2013';
+  const detail = `Beaten lengths, oldest to newest: ${f.seq} (${f.n} starts${f.comparable ? ' at a comparable trip and surface' : ''})${f.context.length ? '; ' + f.context.join('; ') : ''}${f.lastComment ? '. Last out: "' + f.lastComment + '"' : ''}. Display only.`;
   // title= is a hover tooltip and never fires on a touch screen, so the
   // sequence behind the arrow was effectively invisible on the phone this
   // tool is built for. Tapping now reveals the same text inline instead.
@@ -3325,14 +3395,16 @@ function buildTiebreakRead(rs){
     const f = formRead(h);
     const head = `<b>#${escHtml(h.post || '?')} ${escHtml(h.horse)}</b> (${escHtml(h.oddsStr)}) \u00b7 rating ${Math.round(ratingOf(h)*10)/10}`;
     if (!f) return `<div class="tb-row">${head} \u2014 not enough past starts with a beaten margin to read a direction.</div>`;
-    const label = f.trend === 'closing' ? 'CLOSING' : f.trend === 'widening' ? 'LOSING GROUND' : 'FLAT';
+    const label = f.trend === 'closing' ? 'CLOSING' : f.trend === 'widening' ? 'LOSING GROUND' : f.trend === 'mixed' ? 'MIXED' : 'FLAT';
     const steps = `${f.better} of ${f.n - 1} step${f.n - 1 === 1 ? '' : 's'} the right way`;
     const excuses = [];
     f.objective.forEach(o => excuses.push(`<span class="tb-excuse">excuse: ${escHtml(o)}</span>`));
-    if (f.subjective) excuses.push(`<span class="tb-excuse">chart comment on the worst race: "${escHtml(f.subjective)}"</span>`);
+    if (f.subjective && f.subjective !== f.lastComment) excuses.push(`<span class="tb-excuse">chart comment on the worst race: "${escHtml(f.subjective)}"</span>`);
     return `<div class="tb-row">${head}<br>
       <span class="tb-seq">${escHtml(f.seq)}</span> <span class="tb-trend ${f.trend}">${label}</span> \u00b7
-      finishes ${escHtml(f.fins.join('-'))} \u00b7 ${steps}${f.comparable ? '' : ' \u00b7 mixed distances'}
+      finishes ${escHtml(f.fins.join('-'))} \u00b7 ${steps}
+      ${f.context.length ? '<br><span class="tb-context">' + f.context.map(escHtml).join(' \u00b7 ') + '</span>' : ''}
+      ${f.lastComment ? '<br><span class="tb-context">last out: \u201c' + escHtml(f.lastComment) + '\u201d</span>' : ''}
       ${excuses.length ? '<br>' + excuses.join(' \u00b7 ') : ''}</div>`;
   }).join('');
 
@@ -3786,7 +3858,7 @@ function nearTieCallout(rs){
   const jkyBit = x => x ? escHtml(x) : 'rider unlisted';
   const pctBit = v => v != null ? ` ${Math.round(v)}%` : '';
   return `<div class="callout callout-amber"><div class="callout-head">Figure near-tie</div>`
-    + `${horseLabel(nt.fav)} (${nt.favV.toFixed(2)}) is the market's choice and sits ${nt.gap.toFixed(2)} behind `
+    + `${horseLabel(nt.fav)} (${nt.favV.toFixed(2)}) is the market's choice and ${nt.gap < 0.005 ? 'is level with' : 'sits ' + nt.gap.toFixed(2) + ' behind'} `
     + `${horseLabel(nt.lead)} (${nt.leadV.toFixed(2)}) on the recent-figure mean. `
     + `Riders: ${jkyBit(nt.favJky)}${pctBit(nt.favPct)} on ${escHtml(nt.fav.horse)}, `
     + `${jkyBit(nt.leadJky)}${pctBit(nt.leadPct)} on ${escHtml(nt.lead.horse)}.`
@@ -5446,12 +5518,31 @@ function pickContenders(rs, h){
     + ` &nbsp;${link}</div>`;
 }
 
+// MAY HAVE A SHOT — the no-pick counterpart of "Also with a shot" (Robert,
+// GP 26 Sep). Same contender split and same ordering, so a race the rule
+// passes still lists who the past performances leave in it. Names no winner.
+function noPickContenders(rs){
+  const split = contenderSplit(rs);
+  if (!split) return '';
+  const others = split.contenders.slice().sort(ppQualitySort);
+  const quest = split.questionable.slice().sort(ppQualitySort);
+  if (!others.length && !quest.length) return '';
+  const nRunners = (rs.horses || []).filter(x => x.decimalOdds != null).length;
+  const cell = x => `<div class="cp-item">${horseLabel(x.h)}${contenderFactsLine(rs, x.h)}</div>`;
+  const link = `<a href="#" class="race-jump" data-jump="${escAttr(rs.race)}" title="Tap for every runner's past performances">read the whole race \u25b8</a>`;
+  return `<div class="conf-others">`
+    + `<b>May have a shot</b> <span class="cp-order">best past-performance read first, ${others.length + quest.length} of ${nRunners} runners</span><br>`
+    + others.map(cell).join('')
+    + (quest.length ? `<span class="cp-why">questionable:</span>` + quest.map(cell).join('') : '')
+    + ` &nbsp;${link}</div>`;
+}
+
 // Context, not a concern: things worth knowing about the pick that have NOT
 // measured against it. Kept visibly separate so the label never absorbs them.
 function pickContext(rs, h){
   const bits = [];
   if (h.claimDropRatio != null && h.claimDropRatio <= 0.5){
-    bits.push(`entered for ${Math.round(h.claimDropRatio * 100)}% of its recent claiming price`);
+    // (shown as a PASS reason on Picks since v2.38)
   }
   if (h.layoffDays != null && h.layoffDays >= 120 && !h.firstTimeTagged){
     bits.push(`off ${h.layoffDays} days`);
@@ -5536,6 +5627,10 @@ function contenderFacts(rs, h){
     const itm = recent.filter(p => parseInt(p.fin, 10) <= 3).length;
     bits.push(`${itm} of last ${recent.length} in the money`);
   }
+  const cd = claimDropFacts(h);
+  if (cd) bits.push(`entered for ${cd.pct}% of its highest recent claiming price`);
+  const sw = surfaceSwitchFacts(h);
+  if (sw) bits.push(`last start on ${sw.from}, today ${sw.to}`);
   return bits;
 }
 function contenderFactsLine(rs, h){
@@ -5543,8 +5638,14 @@ function contenderFactsLine(rs, h){
   return b.length ? `<div class="cf-line">${escHtml(b.join(' \u00b7 '))}</div>` : '';
 }
 
-function confidenceBlock(rs, h){
+function confidenceBlock(rs, h, line){
   const c = confidenceOf(rs, h);
+  if (line === 'primary' && pickPassReasons(h).length){
+    const items = c.concerns.map(x =>
+      `<div class="callout callout-amber"><div class="callout-head">Worth reading</div>${x}.</div>`
+    ).join('');
+    return `<div class="conf-block">${items}` + passCloseRead(rs, h) + `</div>`;
+  }
   if (!c.concerns.length){
     return `<div class="conf-block"><span class="conf-body">Nothing in the form runs against this one.</span>`
       + pickContenders(rs, h) + `</div>`;
@@ -5569,9 +5670,113 @@ function paceContenderNote(rs){
     + `Listed as a horse to read, not a pick.</div>`;
 }
 
+// PASS REASONS (v2.38, Robert, 27 Sep: "the flag says pass this pick
+// because…"). Two facts from the past performances. When either is present
+// on a Pick, the Pick is still named — it is what the rule chose — but the
+// card tells the reader to pass it and says why in plain words.
+//  1. Class drop: today's claiming price is half or less of the highest tag
+//     in the last four starts.
+//  2. Surface switch: the last start was on a different surface from today.
+function claimDropFacts(h){
+  if (h.claimDropRatio == null || h.claimDropRatio > 0.5) return null;
+  const tags = (h.ppRaces || []).slice(0, 4).map(r => r.claim).filter(v => v != null && v > 0);
+  const hi = tags.length ? Math.max(...tags) : null;
+  const last = ((h.ppRaces || [])[0] || {}).claim || null;
+  return {pct: Math.round(h.claimDropRatio * 100), today: h.todayClaim, hi, last};
+}
+function surfaceSwitchFacts(h){
+  const last = (h.ppRaces || [])[0];
+  if (!last) return null;
+  const a = ai3_surfaceGroup(last.surf || ''), b = ai3_surfaceGroup(h.surface || '');
+  if (!a || !b || a === b) return null;
+  const w = g => g === 'T' ? 'turf' : g === 'A' ? 'all-weather' : 'dirt';
+  return {from: w(a), to: w(b)};
+}
+function pickPassReasons(h){
+  const out = [];
+  const cd = claimDropFacts(h);
+  if (cd){
+    const $ = v => '$' + Math.round(v).toLocaleString();
+    if (cd.last && cd.today && cd.last <= cd.today * 1.01)
+      // the fall happened in earlier starts; today repeats the last level
+      out.push(`it has slid from ${$(cd.hi)} to ${$(cd.today)} within its last four starts (today is the same level as its last race)`);
+    else if (cd.last && cd.today && cd.last === cd.hi)
+      out.push(`it drops from ${$(cd.last)} last time to ${$(cd.today)} today (${cd.pct}%)`);
+    else
+      out.push(`it is entered for ${cd.pct}% of the highest claiming price in its last four starts (${$(cd.today)} today against ${$(cd.hi)}${cd.last ? ', ' + $(cd.last) + ' last time' : ''})`);
+  }
+  const sw = surfaceSwitchFacts(h);
+  if (sw) out.push(`its last start was on ${sw.from} and today is on ${sw.to}`);
+  return out;
+}
+function pickPassBanner(h){
+  const r = pickPassReasons(h);
+  if (!r.length) return '';
+  return `<div class="pick-pass"><b>PASS THIS PICK</b> because ${escHtml(r.join(', and '))}.</div>`;
+}
+
+// PICK STATUS (v2.39, Robert, GP 27 Sep: Wheelhouse and Sweet Agenda read
+// "NO FLAGS" on the board while their own cards said PASS). The flag count
+// only looks at form concerns; the PASS facts are a separate check. Every
+// place that prints a word beside a Pick asks here, so PASS always wins and
+// a passed Pick can never read as clean.
+function pickStatus(rs, h, line){
+  const c = confidenceOf(rs, h);
+  if (line === 'primary' && pickPassReasons(h).length){
+    return {level: 'pass', label: 'PASS', concerns: c.concerns};
+  }
+  return c;
+}
+
+// CLOSE READ OF THE FIELD WHEN A PICK IS PASSED (v2.39, Robert: "when pick
+// has flag there would be closer scrutiny of the top contenders"). Replaces
+// the short "Also with a shot" list on a passed Pick. The Pick is listed
+// first on the same lines so the comparison is direct, then every contender
+// in the usual order. Facts from the past performances only — nothing here
+// is promoted to a Pick and no horse is ranked above another.
+function closeReadLines(rs, h){
+  const live = (rs.horses || []).filter(x => !x.scratched);
+  const bits = [];
+  const a3 = avg3Of(h);
+  if (a3 != null){
+    const r = rankIn(live, h, x => avg3Of(x));
+    const n = ((h.ppRaces || []).map(p => p.spd).filter(v => v != null && v > 0).slice(0, 3)).length;
+    bits.push(`last-${n === 1 ? 'race figure' : n + ' figure average'} ${a3.toFixed(1)}${r ? `, #${r.rank}${r.tied ? ' tied' : ''} in field` : ''}`);
+  } else {
+    bits.push('no recent speed figure');
+  }
+  const f = formRead(h);
+  if (f){
+    const word = f.trend === 'closing' ? 'closing' : f.trend === 'widening' ? 'losing ground' : f.trend === 'mixed' ? 'mixed' : 'flat';
+    bits.push(`form ${word} (beaten lengths, oldest to newest: ${f.seq})`);
+  }
+  if (h.classMove === 'down' || h.classMove === 'up'){
+    const lastCls = h.ppRaces && h.ppRaces[0] ? h.ppRaces[0].classTxt : null;
+    bits.push(`${h.classMove === 'down' ? 'dropping' : 'moving up'} in class${lastCls ? ` (last out ${lastCls})` : ''}`);
+  }
+  if (h.layoffDays != null) bits.push(`${h.layoffDays} days since last start`);
+  let out = escHtml(bits.join(' \u00b7 '));
+  if (f && f.lastComment) out += `<br>last out: \u201c${escHtml(f.lastComment)}\u201d`;
+  return `<div class="pr-more">${out}</div>`;
+}
+function passCloseRead(rs, h){
+  const split = contenderSplit(rs);
+  const isPick = x => x === h || (x.horse === h.horse && x.post === h.post);
+  const others = split ? split.contenders.filter(x => !isPick(x.h)).slice().sort(ppQualitySort) : [];
+  const quest = split ? split.questionable.filter(x => !isPick(x.h)).slice().sort(ppQualitySort) : [];
+  const link = `<a href="#" class="race-jump" data-jump="${escAttr(rs.race)}" title="Tap for every runner's past performances">read the whole race \u25b8</a>`;
+  const item = (x, role, cls) => `<div class="pr-item${cls ? ' ' + cls : ''}"><span class="pr-role">${role}</span>${horseLabel(x)}${contenderFactsLine(rs, x)}${closeReadLines(rs, x)}</div>`;
+  const body = item(h, 'Pick \u00b7 pass', 'pr-pick')
+    + others.map(x => item(x.h, 'Contender')).join('')
+    + quest.map(x => item(x.h, 'Questionable')).join('');
+  return `<div class="pass-read"><div class="pr-head">CLOSE READ \u2014 the passed Pick beside the rest of the field</div>`
+    + (others.length || quest.length ? '' : `<div class="pr-more">No other contender in this race \u2014 the rest of the field is priced out.</div>`)
+    + body + `<div class="pr-more">${link}</div></div>`;
+}
+
 function buildPick(rs){
   const p = pickFor(rs);
-  if (p.none) return `<div class="pick-none race-anchor-target" id="pick-r${escAttr(rs.race)}"><b>Race ${escHtml(rs.race)} — no pick.</b> ${p.none}${nearTieCallout(rs)}${paceLineFor(rs, null)}${paceContenderNote(rs)}</div>`;
+  if (p.none) return `<div class="pick-none race-anchor-target" id="pick-r${escAttr(rs.race)}"><b>Race ${escHtml(rs.race)} — no pick.</b> ${p.none}${nearTieCallout(rs)}${paceLineFor(rs, null)}${paceContenderNote(rs)}${noPickContenders(rs)}</div>`;
   if (isScratchedNow(rs, p.h)){
     return `<div class="pick-none race-anchor-target" id="pick-r${escAttr(rs.race)}"><b>Race ${escHtml(rs.race)} — no pick.</b> `
       + `${escHtml(p.h.horse)} is marked scratched. Rebuild the card to re-rank the race.</div>`;
@@ -5585,7 +5790,7 @@ function buildPick(rs){
       <span class="pick-horse">#${escHtml(h.post || '?')} ${escHtml(h.horse)}</span>
       ${(() => { const st = surfaceTag(rs.horses || []); return st ? `<span class="badge ${st.cls}">${st.label}</span>` : ''; })()}
       <span class="race-metric"><a class="race-jump" data-jump="${escAttr(rs.race)}" title="Tap to see every runner in this race">Race ${escHtml(rs.race)}</a>${(() => { const d = raceDateOf(rs.horses); return d ? ' · ' + escHtml(d) : ''; })()} · ${escHtml(h.oddsStr)} · ${pct(h.marketProb)} of the pool</span>
-    </div>${thinDataNote(rs)}${coreConfirmLine(rs, h)}${paceLineFor(rs, h)}`;
+    </div>${p.line === 'primary' ? pickPassBanner(h) : ''}${thinDataNote(rs)}${coreConfirmLine(rs, h)}${paceLineFor(rs, h)}`;
 
 
   if (p.line === 'primary'){
@@ -5599,7 +5804,7 @@ function buildPick(rs){
       ${surfaceEarningsLine(h)}
       ${p.epsRank === 2 ? earningsMismatchBlock(rs) : ''}
       ${raceCardJumpLink(rs)}
-      ${confidenceBlock(rs, h)}
+      ${confidenceBlock(rs, h, 'primary')}
       ${pickContext(rs, h)}
       ${buildEvidenceBlock(rs, h)}
       ${pickFigLine(rs, h)}
@@ -6338,7 +6543,8 @@ function buildBestOfDay(raceSummaries){
     picks.push({rs, h: p.h, eps: p.eps, tier: p.tier, line: p.line, marketKnown: p.marketKnown,
                 drifting: p.h.drift != null && p.h.drift > 0.25,
                 riderChanged: !!p.h.riderChange,
-                conf: confidenceOf(rs, p.h),
+                conf: pickStatus(rs, p.h, p.line),
+                epsRank: p.epsRank,
                 core: coreConfirmations(rs, p.h),
                 others, fieldSize: (rs.horses || []).filter(x => x.decimalOdds != null).length});
   });
@@ -6352,8 +6558,9 @@ function buildBestOfDay(raceSummaries){
       <span class="bo-rank">${i + 1}</span>
       <span class="bo-main">
         <span class="bo-horse">${escHtml(p.h.horse)}</span>
+        ${p.line === 'primary' && pickPassReasons(p.h).length ? `<br><span class="bo-pass">PASS because ${escHtml(pickPassReasons(p.h).join(', and '))}</span>` : ''}
         <br><span class="bo-core"><b>CORE ${p.core.count}/${p.core.of}</b>${p.core.count ? ': ' + escHtml(p.core.items.join(' \u00b7 ')) : ''}</span>
-        <br><span class="bo-meta"><a class="race-jump" data-jump="${escAttr(p.rs.race)}" title="Tap to see every runner in this race">Race ${escHtml(p.rs.race)}</a> · #${escHtml(p.h.post || '?')} · ${escHtml(p.h.oddsStr)} · ${money(p.eps)} per start${p.line === 'primary' ? ', top in the field' : ', 2nd in the field'}${p.drifting ? ' · DRIFTING, stand down' : ''}${p.riderChanged ? ' · RIDER CHANGE' : ''}${p.conf ? ` · <span class="conf-inline conf-${p.conf.level}">${p.conf.label}</span>` : ''}</span>
+        <br><span class="bo-meta"><a class="race-jump" data-jump="${escAttr(p.rs.race)}" title="Tap to see every runner in this race">Race ${escHtml(p.rs.race)}</a> · #${escHtml(p.h.post || '?')} · ${escHtml(p.h.oddsStr)}${p.eps != null ? ` · ${money(p.eps)} per start${p.line === 'primary' ? (p.epsRank ? `, ${p.epsRank === 1 ? 'top' : ordinalOf(p.epsRank)} in the field` : '') : ', 2nd in the field'}` : ''}${p.drifting ? ' · DRIFTING, stand down' : ''}${p.riderChanged ? ' · RIDER CHANGE' : ''}${p.conf ? ` · <span class="conf-inline conf-${p.conf.level}">${p.conf.label}</span>` : ''}</span>
         ${p.others.length ? `<br><span class="bo-with">with ${p.others.map(o => `#${escHtml(o.post || '?')} ${escHtml(o.horse)} ${escHtml(o.oddsStr)}`).join(' · ')}</span>`
                           : (p.fieldSize ? '<br><span class="bo-with">no other contender</span>' : '')}
       </span>
@@ -6380,10 +6587,11 @@ function buildBestOfDay(raceSummaries){
 // card. Robert's instruction: keep the explanation to the past
 // performances and the file that was uploaded.
 const PICK_BASIS = `<div class="rule-record">
-  <b>Pick.</b> Read straight off the data file: this horse has the highest career earnings
-  per start in the field, is the morning-line favourite at 2.5 or shorter, and holds the
-  single highest best speed figure in the field &mdash; no ties, and at least three runners
-  carrying a figure. Nothing here waits on the live board. Tap the race number for every
+  <b>Pick.</b> Read straight off the data file: this horse is the morning-line favourite
+  and holds the single highest average of its last three speed figures in the field &mdash;
+  no ties, and at least three runners carrying a figure. Career earnings are shown for
+  reference only. A Pick marked PASS is still named, with the past-performance facts that
+  argue against it. Nothing here waits on the live board. Tap the race number for every
   runner's past performances.
 </div>`;
 
@@ -6457,7 +6665,7 @@ function buildBoardIndex(raceSummaries){
 
     let tag, named;
     if (p && p.line === 'primary'){
-      tag = '<span class="btag btag-pick">Pick</span>';
+      tag = pickPassReasons(p.h).length ? '<span class="btag btag-pass">Pick \u00b7 PASS</span>' : '<span class="btag btag-pick">Pick</span>';
       named = `<span class="board-named">${horseLabel(p.h)}</span> <span class="cp-why">${escHtml(p.h.oddsStr || '')}</span>`;
     } else if (p && p.line === 'price'){
       tag = '<span class="btag btag-price">Price play</span>';
@@ -6480,7 +6688,7 @@ function buildBoardIndex(raceSummaries){
       bits.push(`<b>Pace:</b> ${escHtml(paceShape.toLowerCase())}${shapeLead ? ` (${escHtml(shapeLead.h.horse)})` : ''}`);
     }
     const ntw = nearTieWatch(rs);
-    if (ntw) bits.push(`<b class="nt-flag">Near tie:</b> ${escHtml(ntw.fav.horse)} ${ntw.gap.toFixed(2)} behind ${escHtml(ntw.lead.horse)}`);
+    if (ntw) bits.push(`<b class="nt-flag">Near tie:</b> ${escHtml(ntw.fav.horse)} ${ntw.gap < 0.005 ? 'level with' : ntw.gap.toFixed(2) + ' behind'} ${escHtml(ntw.lead.horse)}`);
     const dist = rs.raceDistYds || (horses[0] && horses[0].raceDistYds);
     const sfc = ai3_surfaceGroup((horses[0] && horses[0].surface) || '');
     const sWord = sfc === 'T' ? 'turf' : sfc === 'A' ? 'all-weather' : sfc === 'D' ? 'dirt' : '';
@@ -6817,13 +7025,27 @@ function paceCallsText(p){
   if (p.latePace != null && p.latePace > 0) parts.push(p.latePace.toFixed(0));
   return parts.join('-');
 }
+// v2.38 (Robert, GP 26 Sep R2 Starship Vengeance): the shape used to be read
+// by subtracting the late-pace figure from the early pace figure. Those are
+// different BRIS scales — late pace sits well below E1/E2 for almost every
+// horse — so nearly every line read "faded late", including a race where the
+// horse was 4½ lengths back at the second call and finished a neck away,
+// "gaining fast". The shape is now read from the running line itself:
+// lengths behind at the second call (first call if missing) against lengths
+// behind at the finish. Gained 2+ lengths = closed late; lost 2+ = faded late.
+function callBehind(pos, bl){
+  if (bl == null && pos == null) return null;
+  if (pos === 1) return bl != null ? -Math.abs(bl) : 0;   // leading: margin ahead
+  return bl;
+}
 function paceShapeText(p){
-  const early = [p.pace2, p.pace4].find(v => v != null && v > 0);
-  const late = (p.latePace != null && p.latePace > 0) ? p.latePace : [p.pace8, p.pace6].find(v => v != null && v > 0);
-  if (early == null || late == null) return '';
-  const gap = early - late;
-  if (gap >= 6) return 'faded late';
-  if (gap <= -6) return 'closed late';
+  let call = callBehind(p.c2pos, p.c2bl);
+  if (call == null) call = callBehind(p.c1pos, p.c1bl);
+  const fin = p.lenBehind;
+  if (call == null || fin == null) return '';
+  const gain = call - fin;
+  if (gain >= 2) return 'closed late';
+  if (gain <= -2) return 'faded late';
   return 'even shape';
 }
 
@@ -6858,7 +7080,7 @@ function ppHorseBlock(h, race, standalone, inModal){
     ${breedingLine(h)}
     ${ppRecordLine(h)}
     ${races ? `<div class="pp-section">Last ${(h.ppRaces||[]).length} starts${h.ltStarts != null && h.ltStarts > (h.ppRaces||[]).length ? ` <span style="text-transform:none;letter-spacing:0;font-weight:400;">(of ${h.ltStarts} career — the data file carries 10)</span>` : ''}</div>
-    <div class="pp-table-wrap"><table class="pp-table"><thead><tr><th>Date</th><th>Trk</th><th>Dist</th><th>Class</th><th title="Post position that day, and the number of starters. Validated on 8,182 past starts.">PP</th><th>Fin</th><th>Btn</th><th title="BRIS speed rating for that race, as supplied by the data file">Spd</th><th title="BRIS pace-call figures for that race: 2-call, 4-call, 6-call, 8-call, late pace, in order supplied. Same rating scale as Speed — a fall-off from early to late reads as faded, a rise reads as closed.">Pace</th><th title="Who rode that day. Bold = the rider on the horse today, so the horse's record for this rider can be read against its record for others.">Jky</th><th>Trip comment</th><th title="Who finished first, second and third in that race. Highlighted = a contender in today's race; bold = another runner in it.">W / P / S</th></tr></thead><tbody>${races}</tbody></table></div>` : `<p class="pp-sub">No past races in the data file — first-time starter.</p>`}
+    <div class="pp-table-wrap"><table class="pp-table"><thead><tr><th>Date</th><th>Trk</th><th>Dist</th><th>Class</th><th title="Post position that day, and the number of starters. Validated on 8,182 past starts.">PP</th><th>Fin</th><th>Btn</th><th title="BRIS speed rating for that race, as supplied by the data file">Spd</th><th title="BRIS pace-call figures for that race: 2-call, 4-call, 6-call, 8-call, late pace, in order supplied. The shape word beside them is read from lengths behind at the second call against the finish, not from these figures.">Pace</th><th title="Who rode that day. Bold = the rider on the horse today, so the horse's record for this rider can be read against its record for others.">Jky</th><th>Trip comment</th><th title="Who finished first, second and third in that race. Highlighted = a contender in today's race; bold = another runner in it.">W / P / S</th></tr></thead><tbody>${races}</tbody></table></div>` : `<p class="pp-sub">No past races in the data file — first-time starter.</p>`}
     ${riderSplitLine(h)}
     ${works ? `<div class="pp-section">Last ${Math.min((h.ppWorks||[]).length, PP_WORK_LIMIT)} workouts (● = bullet)</div><div class="pp-works">${works}</div>` : ''}`;
 }
@@ -7206,7 +7428,7 @@ function renderPrintView(){
 
 renderRows();
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v2.32 · released 26 September 2026 · build 2026-09-26-a</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v2.39 · released 27 September 2026 · build 2026-09-27-c</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
