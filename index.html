@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v2.39 — Race Card Reader</title>
+<title>Overlay Board v2.40 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -906,6 +906,11 @@
   .conf-inline.conf-probable{color:#B08A16;}
   .conf-inline.conf-questionable{color:#B4541A;}
   .conf-inline.conf-pass{color:var(--red);}
+  .rt-flag{margin:4px 0; font-size:12.5px;}
+  .rt-tag{display:inline-block; font-family:var(--mono); font-size:10.5px; font-weight:800; letter-spacing:.05em; padding:1px 6px; border-radius:3px; margin-right:6px; border:1px solid;}
+  .rt-hi{color:#2E6E45; border-color:#2E6E45; background:rgba(46,110,69,.10);}
+  .rt-mid{color:#8A6A26; border-color:#8A6A26; background:rgba(217,167,59,.14);}
+  .rt-lo{color:#B4541A; border-color:#B4541A; background:rgba(180,84,26,.10);}
   .pass-read{margin-top:8px; padding:8px 10px; border:1px dashed var(--red); background:rgba(150,40,30,.05);}
   .pass-read .pr-head{font-weight:800; color:var(--red); letter-spacing:.04em;}
   .pass-read .pr-item{margin-top:7px; padding-top:6px; border-top:1px solid rgba(0,0,0,.08);}
@@ -1039,7 +1044,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v2.39</span> · released 27 September 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v2.40</span> · released 27 September 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -5774,9 +5779,50 @@ function passCloseRead(rs, h){
     + body + `<div class="pr-more">${link}</div></div>`;
 }
 
+// RACE-TYPE FLAG (v2.40, Robert, 27 Sep: "flag the race by the race type
+// and add the percentages as a reminder"). Today's race type from the data
+// file (single-file field 9), grouped, with how often Picks of that type have
+// won in the scored cards. Robert asked for these figures on screen as a
+// reminder; they are fixed at the time of this build and change no Pick.
+const RACE_TYPE_RECORD = [
+  {codes: ['A','AO','R'],          label: 'Allowance / AOC',        won: 23, of: 36},
+  {codes: ['G1','G2','G3','N'],    label: 'Stakes',                 won: 13, of: 24},
+  {codes: ['M','MO'],              label: 'Maiden claiming',        won: 15, of: 29},
+  {codes: ['S'],                   label: 'Maiden special weight',  won: 13, of: 31},
+  {codes: ['C','CO'],              label: 'Claiming',               won: 23, of: 57},
+];
+function raceTypeOf(rs){
+  const h = (rs.horses || []).find(x => x.raceType);
+  return h ? String(h.raceType).trim().toUpperCase() : '';
+}
+function raceTypeRecord(rs){
+  const code = raceTypeOf(rs);
+  if (!code) return null;
+  const rec = RACE_TYPE_RECORD.find(r => r.codes.includes(code));
+  if (!rec) return {code, label: (typeof RACE_TYPE_LABELS !== 'undefined' && RACE_TYPE_LABELS[code]) || code, pct: null};
+  const pct = Math.round(100 * rec.won / rec.of);
+  return {code, label: rec.label, pct, won: rec.won, of: rec.of,
+          cls: pct >= 55 ? 'rt-hi' : pct >= 45 ? 'rt-mid' : 'rt-lo'};
+}
+function raceTypeTag(rs){
+  const r = raceTypeRecord(rs);
+  if (!r) return '';
+  return r.pct == null
+    ? `<span class="rt-tag rt-mid">${escHtml(r.label.toUpperCase())}</span>`
+    : `<span class="rt-tag ${r.cls}">${escHtml(r.label.toUpperCase())} ${r.pct}%</span>`;
+}
+function raceTypeLine(rs){
+  const r = raceTypeRecord(rs);
+  if (!r) return '';
+  const body = r.pct == null
+    ? `no scored Picks of this race type yet`
+    : `Picks in this race type have won ${r.pct}% (${r.won} of ${r.of})`;
+  return `<div class="rt-flag">${raceTypeTag(rs)}${body}</div>`;
+}
+
 function buildPick(rs){
   const p = pickFor(rs);
-  if (p.none) return `<div class="pick-none race-anchor-target" id="pick-r${escAttr(rs.race)}"><b>Race ${escHtml(rs.race)} — no pick.</b> ${p.none}${nearTieCallout(rs)}${paceLineFor(rs, null)}${paceContenderNote(rs)}${noPickContenders(rs)}</div>`;
+  if (p.none) return `<div class="pick-none race-anchor-target" id="pick-r${escAttr(rs.race)}"><b>Race ${escHtml(rs.race)} — no pick.</b> ${p.none}${raceTypeLine(rs)}${nearTieCallout(rs)}${paceLineFor(rs, null)}${paceContenderNote(rs)}${noPickContenders(rs)}</div>`;
   if (isScratchedNow(rs, p.h)){
     return `<div class="pick-none race-anchor-target" id="pick-r${escAttr(rs.race)}"><b>Race ${escHtml(rs.race)} — no pick.</b> `
       + `${escHtml(p.h.horse)} is marked scratched. Rebuild the card to re-rank the race.</div>`;
@@ -5790,7 +5836,7 @@ function buildPick(rs){
       <span class="pick-horse">#${escHtml(h.post || '?')} ${escHtml(h.horse)}</span>
       ${(() => { const st = surfaceTag(rs.horses || []); return st ? `<span class="badge ${st.cls}">${st.label}</span>` : ''; })()}
       <span class="race-metric"><a class="race-jump" data-jump="${escAttr(rs.race)}" title="Tap to see every runner in this race">Race ${escHtml(rs.race)}</a>${(() => { const d = raceDateOf(rs.horses); return d ? ' · ' + escHtml(d) : ''; })()} · ${escHtml(h.oddsStr)} · ${pct(h.marketProb)} of the pool</span>
-    </div>${p.line === 'primary' ? pickPassBanner(h) : ''}${thinDataNote(rs)}${coreConfirmLine(rs, h)}${paceLineFor(rs, h)}`;
+    </div>${p.line === 'primary' ? pickPassBanner(h) : ''}${thinDataNote(rs)}${coreConfirmLine(rs, h)}${raceTypeLine(rs)}${paceLineFor(rs, h)}`;
 
 
   if (p.line === 'primary'){
@@ -6559,7 +6605,7 @@ function buildBestOfDay(raceSummaries){
       <span class="bo-main">
         <span class="bo-horse">${escHtml(p.h.horse)}</span>
         ${p.line === 'primary' && pickPassReasons(p.h).length ? `<br><span class="bo-pass">PASS because ${escHtml(pickPassReasons(p.h).join(', and '))}</span>` : ''}
-        <br><span class="bo-core"><b>CORE ${p.core.count}/${p.core.of}</b>${p.core.count ? ': ' + escHtml(p.core.items.join(' \u00b7 ')) : ''}</span>
+        <br>${raceTypeTag(p.rs)}<span class="bo-core"><b>CORE ${p.core.count}/${p.core.of}</b>${p.core.count ? ': ' + escHtml(p.core.items.join(' \u00b7 ')) : ''}</span>
         <br><span class="bo-meta"><a class="race-jump" data-jump="${escAttr(p.rs.race)}" title="Tap to see every runner in this race">Race ${escHtml(p.rs.race)}</a> · #${escHtml(p.h.post || '?')} · ${escHtml(p.h.oddsStr)}${p.eps != null ? ` · ${money(p.eps)} per start${p.line === 'primary' ? (p.epsRank ? `, ${p.epsRank === 1 ? 'top' : ordinalOf(p.epsRank)} in the field` : '') : ', 2nd in the field'}` : ''}${p.drifting ? ' · DRIFTING, stand down' : ''}${p.riderChanged ? ' · RIDER CHANGE' : ''}${p.conf ? ` · <span class="conf-inline conf-${p.conf.level}">${p.conf.label}</span>` : ''}</span>
         ${p.others.length ? `<br><span class="bo-with">with ${p.others.map(o => `#${escHtml(o.post || '?')} ${escHtml(o.horse)} ${escHtml(o.oddsStr)}`).join(' · ')}</span>`
                           : (p.fieldSize ? '<br><span class="bo-with">no other contender</span>' : '')}
@@ -7428,7 +7474,7 @@ function renderPrintView(){
 
 renderRows();
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v2.39 · released 27 September 2026 · build 2026-09-27-c</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v2.40 · released 27 September 2026 · build 2026-09-27-d</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
