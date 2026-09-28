@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v2.46 — Race Card Reader</title>
+<title>Overlay Board v2.47 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1069,7 +1069,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v2.46</span> · released 27 September 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v2.47</span> · released 27 September 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -1924,6 +1924,12 @@ function parseBrisnetSingleFile(text){
       trnStarts: num(29), trnWins: num(30), trnPlaces: num(31), trnShows: num(32),
       jockey: titleCase(get(33)),
       jkyStarts: num(35), jkyWins: num(36), jkyPlaces: num(37), jkyShows: num(38),
+      // v2.47: fields checked against Equibase charts before use. Field 51 =
+      // weight carried (6 of 7 GP 27 Sep matched the chart; the 7th changed
+      // late). Field 62 = today's medication, 4 = first-time Lasix. Fields
+      // 1264-1267 = BRIS pedigree ratings dirt / mud / turf / distance.
+      // Field 1066 = jockey in the last race (matches the chart rider).
+      weight: num(51), medCode: get(62), pedTurf: get(1266), pedDirt: get(1264), lastJockey: get(1066),
       // SEASON RECORDS. The meet block above (29-32 / 35-38) is zero on every
       // row of some files, which left the connections showing a bare name. The
       // file also carries full-year records: 1147-1151 trainer this year,
@@ -2821,6 +2827,8 @@ document.getElementById('computeBtn').addEventListener('click', () => {
       jockey: r.jockey || '', jkyStarts: r.jkyStarts, jkyWins: r.jkyWins,
       jkyPlaces: r.jkyPlaces, jkyShows: r.jkyShows,
       trainer: r.trainer || '', trnStarts: r.trnStarts, trnWins: r.trnWins,
+      weight: r.weight != null ? r.weight : null, medCode: r.medCode || '', pedTurf: r.pedTurf || '', pedDirt: r.pedDirt || '', lastJockey: r.lastJockey || '',
+      claimedLastRace: !!r.claimedLastRace, recentWorks: r.recentWorks || [],
       dirtRec: r.dirtRec || null, wetRec: r.wetRec || null, turfRec: r.turfRec || null,
       trnYr: r.trnYr || null, trnPrev: r.trnPrev || null,
       jkyYr: r.jkyYr || null, jkyPrev: r.jkyPrev || null,
@@ -5979,10 +5987,25 @@ function raceFactsRows(rs, extra){
     const er = rankIn(live, h, y => y.ltStarts ? y.ltEarn / y.ltStarts : null);
     const last = pp[0] || {};
     const score = Math.min(a3 ? a3.rank : 99, 15) + Math.min(pr ? pr.rank : 99, 15) + (byMl.indexOf(h) + 1);
-    return {h, score, a3, pr, lf, eps, er, last, pp, onS, onSD, w, itm,
+    const pct = (w0, s0) => (s0 != null && s0 >= 10 && w0 != null) ? w0 / s0 : null;
+    const trn = pct(h.trnWins, h.trnStarts), jky = pct(h.jkyWins, h.jkyStarts);
+    const trR = rankIn(live, h, y => pct(y.trnWins, y.trnStarts)), jkR = rankIn(live, h, y => pct(y.jkyWins, y.jkyStarts));
+    const wts = live.map(y => y.weight).filter(v => v > 0).sort((a, b) => a - b);
+    const wMed = wts.length ? wts[Math.floor(wts.length / 2)] : null;
+    return {trn, jky, trR, jkR, wMed, h, score, a3, pr, lf, eps, er, last, pp, onS, onSD, w, itm,
       firstSurf: pp.length > 0 && onS.length === 0, cd: claimDropFacts(h)};
   }).sort((a, b) => a.score - b.score || mlOf(a.h) - mlOf(b.h));
   return {rows, today, word, td};
+}
+function factsNotes(h, today){
+  const n = [];
+  if (h.claimedLastRace) n.push('first start off a claim');
+  if (String(h.medCode || '').trim() === '4') n.push('first-time Lasix');
+  if ((h.recentWorks || []).some(w => w.isBullet)) n.push('bullet work');
+  const lj = String(h.lastJockey || '').trim().toUpperCase(), tj = String(h.jockey || '').trim().toUpperCase();
+  if (lj && tj && lj !== tj) n.push(`rider change (was ${String(h.lastJockey).trim()})`);
+  if (today === 'T' && h.pedTurf && String(h.pedTurf).trim()) n.push(`turf pedigree ${String(h.pedTurf).trim()}`);
+  return n;
 }
 function raceFactsTable(rs, extra, label){
   const R = raceFactsRows(rs, extra);
@@ -6010,10 +6033,15 @@ function raceFactsTable(rs, extra, label){
       + `<td>${lastTxt}</td>`
       + `<td${cls(f.er && f.er.rank === 1 ? 'best' : '')}>${f.eps != null ? money(Math.round(f.eps)) + ' ' + rk(f.er) : '—'}</td>`
       + `<td>${escHtml(style || '—')}</td>`
-      + `<td>${h.layoffDays != null ? h.layoffDays + 'd' : '—'}</td></tr>`;
+      + `<td>${h.layoffDays != null ? h.layoffDays + 'd' : '—'}</td>`
+      + `<td${cls(f.trR && f.trR.rank === 1 ? 'best' : '')}>${f.trn != null ? Math.round(f.trn * 100) + '% ' + rk(f.trR) : '—'}</td>`
+      + `<td${cls(f.jkR && f.jkR.rank === 1 ? 'best' : '')}>${f.jky != null ? Math.round(f.jky * 100) + '% ' + rk(f.jkR) : '—'}</td>`
+      + `<td>${escHtml(h.post || '')}</td>`
+      + `<td>${h.weight ? h.weight + (f.wMed && h.weight - f.wMed <= -4 ? ` (${h.weight - f.wMed})` : f.wMed && h.weight - f.wMed >= 4 ? ` (+${h.weight - f.wMed})` : '') : '—'}</td>`
+      + `<td>${escHtml(factsNotes(h, today).join(' · ') || '—')}</td></tr>`;
   }).join('');
   return `<details class="rf"><summary>RACE FACTS \u25b8 ${escHtml(label || 'ranked horses side by side')}</summary><div class="rf-wrap"><table class="rf-t">`
-    + `<tr><th>RK</th><th>HORSE</th><th>ML</th><th>LAST-3</th><th>LAST</th><th>PRIME PWR</th><th>ON ${escHtml(word(today).toUpperCase())} (st-w-pl/sh)</th><th>SAME SURF & TRIP</th><th>CLASS</th><th>LAST RACE</th><th>$/START</th><th>STYLE</th><th>OFF</th></tr>`
+    + `<tr><th>RK</th><th>HORSE</th><th>ML</th><th>LAST-3</th><th>LAST</th><th>PRIME PWR</th><th>ON ${escHtml(word(today).toUpperCase())} (st-w-pl/sh)</th><th>SAME SURF & TRIP</th><th>CLASS</th><th>LAST RACE</th><th>$/START</th><th>STYLE</th><th>OFF</th><th>TRAINER MEET</th><th>JOCKEY MEET</th><th>POST</th><th>WT</th><th>NOTES</th></tr>`
     + body + `</table></div><div class="rf-key">Green = best in this field on that line. Red = never raced on today's surface, or a sharp claiming drop. Today: ${escHtml(word(today))}${td ? ', ' + escHtml(fmtDistY(td)) : ''}.</div></details>`;
 }
 
@@ -7690,7 +7718,7 @@ function renderPrintView(){
 
 renderRows();
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v2.46 · released 28 September 2026 · build 2026-09-28-f</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v2.47 · released 28 September 2026 · build 2026-09-28-g</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
