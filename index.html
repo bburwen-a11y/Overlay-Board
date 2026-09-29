@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v2.54 — Race Card Reader</title>
+<title>Overlay Board v2.55 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1107,7 +1107,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v2.54</span> · released 27 September 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v2.55</span> · released 27 September 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -1204,7 +1204,7 @@
     <div class="tabbar no-print" id="tabbar" style="display:none;">
       <button data-tab="picks" id="tabPicks">Decision board<span class="tab-count" id="pickCount">0</span></button>
       <button data-tab="cards" class="on">Race cards</button>
-      <button data-tab="contenders">Contenders</button>
+      <button data-tab="facts">Race facts</button>
       <button data-tab="field">Full field</button>
       <button data-tab="help">Help</button>
       <button data-tab="print">Printable page</button>
@@ -1306,6 +1306,12 @@
       <p style="font-size:12.5px;color:var(--ink-soft);margin:-4px 0 14px;">Which column the math reads. <b>Final odds</b> falls back to the morning line for any horse you haven't updated, so you can fill in one race at a time.</p>
       <div class="race-nav no-print" id="raceNav"></div>
       <div id="raceCardList"></div>
+    </section>
+
+    <section id="factsSection" style="display:none;">
+      <h2><span class="step-num">▤</span> Race facts — every race, ranked horses side by side</h2>
+      <div class="race-nav no-print" id="factsNav"></div>
+      <div id="factsList"></div>
     </section>
 
     <section id="contendersSection" style="display:none;">
@@ -3062,6 +3068,7 @@ document.getElementById('computeBtn').addEventListener('click', () => {
   renderRaceCard(raceSummaries, scratchedCount);
   renderPicks(raceSummaries);
   renderContenders(raceSummaries);
+  renderFactsTab(raceSummaries);
   document.getElementById('tabbar').style.display = 'flex';
   document.getElementById('reportToolbar').style.display = 'flex';
   renderFullField(currentSort);
@@ -6949,6 +6956,7 @@ function renderRaceCard(raceSummaries, scratchedCount){
         <div class="race-card-top">
           <strong class="race-no ${read ? read.level : ''}"><a class="race-jump" data-jump="${escAttr(rs.race)}" title="Tap for every runner's past performances">Race ${escHtml(rs.race)}</a></strong>
           <a class="field-jump" data-jump="${escAttr(rs.race)}" title="Jump to this race's full field table">field ▸</a>
+          <a href="#" class="race-jump" data-goto-facts="${escAttr(rs.race)}" title="Jump to this race's facts table">facts ▸</a>
           ${read ? `<span class="read-badge ${read.level}">${READ_LABEL[read.level]} ${read.pts}/${read.max}</span>` : ''}
           <span class="race-metric">${(() => { const d = raceDateOf(rs.horses); return d ? escHtml(d) + ' · ' : ''; })()}${rs.meta ? escHtml(rs.meta) + ' · ' : ''}${rs.fieldSize} runners · book ${pct(rs.overround)} · ${oddsSourceMode === 'ml' ? 'morning line' : 'final odds'}</span>
           ${concentrationTag(rs)}
@@ -6995,7 +7003,8 @@ const TABS = {
   picks: ['picksSection'],
   print: ['printSection'],
   cards: ['resultsSection'],
-  contenders: ['contendersSection'],
+  facts: ['factsSection'],
+  contenders: ['contendersSection'],   // v2.55: tab removed (Robert: redundant with the Decision board); section kept, unreachable
   field: ['fieldSection'],
   help: ['helpSection']
 };
@@ -7265,6 +7274,31 @@ function buildBoardIndex(raceSummaries){
 }
 
 
+// v2.55 RACE FACTS TAB (Robert: "new tab race facts that goes back and forth
+// to race card by race number or horse"). Every race's facts table, open,
+// with links to that race's card and its Decision card; each race card links
+// back here. Horse names open the past performances as everywhere else.
+function renderFactsTab(raceSummaries){
+  const list = document.getElementById('factsList');
+  if (!list) return;
+  renderRaceNav(document.getElementById('factsNav'), raceSummaries, 'facts-r');
+  list.innerHTML = raceSummaries.map(rs => {
+    const p = pickFor(rs);
+    const extra = p.none ? [] : [p.h];
+    const live = (rs.horses || []).filter(x => !x.scratched && x.decimalOdds != null);
+    const dist = (live[0] || {}).raceDistYds ? fmtDistY(live[0].raceDistYds) : '';
+    const st = surfaceTag(rs.horses || []);
+    const tbl = raceFactsTable(rs, extra, 'ranked horses side by side').replace('<details class="rf">', '<details class="rf" open>');
+    const call = p.none ? 'No pick' : (p.line === 'price' ? `Price play #${escHtml(p.h.post || '?')}` : (pickPassReasons(p.h).length ? `Flagged #${escHtml(p.h.post || '?')}` : `Pick #${escHtml(p.h.post || '?')} ${escHtml(p.h.horse)}${playTier(rs, p.h).ok ? ' · play' : ' · no play'}`));
+    return `<div class="dc race-anchor-target" id="facts-r${escAttr(rs.race)}" style="border-left-color:var(--ink,#1b2a22)">`
+      + `<div class="dc-race">RACE ${escHtml(rs.race)}${raceDateOf(rs.horses) ? ' · ' + escHtml(raceDateOf(rs.horses)) : ''}${dist ? ' · ' + escHtml(dist) : ''}${st ? ' ' + escHtml(String(st.label).toLowerCase()) : ''} · ${escHtml(call)}</div>`
+      + `<div class="dc-type">${raceTypeTag(rs)}</div>`
+      + `<div style="margin:6px 0 2px;font-size:12.5px"><a href="#" class="race-jump" data-goto-card="${escAttr(rs.race)}">race card ▸</a> &nbsp; <a href="#" class="race-jump" data-goto-pick="${escAttr(rs.race)}">decision ▸</a> &nbsp; <a href="#" class="race-jump" data-jump="${escAttr(rs.race)}">every runner's PPs ▸</a></div>`
+      + tbl + `</div>`;
+  }).join('');
+  bindTapHandlers(list);
+}
+
 function renderContenders(raceSummaries){
   const list = document.getElementById('contendersList');
   if (!list) return;
@@ -7399,14 +7433,15 @@ document.addEventListener('click', e => {
   if (a && a.dataset.jump != null){ e.preventDefault(); markPPReturn(a); openRacePP(a.dataset.jump); return; }
   // Cross-tab jumps: switch tab, scroll to the matching block, flash it so the
   // eye finds it without hunting.
-  if (a && (a.dataset.gotoPick != null || a.dataset.gotoCard != null)){
+  if (a && (a.dataset.gotoPick != null || a.dataset.gotoCard != null || a.dataset.gotoFacts != null)){
     e.preventDefault();
-    const toPick = a.dataset.gotoPick != null;
-    const race = toPick ? a.dataset.gotoPick : a.dataset.gotoCard;
-    showTab(toPick ? 'picks' : 'cards');
+    const toPick = a.dataset.gotoPick != null, toFacts = a.dataset.gotoFacts != null;
+    const race = toPick ? a.dataset.gotoPick : toFacts ? a.dataset.gotoFacts : a.dataset.gotoCard;
+    showTab(toPick ? 'picks' : toFacts ? 'facts' : 'cards');
     requestAnimationFrame(() => {
       const el = toPick
         ? document.getElementById('pick-r' + race)
+        : toFacts ? document.getElementById('facts-r' + race)
         : document.getElementById('card-race-' + race);
       if (!el) return;
       el.scrollIntoView({behavior:'smooth', block:'start'});
@@ -7958,7 +7993,7 @@ function renderPrintView(){
 
 renderRows();
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v2.54 · released 30 September 2026 · build 2026-09-30-a</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v2.55 · released 30 September 2026 · build 2026-09-30-b</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
