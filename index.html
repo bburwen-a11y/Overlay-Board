@@ -1,9 +1,9 @@
-
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v2.66 — Race Card Reader</title>
+<title>Overlay Board v2.67 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1140,7 +1140,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v2.66</span> · released 2 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v2.67</span> · released 2 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -8300,9 +8300,12 @@ document.getElementById('printBtn').addEventListener('click', () => {
     st.textContent = 'Card laid out on the Printable page tab. If no print sheet opened, use the Print / Save as PDF button there.';
     st.className = 'status ok';
   }
-  setTimeout(openPrintSheet, 400);
+  // iPhone Safari only opens the print sheet when print is called directly in
+  // the tap itself - a delayed call is ignored. showTab has already rendered
+  // the page synchronously above.
+  openPrintSheet();
 });
-document.getElementById('printNowBtn').addEventListener('click', () => { renderPrintView(); setTimeout(openPrintSheet, 150); });
+document.getElementById('printNowBtn').addEventListener('click', () => { renderPrintView(); openPrintSheet(); });
 
 // Print goes through a real rendered page: window.print() is a silent no-op
 // in some phone browsers.
@@ -8339,7 +8342,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v2.66 · released 2 October 2026 · build 2026-10-02-c</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v2.67 · released 2 October 2026 · build 2026-10-02-d</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
