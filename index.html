@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v2.64 — Race Card Reader</title>
+<title>Overlay Board v2.65 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1140,7 +1140,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v2.64</span> · released 2 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v2.65</span> · released 2 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -1285,10 +1285,6 @@
         <p>The rest of the field, ordered by the same read that flagged Army's Marauder — competitive-at-today's-level ratio first, earnings per start as the tiebreaker. Not by price. A horse with no comparable starts to judge sorts to the end, not the top.</p>
       </div>
 
-      <div class="help-block">
-        <h3>Best-supported Questionable <span class="help-status help-display">display only</span></h3>
-        <p>Fires when a Questionable horse clears a real bar — competitive at today's level, top-2 on earnings per start. Shown next to the Pick whether or not one fired. Doesn't change the Pick.</p>
-      </div>
 
       <div class="help-block">
         <h3>Worth a second look — pace <span class="help-status help-display">display only</span></h3>
@@ -4736,6 +4732,8 @@ function pickPaceCautionHTML(rs){
   </div>`;
 }
 
+// v2.65: retired from the card (Robert, 2 Oct) - on the full pool it named 15
+// horses for 1 winner. Kept in the file, not called anywhere.
 function bestQuestionableBlockHTML(rs){
   const hit = bestQuestionableCandidate(rs);
   if (!hit) return '';
@@ -7298,7 +7296,6 @@ function renderRaceCard(raceSummaries, scratchedCount){
         ${buildContenderBlock(rs)}
         ${buildTopProbableBlock(rs)}
         ${crossCheckBlockHTML(rs)}
-        ${bestQuestionableBlockHTML(rs)}
         ${pickPaceCautionHTML(rs)}
         ${buildCommonCompanyBlock(rs.horses || [], (rs.horses && rs.horses.length) ? rs.horses[0].raceDistYds : null)}
         ${buildReadPanel(rs)}
@@ -8328,7 +8325,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v2.64 · released 2 October 2026 · build 2026-10-02-a</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v2.65 · released 2 October 2026 · build 2026-10-02-b</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
