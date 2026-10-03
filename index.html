@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v2.73 — Race Card Reader</title>
+<title>Overlay Board v2.74 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -758,6 +758,8 @@
   .t4-leads.t4-none{border-left-color:var(--paper-line); background:transparent; color:var(--ink-soft);}
   .cmp-table td.t4-cell{font-size:12px;} .cmp-table td.t4-strong{font-weight:700;}
   .help-guide{border-left:4px solid #2F6B3F;}
+  .win-chip{display:inline-block; margin-left:6px; padding:1px 6px; border:1px solid #2F6B3F; border-radius:3px; font-family:var(--mono); font-size:10.5px; font-weight:700; color:#2F6B3F; vertical-align:middle;}
+  .win-chip.win-unbeaten{background:#2F6B3F; color:#fff;}
   .pp-lvl{font-family:var(--mono); font-size:10px; opacity:.7; margin-left:3px;}
   .pp-works{font-family:var(--mono); font-size:11.5px; line-height:1.7;}
   .pp-record{
@@ -1144,7 +1146,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v2.73</span> · released 3 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v2.74</span> · released 3 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -5660,7 +5662,7 @@ function buildTopProbableBlock(rs){
   const leads = top4Leads(ranked.map(r => r.h));
   const blocks = ranked.map((r, i) => {
     const tag = i === 0 ? 'TOP' : `NEXT ${i}`;
-    return `<div class="pp-horse tp-slot"><div class="tp-tag">${tag} \u00b7 avg-3 ${r.v.toFixed(1)}</div>${top4LeadsLine(leads.get(r.h))}${ppHorseBlock(r.h, rs.race, false)}</div>`;
+    return `<div class="pp-horse tp-slot"><div class="tp-tag">${tag} \u00b7 avg-3 ${r.v.toFixed(1)}</div>${top4LeadsLine(leads.get(r.h))}${winFormChip(r.h) ? `<div style="margin:0 0 6px">${winFormChip(r.h)}</div>` : ''}${ppHorseBlock(r.h, rs.race, false)}</div>`;
   }).join('');
   const horses = ranked.map(r => r.h);
   const matchups = buildMatchupBlock(horses, horses[0].raceDistYds)
@@ -5876,7 +5878,7 @@ function pickContenders(rs, h){
     return `<div class="conf-others">No other contender in this race \u2014 the rest of the field is priced out. ${link}</div>`;
   }
   const me = ranked.find(r => r.h === h);
-  const cell = r => `<div class="mhs-row"><span class="mhs-n">${r.rank}.</span><div>${horseLabel(r.h)}${r.q ? '<span class="mhs-q">QUESTIONABLE</span>' : ''}${contenderFactsLine(rs, r.h)}<div class="cf-line" style="opacity:.7">${escHtml(r.whyLong)}</div></div></div>`;
+  const cell = r => `<div class="mhs-row"><span class="mhs-n">${r.rank}.</span><div>${horseLabel(r.h)}${winFormChip(r.h)}${r.q ? '<span class="mhs-q">QUESTIONABLE</span>' : ''}${contenderFactsLine(rs, r.h)}<div class="cf-line" style="opacity:.7">${escHtml(r.whyLong)}</div></div></div>`;
   return `<div class="conf-others">`
     + `<b>Also with a shot</b> <span class="cp-order">same ranking as Race Facts${me ? ` \u00b7 the figure favourite ranks #${me.rank}` : ''} \u00b7 ${ranked.length} of ${nRunners} runners</span>`
     + others.map(cell).join('')
@@ -5917,7 +5919,7 @@ function noPickContenders(rs, flagged){
     const cd = claimDropFacts(h); if (cd) bits.push(`entered for ${cd.pct}% of its highest recent claiming price`);
     { const tf = lastVsTodayFact(h); if (tf) bits.push(tf); }
     const isF = flagged && h === flagged;
-    return `<div class="mhs-row${isF ? ' mhs-flagged' : ''}"><span class="mhs-n">${f.rank}.</span><div>${horseLabel(h)}${f.t.q ? '<span class="mhs-q">QUESTIONABLE</span>' : ''}${isF ? '<span class="mhs-flag">FLAGGED FAVOURITE</span>' : ''}`
+    return `<div class="mhs-row${isF ? ' mhs-flagged' : ''}"><span class="mhs-n">${f.rank}.</span><div>${horseLabel(h)}${winFormChip(h)}${f.t.q ? '<span class="mhs-q">QUESTIONABLE</span>' : ''}${isF ? '<span class="mhs-flag">FLAGGED FAVOURITE</span>' : ''}`
       + `<div class="cf-line">${escHtml(bits.join(' \u00b7 '))}</div><div class="cf-line" style="opacity:.7">${escHtml(f.why)}</div></div></div>`;
   };
   const link = `<a href="#" class="race-jump" data-jump="${escAttr(rs.race)}" title="Tap for every runner's past performances">read the whole race \u25b8</a>`;
@@ -6044,6 +6046,25 @@ function lastVsTodayFact(h){
             : ` \u00b7 no ${w(tg)} starts`;
   }
   return s;
+}
+// v2.74 (Robert, BEL 19 Sep R2: Life's Dynamic, ranked 4th, won and was
+// 2-for-2 with a turf win - "a distinction which should be highlighted"). A
+// winning-form chip on every ranked contender: UNBEATEN when the horse has won
+// every career start (2 or more), otherwise how many of its most recent starts
+// in a row it won, with the surface of the last win. Facts from the file only.
+function winFormChip(h){
+  if (!h) return '';
+  const sw = g => g === 'T' ? 'turf' : g === 'A' ? 'all-weather' : 'dirt';
+  const pp = (h.ppRaces || []).filter(q => q.fin != null && String(q.fin).trim() !== '');
+  const st = h.ltStarts, wn = h.ltWins;
+  if (st != null && st >= 2 && wn === st){
+    const tw = pp.filter(q => parseInt(q.fin, 10) === 1 && ai3_surfaceGroup(q.surf || '') === 'T').length;
+    return `<span class="win-chip win-unbeaten">UNBEATEN \u00b7 won all ${st}${tw ? ` (${tw} on turf)` : ''}</span>`;
+  }
+  let k = 0; for (const q of pp){ if (parseInt(q.fin, 10) === 1) k++; else break; }
+  if (!k) return '';
+  const g = ai3_surfaceGroup(pp[0].surf || '');
+  return `<span class="win-chip">${k === 1 ? 'WON LAST START' : `WON LAST ${k}`}${g ? ' \u00b7 ' + sw(g) : ''}</span>`;
 }
 function contenderFactsLine(rs, h){
   const b = contenderFacts(rs, h);
@@ -8427,7 +8448,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v2.73 · released 3 October 2026 · build 2026-10-03-e</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v2.74 · released 3 October 2026 · build 2026-10-03-f</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
