@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v2.95 — Race Card Reader</title>
+<title>Overlay Board v2.96 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -804,6 +804,8 @@
   .vd-bet{border-color:#2F6B3F; background:#eef6ef;} .vd-bet .vd-tier{color:#2F6B3F;}
   .vd-exotics{border-color:#C9A227; background:#fdf6d8;} .vd-exotics .vd-tier{color:#7a5c00;}
   .vd-pass{border-color:#b9b2a6; background:#f4f1ea;} .vd-pass .vd-tier{color:#6b655c;}
+  .bo-chip{display:inline-block; margin-left:6px; padding:1px 6px; border:1px solid #1F5A33; border-radius:3px; color:#1F5A33; font-family:var(--mono); font-size:10.5px; font-weight:700; vertical-align:middle;}
+  .h2h-note{font-size:12px; color:#1F5A33; margin:2px 0 0;}
   .pp-lvl{font-family:var(--mono); font-size:10px; opacity:.7; margin-left:3px;}
   .pp-works{font-family:var(--mono); font-size:11.5px; line-height:1.7;}
   .pp-record{
@@ -1190,7 +1192,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v2.95</span> · released 8 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v2.96</span> · released 8 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -4022,8 +4024,52 @@ function fadeNotes(list){
   return `<div class="fade-note">${'\u2296'.repeat(Math.min(list.length, 3))} ${list.length > 1 ? list.length + ' fade signals: ' : 'fade: '}${escHtml(list.join(' \u00b7 '))}</div>`;
 }
 
+function boostChips(r){
+  let out = '';
+  if ((r.boosts || []).some(b => b.code === 'epsup')) out += `<span class="bo-chip">\u2b06 TOP $/START \u00b7 MOVING UP</span>`;
+  if ((r.h2hBeat || []).length) out += `<div class="h2h-note">H2H: finished ahead of ${r.h2hBeat.map(y => '#' + (y.post || '?') + ' ' + escHtml(y.horse)).join(', ')} in their last meeting</div>`;
+  return out;
+}
 function demoteChips(fl){
   return (fl || []).map(f => `<span class="dm-chip">\u2b07 ${f.code === 'surf' ? 'FIGURE FROM OTHER SURFACE' : 'TROUBLE LAST OUT'}</span><div class="dm-note">${escHtml(f.text)}</div>`).join('');
+}
+
+// v2.96 (Robert: "are there factors like H2H that are positive and should
+// move a horse up?"). Three positives were tested as rank-score boosts on the
+// pool: beating a higher-ranked rival (H2H), winning last time out, and being
+// the field's top earner per start while moving up in class. Only the last one
+// improved the ranking (winner in the top 2 / top 3 up in both halves), so it is
+// the only one that scores; H2H is shown on the horse as a fact.
+const BOOST_DEFAULT = {h2h: 0, wonlast: 0, epsup: 5};
+function boostSize(k){ const g = globalThis.__boost || BOOST_DEFAULT; return typeof g[k] === 'number' ? g[k] : 0; }
+function applyBoosts(x, arr, pool, byMl){
+  const h = x.h; x.boosts = x.boosts || [];
+  const mlFav = byMl[0];
+  // 1. H2H: beat, in their latest meeting, a non-favourite ranked above it
+  const b1 = boostSize('h2h');
+  if (h !== mlFav){
+    const mine = {}; (h.ppRaces || []).forEach(q => { mine[q.date + '|' + q.track + '|' + q.raceNum] = parseInt(q.fin, 10); });
+    let n = 0, who = [];
+    arr.forEach(y => {
+      if (y === x || y.h === mlFav || y.score >= x.score) return;
+      const shared = (y.h.ppRaces || []).filter(q => mine[q.date + '|' + q.track + '|' + q.raceNum] != null && !isNaN(parseInt(q.fin, 10)));
+      if (!shared.length) return;
+      const q = shared.sort((a, b) => String(b.date).localeCompare(String(a.date)))[0];
+      const me = mine[q.date + '|' + q.track + '|' + q.raceNum], them = parseInt(q.fin, 10);
+      if (me < them){ n++; who.push(y.h); }
+    });
+    if (n){ x.score -= b1 * Math.min(n, 2); x.h2hBeat = who; if (b1) x.boosts.push({code: 'h2h', who}); }
+  }
+  // 2. won its last start
+  const b2 = boostSize('wonlast');
+  if (b2 && (h.ppRaces || [])[0] && parseInt(h.ppRaces[0].fin, 10) === 1){ x.score -= b2; x.boosts.push({code: 'wonlast'}); }
+  // 3. top career earnings per start in the field, moving up 2+ class points
+  const b3 = boostSize('epsup');
+  if (b3){
+    const eps = y => (y.ltStarts ? (y.ltEarn || 0) / y.ltStarts : -1);
+    const top = Math.max(...pool.map(eps));
+    if (eps(h) > 0 && eps(h) === top && h.lastClassPar != null && h.todayClassPar != null && h.todayClassPar - h.lastClassPar >= 2){ x.score = Math.max(1, x.score - b3); x.boosts.push({code: 'epsup'}); x.whyLong = String(x.whyLong || '').replace(/^RS \d+/, 'RS ' + x.score) + ` \u2212 ${b3} for top $/start moving up`; }
+  }
 }
 
 function rankedField(rs, extra){
@@ -4067,7 +4113,9 @@ function rankedField(rs, extra){
     const why = `${score} = ${fTxt} + ${few ? fTxt + '*' : String(pr)} + ${mr}\u00d72`;
     const whyLong = debutByMl ? `RS ${score} = first-time starter in a lightly raced field, ranked by morning line #${mlr} (counted for figures, Prime Power and morning line \u00d72) \u00b7 lower is better` : `RS ${score} = figures ${a3 ? '#' + a3.rank : 'none (15)'} + ${few ? `figures again* (${h.ltStarts || 0} start${(h.ltStarts || 0) === 1 ? '' : 's'})` : `Prime Power #${pp ? pp.rank : '\u2014'}`} + morning line #${mr} \u00d72 \u00b7 lower is better`;
     return {h, q: qSet.has(h), score, ml: mlOf(h), why, whyLong: whyLong + (dflags.length ? ` + ${demotePts() * dflags.length} flagged` : '') + (fades.length ? ` + ${fadePts() * fades.length} fade` : ''), dflags, fades};
-  }).sort((a, b) => a.score - b.score || a.ml - b.ml).map((x, i) => Object.assign(x, {rank: i + 1}));
+  }).map(x => x).sort((a, b) => a.score - b.score || a.ml - b.ml)
+    .map((x, i, arr) => { applyBoosts(x, arr, pool, byMl); return x; })
+    .sort((a, b) => a.score - b.score || a.ml - b.ml).map((x, i) => Object.assign(x, {rank: i + 1}));
 }
 function horseTap(h){
   const body = `<b>#${escHtml(h.post || '?')} ${escHtml(h.horse)}</b>`;
@@ -4817,7 +4865,7 @@ function topProbableRanked(rs){
 // demotion flags included - the same order as Ranked contenders. v = the
 // horse's 3-race average (null for a horse with no figures), shown alongside.
 function topFourByRS(rs){
-  return rankedField(rs, []).slice(0, 4).map(r => ({h: r.h, v: avg3Of(r.h), score: r.score, dflags: r.dflags || [], fades: r.fades || []}));
+  return rankedField(rs, []).slice(0, 4).map(r => ({h: r.h, v: avg3Of(r.h), score: r.score, dflags: r.dflags || [], fades: r.fades || [], boosts: r.boosts || [], h2hBeat: r.h2hBeat || []}));
 }
 
 function normHorseName(s){
@@ -5859,7 +5907,7 @@ function buildTopProbableBlock(rs){
   const leads = top4Leads(ranked.map(r => r.h));
   const blocks = ranked.map((r, i) => {
     const tag = i === 0 ? 'TOP' : `NEXT ${i}`;
-    return `<div class="pp-horse tp-slot"><div class="tp-tag">${tag} \u00b7 RS ${r.score} \u00b7 avg-3 ${r.v != null ? r.v.toFixed(1) : 'none'}</div>${demoteChips(r.dflags)}${fadeNotes(r.fades)}${top4LeadsLine(leads.get(r.h))}${winFormChip(r.h) ? `<div style="margin:0 0 6px">${winFormChip(r.h)}</div>` : ''}${ppHorseBlock(r.h, rs.race, false)}</div>`;
+    return `<div class="pp-horse tp-slot"><div class="tp-tag">${tag} \u00b7 RS ${r.score} \u00b7 avg-3 ${r.v != null ? r.v.toFixed(1) : 'none'}</div>${boostChips(r)}${demoteChips(r.dflags)}${fadeNotes(r.fades)}${top4LeadsLine(leads.get(r.h))}${winFormChip(r.h) ? `<div style="margin:0 0 6px">${winFormChip(r.h)}</div>` : ''}${ppHorseBlock(r.h, rs.race, false)}</div>`;
   }).join('');
   const horses = ranked.map(r => r.h);
   const matchups = buildMatchupBlock(horses, horses[0].raceDistYds)
@@ -6075,7 +6123,7 @@ function pickContenders(rs, h){
     return `<div class="conf-others">No other contender in this race \u2014 the rest of the field is priced out. ${link}</div>`;
   }
   const me = ranked.find(r => r.h === h);
-  const cell = r => `<div class="mhs-row"><span class="mhs-n">${r.rank}.</span><div>${horseLabel(r.h)}<span class="rs-chip${r.q ? ' rs-q' : ''}">${r.q ? 'QUESTIONABLE' : 'CONTENDER'} \u00b7 RS ${r.score}</span>${winFormChip(r.h)}${demoteChips(r.dflags)}${fadeNotes(r.fades)}${contenderFactsLine(rs, r.h)}<div class="cf-line" style="opacity:.7">${escHtml(r.whyLong)}</div></div></div>`;
+  const cell = r => `<div class="mhs-row"><span class="mhs-n">${r.rank}.</span><div>${horseLabel(r.h)}<span class="rs-chip${r.q ? ' rs-q' : ''}">${r.q ? 'QUESTIONABLE' : 'CONTENDER'} \u00b7 RS ${r.score}</span>${winFormChip(r.h)}${boostChips(r)}${demoteChips(r.dflags)}${fadeNotes(r.fades)}${contenderFactsLine(rs, r.h)}<div class="cf-line" style="opacity:.7">${escHtml(r.whyLong)}</div></div></div>`;
   return `<div class="conf-others">`
     + `<b>Also with a shot</b> <span class="cp-order">same ranking as Race Facts${me ? ` \u00b7 the figure favourite ranks #${me.rank}` : ''} \u00b7 ${ranked.length} of ${nRunners} runners</span>`
     + others.map(cell).join('')
@@ -6096,7 +6144,7 @@ function noPickContenders(rs, flagged){
   const live = (rs.horses || []).filter(x => !x.scratched && x.decimalOdds != null);
   const facts = rankedField(rs, flagged ? [flagged] : []).map(r => {
     const h = r.h;
-    return {t: {q: r.q}, h, rank: r.rank, why: r.whyLong, score: r.score, dflags: r.dflags, fades: r.fades,
+    return {t: {q: r.q}, h, rank: r.rank, why: r.whyLong, score: r.score, dflags: r.dflags, fades: r.fades, boosts: r.boosts, h2hBeat: r.h2hBeat,
       a3: rankIn(live, h, y => avg3Of(y)), pp: rankIn(live, h, y => y.rawPP), lf: rankIn(live, h, y => y.lastSpd),
       core: coreConfirmations(rs, h)};
   });
@@ -6116,7 +6164,7 @@ function noPickContenders(rs, flagged){
     const cd = claimDropFacts(h); if (cd) bits.push(`entered for ${cd.pct}% of its highest recent claiming price`);
     { const tf = lastVsTodayFact(h); if (tf) bits.push(tf); }
     const isF = flagged && h === flagged;
-    return `<div class="mhs-row${isF ? ' mhs-flagged' : ''}"><span class="mhs-n">${f.rank}.</span><div>${horseLabel(h)}<span class="rs-chip${f.t.q ? ' rs-q' : ''}">${f.t.q ? 'QUESTIONABLE' : 'CONTENDER'}${f.score != null ? ' \u00b7 RS ' + f.score : ''}</span>${winFormChip(h)}${demoteChips(f.dflags)}${fadeNotes(f.fades)}${isF ? '<span class="mhs-flag">FLAGGED FAVOURITE</span>' : ''}`
+    return `<div class="mhs-row${isF ? ' mhs-flagged' : ''}"><span class="mhs-n">${f.rank}.</span><div>${horseLabel(h)}<span class="rs-chip${f.t.q ? ' rs-q' : ''}">${f.t.q ? 'QUESTIONABLE' : 'CONTENDER'}${f.score != null ? ' \u00b7 RS ' + f.score : ''}</span>${winFormChip(h)}${boostChips(f)}${demoteChips(f.dflags)}${fadeNotes(f.fades)}${isF ? '<span class="mhs-flag">FLAGGED FAVOURITE</span>' : ''}`
       + `<div class="cf-line">${escHtml(bits.join(' \u00b7 '))}</div><div class="cf-line" style="opacity:.7">${escHtml(f.why)}</div></div></div>`;
   };
   const link = `<a href="#" class="race-jump" data-jump="${escAttr(rs.race)}" title="Tap for every runner's past performances">read the whole race \u25b8</a>`;
@@ -6821,7 +6869,7 @@ function raceFactsTable(rs, extra, label){
   }).join('');
   return `<details class="rf"><summary>RACE FACTS \u25b8 ${escHtml(label || 'ranked horses side by side')}</summary><div class="rf-wrap"><table class="rf-t">`
     + `<tr><th>RK</th><th>HORSE</th><th>ML</th><th>LAST-3</th><th>LAST</th><th>PRIME PWR</th><th>ON ${escHtml(word(today).toUpperCase())} ST-W-P-S</th><th>SAME SURF & TRIP (last 10)</th><th>CLASS &amp; LEVEL (LAST \u2192 TODAY)</th><th>LAST RACE</th><th>$/START</th><th>STYLE</th><th>OFF</th><th>TRAINER MEET</th><th>JOCKEY MEET</th><th>POST</th><th>WT</th><th>NOTES</th><th>RS (LOW = BETTER)</th></tr>`
-    + body + `</table></div>${ftsTable(rs)}<div class="rf-key"><b>RS</b> (rank score) = fig + PP + ML\u00d72, +10 per \u2b07 flag, +5 per \u2296 fade signal, lower is better \u00b7 <b>CLASS</b> last \u2192 today, level \u00b12+ = up/down, <b>bold</b> = big drop \u00b7 red = never on today\u2019s surface \u00b7 green = best in field. Today: ${escHtml(word(today))}${td ? ', ' + escHtml(fmtDistY(td)) : ''}.<details class="rf-key-more"><summary>\u25b8 Full key</summary>SCORE = figure rank + Prime Power rank + morning-line rank \u00d72; lower is better. * = under 3 starts, figure rank used in place of Prime Power; no figure counts as 15. Tap a horse for its past performances. Surface record is starts-wins-places-shows: turf and all-weather are lifetime records from the file; dirt is counted from the past-performance lines shown (up to 10), as the file carries no separate dirt record; green there = best win rate on today's surface (2+ starts). Elsewhere green = best in this field on that line. Red = never raced on today's surface. Bold in CLASS = a big drop: class level 8+ points below the last race, or today's tag 50% or less of its highest in the last 4, or a last-out winner entered at 75% or less of its last tag. Class codes: MC maiden claiming, MOC maiden optional claiming, MSW maiden special weight, CLM claiming, OC optional claiming, ALW allowance, AOC allowance optional claiming, STR starter, STK stakes; number = claiming tag, (amount) = purse where there is no tag, n2l/n1x = eligibility, (s) = state-bred. LEVEL = class level in BRIS figure points, the figure a race of that kind normally draws: the average of BRIS's own class par printed in the file and a reading from its type, purse, tag, state-bred and fillies restrictions and track; every race is on this one scale. Up or down = 2 points or more. Today: ${escHtml(word(today))}${td ? ', ' + escHtml(fmtDistY(td)) : ''}.</details></div></details>`;
+    + body + `</table></div>${ftsTable(rs)}<div class="rf-key"><b>RS</b> (rank score) = fig + PP + ML\u00d72, +10 per \u2b07 flag, +5 per \u2296 fade signal, \u22125 for \u2b06 top $/start moving up, lower is better \u00b7 <b>CLASS</b> last \u2192 today, level \u00b12+ = up/down, <b>bold</b> = big drop \u00b7 red = never on today\u2019s surface \u00b7 green = best in field. Today: ${escHtml(word(today))}${td ? ', ' + escHtml(fmtDistY(td)) : ''}.<details class="rf-key-more"><summary>\u25b8 Full key</summary>SCORE = figure rank + Prime Power rank + morning-line rank \u00d72; lower is better. * = under 3 starts, figure rank used in place of Prime Power; no figure counts as 15. Tap a horse for its past performances. Surface record is starts-wins-places-shows: turf and all-weather are lifetime records from the file; dirt is counted from the past-performance lines shown (up to 10), as the file carries no separate dirt record; green there = best win rate on today's surface (2+ starts). Elsewhere green = best in this field on that line. Red = never raced on today's surface. Bold in CLASS = a big drop: class level 8+ points below the last race, or today's tag 50% or less of its highest in the last 4, or a last-out winner entered at 75% or less of its last tag. Class codes: MC maiden claiming, MOC maiden optional claiming, MSW maiden special weight, CLM claiming, OC optional claiming, ALW allowance, AOC allowance optional claiming, STR starter, STK stakes; number = claiming tag, (amount) = purse where there is no tag, n2l/n1x = eligibility, (s) = state-bred. LEVEL = class level in BRIS figure points, the figure a race of that kind normally draws: the average of BRIS's own class par printed in the file and a reading from its type, purse, tag, state-bred and fillies restrictions and track; every race is on this one scale. Up or down = 2 points or more. Today: ${escHtml(word(today))}${td ? ', ' + escHtml(fmtDistY(td)) : ''}.</details></div></details>`;
 }
 
 
@@ -8740,7 +8788,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v2.95 · released 8 October 2026 · build 2026-10-08-d</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v2.96 · released 8 October 2026 · build 2026-10-08-e</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
