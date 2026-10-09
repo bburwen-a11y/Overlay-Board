@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v2.97 — Race Card Reader</title>
+<title>Overlay Board v2.98 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -806,6 +806,7 @@
   .vd-pass{border-color:#b9b2a6; background:#f4f1ea;} .vd-pass .vd-tier{color:#6b655c;}
   .bo-chip{display:inline-block; margin-left:6px; padding:1px 6px; border:1px solid #1F5A33; border-radius:3px; color:#1F5A33; font-family:var(--mono); font-size:10.5px; font-weight:700; vertical-align:middle;}
   .h2h-note{font-size:12px; color:#1F5A33; margin:2px 0 0;}
+  table.rf-t td.rf-h2h{white-space:normal; min-width:150px;}
   .pp-lvl{font-family:var(--mono); font-size:10px; opacity:.7; margin-left:3px;}
   .pp-works{font-family:var(--mono); font-size:11.5px; line-height:1.7;}
   .pp-record{
@@ -1192,7 +1193,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v2.97</span> · released 8 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v2.98</span> · released 8 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -4018,6 +4019,32 @@ function fadeSignals(h, live){
     }
   }
   return out;
+}
+// v2.98 (Robert: "how about H2H showing in race facts"). For one horse, every
+// rival in today's field it has met: ahead of / behind, by their latest meeting.
+function h2hFacts(h, horses){
+  const key = q => q.date + '|' + q.track + '|' + q.raceNum;
+  const mine = {}; (h.ppRaces || []).forEach(q => { const f = parseInt(q.fin, 10); if (!isNaN(f)) mine[key(q)] = {fin: f, date: q.date}; });
+  const ahead = [], behind = [];
+  horses.forEach(y => {
+    if (y === h) return;
+    const sh = (y.ppRaces || []).filter(q => mine[key(q)] && !isNaN(parseInt(q.fin, 10)));
+    if (!sh.length) return;
+    const q = sh.sort((a, b) => String(b.date).localeCompare(String(a.date)))[0];
+    const me = mine[key(q)].fin, them = parseInt(q.fin, 10);
+    if (me === them) return;
+    const d = String(q.date); const md = d.length === 8 ? (+d.slice(4, 6)) + '/' + (+d.slice(6, 8)) : d;
+    (me < them ? ahead : behind).push({h: y, md});
+  });
+  return {ahead, behind};
+}
+function h2hCell(h, horses){
+  const r = h2hFacts(h, horses);
+  const fmt = L => L.map(x => '#' + (x.h.post || '?') + ' (' + x.md + ')').join(', ');
+  const bits = [];
+  if (r.ahead.length) bits.push('ahead of ' + fmt(r.ahead));
+  if (r.behind.length) bits.push('behind ' + fmt(r.behind));
+  return bits.length ? bits.join(' \u00b7 ') : '\u2014';
 }
 function h2hEdge90(h, live){
   const today = String(h.raceDateYmd || '');
@@ -6871,6 +6898,7 @@ function raceFactsTable(rs, extra, label){
       + `<td>${escHtml(sd)}</td>`
       + `<td class="rf-cls${cmWarn ? ' rf-bold' : ''}">${pastClassCode(l) ? `${escHtml(pastClassCode(l))} \u2192 ${escHtml(todayClassCode(rs, true))}<br>` : ''}${h.todayClassPar != null && h.lastClassPar != null ? `level ${Math.round(h.lastClassPar)} \u2192 ${Math.round(h.todayClassPar)} (${h.todayClassPar - h.lastClassPar > 0 ? '+' : ''}${(h.todayClassPar - h.lastClassPar).toFixed(1)}) \u00b7 ` : ''}${escHtml(cm)} vs last race${f.cd ? ` \u00b7 today's tag is ${f.cd.pct}% of its highest in the last 4` : ''}</td>`
       + `<td>${lastTxt}</td>`
+      + `<td class="rf-h2h">${escHtml(h2hCell(h, rows.map(x => x.h)))}</td>`
       + `<td${cls(f.er && f.er.rank === 1 ? 'best' : '')}>${f.eps != null ? money(Math.round(f.eps)) + ' ' + rk(f.er) : '—'}</td>`
       + `<td>${escHtml(style || '—')}</td>`
       + `<td>${h.layoffDays != null ? h.layoffDays + 'd' : '—'}</td>`
@@ -6882,8 +6910,8 @@ function raceFactsTable(rs, extra, label){
       + `<td style="opacity:.75">${escHtml(f.why)}</td></tr>`;
   }).join('');
   return `<details class="rf"><summary>RACE FACTS \u25b8 ${escHtml(label || 'ranked horses side by side')}</summary><div class="rf-wrap"><table class="rf-t">`
-    + `<tr><th>RK</th><th>HORSE</th><th>ML</th><th>LAST-3</th><th>LAST</th><th>PRIME PWR</th><th>ON ${escHtml(word(today).toUpperCase())} ST-W-P-S</th><th>SAME SURF & TRIP (last 10)</th><th>CLASS &amp; LEVEL (LAST \u2192 TODAY)</th><th>LAST RACE</th><th>$/START</th><th>STYLE</th><th>OFF</th><th>TRAINER MEET</th><th>JOCKEY MEET</th><th>POST</th><th>WT</th><th>NOTES</th><th>RS (LOW = BETTER)</th></tr>`
-    + body + `</table></div>${ftsTable(rs)}<div class="rf-key"><b>RS</b> (rank score) = fig + PP + ML\u00d72, +10 per \u2b07 flag, +5 per \u2296 fade signal, \u22125 for \u2b06 top $/start moving up, lower is better \u00b7 <b>CLASS</b> last \u2192 today, level \u00b12+ = up/down, <b>bold</b> = big drop \u00b7 red = never on today\u2019s surface \u00b7 green = best in field. Today: ${escHtml(word(today))}${td ? ', ' + escHtml(fmtDistY(td)) : ''}.<details class="rf-key-more"><summary>\u25b8 Full key</summary>SCORE = figure rank + Prime Power rank + morning-line rank \u00d72; lower is better. * = under 3 starts, figure rank used in place of Prime Power; no figure counts as 15. Tap a horse for its past performances. Surface record is starts-wins-places-shows: turf and all-weather are lifetime records from the file; dirt is counted from the past-performance lines shown (up to 10), as the file carries no separate dirt record; green there = best win rate on today's surface (2+ starts). Elsewhere green = best in this field on that line. Red = never raced on today's surface. Bold in CLASS = a big drop: class level 8+ points below the last race, or today's tag 50% or less of its highest in the last 4, or a last-out winner entered at 75% or less of its last tag. Class codes: MC maiden claiming, MOC maiden optional claiming, MSW maiden special weight, CLM claiming, OC optional claiming, ALW allowance, AOC allowance optional claiming, STR starter, STK stakes; number = claiming tag, (amount) = purse where there is no tag, n2l/n1x = eligibility, (s) = state-bred. LEVEL = class level in BRIS figure points, the figure a race of that kind normally draws: the average of BRIS's own class par printed in the file and a reading from its type, purse, tag, state-bred and fillies restrictions and track; every race is on this one scale. Up or down = 2 points or more. Today: ${escHtml(word(today))}${td ? ', ' + escHtml(fmtDistY(td)) : ''}.</details></div></details>`;
+    + `<tr><th>RK</th><th>HORSE</th><th>ML</th><th>LAST-3</th><th>LAST</th><th>PRIME PWR</th><th>ON ${escHtml(word(today).toUpperCase())} ST-W-P-S</th><th>SAME SURF & TRIP (last 10)</th><th>CLASS &amp; LEVEL (LAST \u2192 TODAY)</th><th>LAST RACE</th><th>H2H (LAST MEETING)</th><th>$/START</th><th>STYLE</th><th>OFF</th><th>TRAINER MEET</th><th>JOCKEY MEET</th><th>POST</th><th>WT</th><th>NOTES</th><th>RS (LOW = BETTER)</th></tr>`
+    + body + `</table></div>${ftsTable(rs)}<div class="rf-key"><b>RS</b> (rank score) = fig + PP + ML\u00d72, +10 per \u2b07 flag, +5 per \u2296 fade signal, \u22125 for \u2b06 top $/start moving up, lower is better \u00b7 <b>H2H</b> = rivals in this field it finished ahead of / behind in their latest meeting (date) \u00b7 <b>CLASS</b> last \u2192 today, level \u00b12+ = up/down, <b>bold</b> = big drop \u00b7 red = never on today\u2019s surface \u00b7 green = best in field. Today: ${escHtml(word(today))}${td ? ', ' + escHtml(fmtDistY(td)) : ''}.<details class="rf-key-more"><summary>\u25b8 Full key</summary>SCORE = figure rank + Prime Power rank + morning-line rank \u00d72; lower is better. * = under 3 starts, figure rank used in place of Prime Power; no figure counts as 15. Tap a horse for its past performances. Surface record is starts-wins-places-shows: turf and all-weather are lifetime records from the file; dirt is counted from the past-performance lines shown (up to 10), as the file carries no separate dirt record; green there = best win rate on today's surface (2+ starts). Elsewhere green = best in this field on that line. Red = never raced on today's surface. Bold in CLASS = a big drop: class level 8+ points below the last race, or today's tag 50% or less of its highest in the last 4, or a last-out winner entered at 75% or less of its last tag. Class codes: MC maiden claiming, MOC maiden optional claiming, MSW maiden special weight, CLM claiming, OC optional claiming, ALW allowance, AOC allowance optional claiming, STR starter, STK stakes; number = claiming tag, (amount) = purse where there is no tag, n2l/n1x = eligibility, (s) = state-bred. LEVEL = class level in BRIS figure points, the figure a race of that kind normally draws: the average of BRIS's own class par printed in the file and a reading from its type, purse, tag, state-bred and fillies restrictions and track; every race is on this one scale. Up or down = 2 points or more. Today: ${escHtml(word(today))}${td ? ', ' + escHtml(fmtDistY(td)) : ''}.</details></div></details>`;
 }
 
 
@@ -8802,7 +8830,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v2.97 · released 8 October 2026 · build 2026-10-08-f</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v2.98 · released 8 October 2026 · build 2026-10-08-g</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
