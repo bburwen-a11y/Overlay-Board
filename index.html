@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v2.94 — Race Card Reader</title>
+<title>Overlay Board v2.95 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1190,7 +1190,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v2.94</span> · released 8 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v2.95</span> · released 8 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -4043,9 +4043,19 @@ function rankedField(rs, extra){
   // in for Prime Power. The morning-line rank counts twice.
   return pool.map(h => {
     const a3 = rankIn(live, h, y => avg3Of(y)), pp = rankIn(live, h, y => y.rawPP);
-    const fr = Math.min(a3 ? a3.rank : 99, 15);
     const few = (h.ltStarts || 0) < 3;
-    const pr = few ? fr : Math.min(pp ? pp.rank : 99, 15);
+    const debut = !(h.ppRaces || []).length;
+    const mlr = byMl.indexOf(h) + 1;
+    // v2.95 (Robert, BEL 7 Oct R2 Mioruilt): in a THIN race - fewer than half
+    // the runners have 2+ starts - a first-time starter is ranked by its
+    // morning line in place of the figure and Prime Power ranks, instead of
+    // counting as the worst figure twice. Tested on the pool: debut winners
+    // inside the Top 4 rose from 29 to 41 of 57, with the #1 horse unchanged.
+    const thin = live.filter(x => (x.ppRaces || []).length >= 2).length < live.length / 2;
+    const debutByMl = debut && thin && (typeof globalThis.__ftsMode !== 'number' || globalThis.__ftsMode === 11);
+    let fr = Math.min(a3 ? a3.rank : 99, 15);
+    let pr = few ? fr : Math.min(pp ? pp.rank : 99, 15);
+    if (debutByMl){ fr = mlr; pr = mlr; }
     const mr = byMl.indexOf(h) + 1;
     const dflags = demotionFlags(h, live);
     const fades = fadeSignals(h, live);
@@ -4055,7 +4065,7 @@ function rankedField(rs, extra){
     // + morning-line rank x2. No figure counts as 15. Lower is better.
     const fTxt = a3 ? String(fr) : '15';
     const why = `${score} = ${fTxt} + ${few ? fTxt + '*' : String(pr)} + ${mr}\u00d72`;
-    const whyLong = `RS ${score} = figures ${a3 ? '#' + a3.rank : 'none (15)'} + ${few ? `figures again* (${h.ltStarts || 0} start${(h.ltStarts || 0) === 1 ? '' : 's'})` : `Prime Power #${pp ? pp.rank : '\u2014'}`} + morning line #${mr} \u00d72 \u00b7 lower is better`;
+    const whyLong = debutByMl ? `RS ${score} = first-time starter in a lightly raced field, ranked by morning line #${mlr} (counted for figures, Prime Power and morning line \u00d72) \u00b7 lower is better` : `RS ${score} = figures ${a3 ? '#' + a3.rank : 'none (15)'} + ${few ? `figures again* (${h.ltStarts || 0} start${(h.ltStarts || 0) === 1 ? '' : 's'})` : `Prime Power #${pp ? pp.rank : '\u2014'}`} + morning line #${mr} \u00d72 \u00b7 lower is better`;
     return {h, q: qSet.has(h), score, ml: mlOf(h), why, whyLong: whyLong + (dflags.length ? ` + ${demotePts() * dflags.length} flagged` : '') + (fades.length ? ` + ${fadePts() * fades.length} fade` : ''), dflags, fades};
   }).sort((a, b) => a.score - b.score || a.ml - b.ml).map((x, i) => Object.assign(x, {rank: i + 1}));
 }
@@ -8730,7 +8740,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v2.94 · released 8 October 2026 · build 2026-10-08-c</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v2.95 · released 8 October 2026 · build 2026-10-08-d</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
