@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v3.02 — Race Card Reader</title>
+<title>Overlay Board v3.10 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -811,6 +811,12 @@
   .vb-threat .vb-tier, .vb-c.vb-threat{background:#8E4B2E; color:#fff;}
   .vd-value{border-color:#2E6E8E; background:#e7f1f6;} .vd-value .vd-tier{color:#2E6E8E;}
   .vd-threat{border-color:#8E4B2E; background:#f6ece7;} .vd-threat .vd-tier{color:#8E4B2E;}
+  .vb-play .vb-tier, .vb-c.vb-play{background:#2F6B3F; color:#fff;}
+  .vb-c.vb-winc{background:#1b2a22; color:#fff;}
+  .vb-win{color:#1F5A33; font-weight:700;}
+  .vd-play{border-color:#2F6B3F; background:#eef6ef;} .vd-play .vd-tier{color:#2F6B3F;}
+  .vd-use{font-size:13.5px; margin-top:2px;}
+  .vd-win{font-size:13px; margin-top:4px; color:#1F5A33;}
   .pp-lvl{font-family:var(--mono); font-size:10px; opacity:.7; margin-left:3px;}
   .pp-works{font-family:var(--mono); font-size:11.5px; line-height:1.7;}
   .pp-record{
@@ -1197,7 +1203,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v3.02</span> · released 9 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v3.10</span> · released 9 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -1319,6 +1325,7 @@
 
       <div class="help-block help-guide">
         <h3>Using the board — what to bet, what to read</h3>
+        <p><b>Race plans.</b> Every race is <b>PLAY</b> or <b>SKIP</b>. <b>SKIP</b>: the field is too lightly raced to read, or it has 9 or more runners and no figure favourite. <b>PLAY</b>: the <b>Key</b> is the top-ranked horse and <b>Use</b> lists the next three (next four in a field of 9 or more) — the horses to build exotics around, with two ready tickets: the Key on top of the Use horses, or a box of the four. A <b>win bet</b> is shown only where a BET verdict applies, with its condition.</p>
         <p><b>Today’s verdicts.</b> Every race gets one verdict at the top of the Decision board and on its card. <b>BET — DEFINITIVE</b> (the figure favourite meets every definitive condition): win, plus an exacta with it on top of the next four ranked. <b>BET — CONDITIONAL</b> (a figure favourite with no flag that misses one definitive condition): a conditional win wager \u2014 only if the horse is 2-1 or higher at post. Enter it with that condition and the odds at the off decide. <b>BET — VALUE</b> (no figure favourite; the horse with the top 3-race figure average is dropping 2 or more class points, has 2 or more speed points and no \u2b07 flag or \u2296 fade): win at any price, or only at 2-1 or higher if it is the morning-line favourite. <b>BET — THREAT</b> (the figure favourite is flagged and its Main Threat carries no flag or fade): win on the Main Threat. <b>EXOTICS</b> (top-ranked horse with no ⬇ flag or ⊖ fade, 8 or fewer runners, race not red): exacta with it on top of the next three ranked, no win bet. <b>PASS</b>: no bet, with the reason.</p>
         <p>Every race lands in one of four situations. Work down the Decision board and treat each one this way.</p>
         <p><b>1. BET — DEFINITIVE.</b> The figure favourite also has the top last figure on its own, has been in the money in most of its recent starts, and shows early speed (2 or more speed points), with no claiming drop or surface switch against it. Every condition points the same way: win, plus the exacta key.</p>
@@ -7814,6 +7821,37 @@ function raceIsFlagged(rs){
 //                  not red -> $1 exacta, it over the next 3 ranked
 //   PASS         : everything else, with the reason
 // On screen: past-performance terms only.
+// v3.10 RESHAPE (Robert, 9 Oct: "reshape it"). The board is built around what it
+// does reliably: which races to play or skip, the Top 4 to use, and how to tie
+// them into exotics. Win bets appear only where a win verdict applies.
+//   PLAY  : 8 or fewer runners, or a figure favourite in a bigger field; race not red
+//   SKIP  : red (too thin to read), or 9+ runners with no figure favourite
+// KEY = top-ranked horse; USE = next three (next four in a field of 9+).
+function racePlan(rs){
+  const v = verdictOf(rs);
+  const rf = rankedField(rs, []);
+  const n = (rs.horses || []).filter(h => !isScratchedNow(rs, h)).length;
+  const lvl = ((typeof readability === 'function' ? readability(rs) : null) || {}).level || '';
+  const p = pickFor(rs);
+  const figFav = p && !p.none && p.line === 'primary' && !pickPassReasons(p.h).length;
+  let skip = null;
+  if (lvl === 'red') skip = 'too few past starts in this field to read';
+  else if (n >= 9 && !figFav) skip = `${n} runners and no figure favourite`;
+  else if (rf.length < 4) skip = 'too few ranked runners';
+  if (skip) return {play: false, why: skip, v};
+  const wide = n >= 9;
+  const key = rf[0].h, use = rf.slice(1, wide ? 5 : 4).map(r => r.h);
+  let win = null;
+  if (v.h && ['STRONG', 'BET', 'VALUE', 'THREAT'].includes(v.tier)) win = {label: vLabel(v), text: verdictTicket(v).split(' \u00b7 ')[0]};
+  return {play: true, key, use, wide, n, win, v};
+}
+function planTickets(pl){
+  const num = h => '#' + (h.post || '?');
+  const u = pl.use.map(num).join(', ');
+  const out = [`Exacta ${num(pl.key)} over ${u}`, `Exacta box ${[pl.key].concat(pl.use.slice(0, 3)).map(num).join(', ')}`];
+  return out;
+}
+
 function verdictOf(rs){
   const rf = rankedField(rs, []);
   const n = (rs.horses || []).filter(h => !isScratchedNow(rs, h)).length;
@@ -7873,21 +7911,33 @@ function verdictTicket(v){
   return '';
 }
 function verdictBanner(rs){
-  const v = verdictOf(rs);
-  return `<div class="vd vd-${v.tier.toLowerCase()}"><div class="vd-tier">${vLabel(v)}</div>`
-    + (v.h ? `<div class="vd-horse">${horseLabel(v.h)}</div><div class="vd-ticket">${escHtml(verdictTicket(v))}</div>` : '')
-    + `<div class="vd-why">${escHtml(v.why)}</div></div>`;
+  const pl = racePlan(rs);
+  if (!pl.play) return `<div class="vd vd-pass"><div class="vd-tier">SKIP</div><div class="vd-why">${escHtml(pl.why)}</div></div>`;
+  const t = planTickets(pl);
+  return `<div class="vd vd-play"><div class="vd-tier">PLAY${pl.wide ? ' \u00b7 WIDE FIELD' : ''}</div>`
+    + `<div class="vd-horse">Key ${horseLabel(pl.key)}</div>`
+    + `<div class="vd-use">Use ${pl.use.map(h => horseLabel(h)).join(' \u00b7 ')}</div>`
+    + `<div class="vd-ticket">${escHtml(t[0])}<br>${escHtml(t[1])}</div>`
+    + (pl.win ? `<div class="vd-win"><b>${escHtml(pl.win.label)}</b> \u00b7 ${escHtml(pl.win.text)}</div>` : `<div class="vd-why">No win bet in this race.</div>`)
+    + `</div>`;
 }
 function buildVerdictBoard(raceSummaries){
-  const rows = raceSummaries.map(rs => ({rs, v: verdictOf(rs)}));
-  const order = ['STRONG', 'BET', 'VALUE', 'THREAT', 'EXOTICS', 'PASS'];
-  const counts = order.map(t => rows.filter(r => r.v.tier === t).length);
-  const line = r => `<div class="vb-row vb-${r.v.tier.toLowerCase()}"><a class="race-jump vb-race" data-goto-pick="${escAttr(r.rs.race)}" href="#">R${escHtml(r.rs.race)}</a>`
-    + `<span class="vb-tier">${vLabel(r.v)}</span>`
-    + (r.v.h ? `<span class="vb-horse">#${escHtml(r.v.h.post || '?')} ${escHtml(r.v.h.horse)} (${escHtml(r.v.h.oddsStr || '')})</span><span class="vb-ticket">${escHtml(verdictTicket(r.v))}</span>` : `<span class="vb-why">${escHtml(r.v.why)}</span>`)
-    + `</div>`;
-  return `<div class="verdict-board"><h3>Today\u2019s verdicts</h3>`
-    + `<div class="vb-counts">${order.map((t, i) => `<span class="vb-c vb-${t.toLowerCase()}">${V_LABEL[t]} ${counts[i]}</span>`).join('')}</div>`
+  const rows = raceSummaries.map(rs => ({rs, pl: racePlan(rs)}));
+  const plays = rows.filter(r => r.pl.play).length;
+  const wins = rows.filter(r => r.pl.play && r.pl.win).length;
+  const num = h => '#' + (h.post || '?');
+  const line = r => {
+    const go = `<a class="race-jump vb-race" data-goto-pick="${escAttr(r.rs.race)}" href="#">R${escHtml(r.rs.race)}</a>`;
+    if (!r.pl.play) return `<div class="vb-row vb-pass">${go}<span class="vb-tier">SKIP</span><span class="vb-why">${escHtml(r.pl.why)}</span></div>`;
+    const t = planTickets(r.pl);
+    return `<div class="vb-row vb-play">${go}<span class="vb-tier">PLAY</span>`
+      + `<span class="vb-horse">Key ${num(r.pl.key)} ${escHtml(r.pl.key.horse)} (${escHtml(r.pl.key.oddsStr || '')})</span>`
+      + `<span class="vb-ticket">Use ${r.pl.use.map(num).join(', ')} \u00b7 ${escHtml(t[0])} \u00b7 or ${escHtml(t[1])}</span>`
+      + (r.pl.win ? `<span class="vb-ticket vb-win">${escHtml(r.pl.win.label)}: ${escHtml(r.pl.win.text)}</span>` : '')
+      + `</div>`;
+  };
+  return `<div class="verdict-board"><h3>Today\u2019s race plans</h3>`
+    + `<div class="vb-counts"><span class="vb-c vb-play">PLAY ${plays}</span><span class="vb-c vb-pass">SKIP ${rows.length - plays}</span><span class="vb-c vb-winc">WIN BETS ${wins}</span></div>`
     + rows.map(line).join('') + `</div>`;
 }
 
@@ -8179,7 +8229,7 @@ function renderPicks(raceSummaries){
   const verdicts = buildVerdictBoard(raceSummaries);
   // v2.91: the verdicts lead the board on every card, plays or not.
   list.innerHTML = verdicts + index + best + blocks.join('');
-  document.getElementById('pickCount').textContent = raceSummaries.filter(rs => ['STRONG', 'BET', 'VALUE', 'THREAT'].includes(verdictOf(rs).tier)).length;
+  document.getElementById('pickCount').textContent = raceSummaries.filter(rs => racePlan(rs).play).length;
   bindTapHandlers(list);
   // The race-number block carries its own handler: bindTapHandlers keys off
   // .race-jump + data-jump, and wrapping the number in that anchor let other
@@ -8866,7 +8916,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v3.02 · released 9 October 2026 · build 2026-10-09-d</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v3.10 · released 9 October 2026 · build 2026-10-09-e</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
