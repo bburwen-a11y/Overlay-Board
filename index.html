@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v2.98 — Race Card Reader</title>
+<title>Overlay Board v3.00 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1193,7 +1193,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v2.98</span> · released 8 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v3.00</span> · released 9 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -1993,7 +1993,7 @@ function parseBrisnetSingleFile(text){
       const finTxt = get(616+i);
       const rawMargin = num(736+i);
       const wonIt = String(finTxt).trim() === '1';
-      ppRaces.push({date: d, track: get(276+i), raceNum: get(296+i), distYds: num(316+i), surf: get(326+i), fin: finTxt, margin: rawMargin, won: wonIt, lenBehind: (rawMargin == null ? null : (wonIt ? -rawMargin : rawMargin)), comment: get(396+i), pastPost: num(356+i), pastField: num(346+i), winner: get(406+i), second: get(416+i), third: get(426+i), rtype: get(1086+i), claim: num(546+i), classTxt: get(536+i), spd: num(846+i), pace2: num(766+i), pace4: num(776+i), pace6: num(786+i), pace8: num(796+i), latePace: num(816+i), c1pos: num(576+i), c1bl: num(656+i), c2pos: num(586+i), c2bl: num(676+i), strpos: num(606+i), strbl: num(716+i), purse: num(556+i), brisPar: num(1167+i), classPar: classLevelBlend(num(1167+i), classPar(get(276+i), get(1086+i), get(536+i), num(556+i))), trackCond: get(306+i),
+      ppRaces.push({date: d, track: get(276+i), raceNum: get(296+i), distYds: num(316+i), surf: get(326+i), fin: finTxt, margin: rawMargin, won: wonIt, lenBehind: (rawMargin == null ? null : (wonIt ? -rawMargin : rawMargin)), comment: get(396+i), pastPost: num(356+i), pastField: num(346+i), winner: get(406+i), second: get(416+i), third: get(426+i), rtype: get(1086+i), claim: num(546+i), classTxt: get(536+i), spd: num(846+i), pace2: num(766+i), pace4: num(776+i), pace6: num(786+i), pace8: num(796+i), latePace: num(816+i), c1pos: num(576+i), c1bl: num(656+i), c2pos: num(586+i), c2bl: num(676+i), strpos: num(606+i), strbl: num(716+i), purse: num(556+i), brisPar: num(1167+i), classPar: classLevelBlend(num(1167+i), classPar(get(276+i), get(1086+i), get(536+i), num(556+i))), classFit: classPar(get(276+i), get(1086+i), get(536+i), num(556+i)), trackCond: get(306+i),
         // WHO RODE THAT DAY. Fields 1066-1075 carry the rider of each past
         // race and 1056-1065 the trainer, so a line can be read against the
         // rider who was on it — verified on this file against today's rider
@@ -2124,7 +2124,13 @@ function parseBrisnetSingleFile(text){
     let classMove = '';
     const todayPre = (get(239) === 's' ? 's' : '') + (/^[MF]$/.test(get(10).slice(2,3)) ? 'f' : '');
     const todayClassPar = classLevelBlend(num(217), classPar(get(1), rtype, get(11), num(12), todayPre));
-    const lastClassPar = ppRaces.length ? ppRaces[0].classPar : null;
+    // v3.00 (Robert, BEL 9 Oct R2 City Blocks: "how can the class level be down
+    // with the purse worth so much more?"). When the file prints no BRIS class par
+    // for TODAY's race, today's level is the purse/type/tag reading alone - so the
+    // last race must be read the same way, not blended with its BRIS par, or the
+    // two numbers are on different footings.
+    const todayHasPar = num(217) != null && num(217) > 0;
+    const lastClassPar = ppRaces.length ? (todayHasPar ? ppRaces[0].classPar : (ppRaces[0].classFit != null ? ppRaces[0].classFit : ppRaces[0].classPar)) : null;
     const parMove = classMoveFromPar(todayClassPar, lastClassPar);
     const isMdType = t => ['M','MO','S'].includes(String(t || '').trim().toUpperCase());
     if (parMove){
@@ -3884,7 +3890,13 @@ function classMoveLine(h){
   if (h.classMove !== 'down' && h.classMove !== 'up') return '';
   const dir = h.classMove === 'down' ? 'Dropping in class' : 'Moving up in class';
   const bits = [];
-  if (h.todayClaim) bits.push(`today ${money(h.todayClaim)} claiming`);
+  // v2.99 (Robert, BEL 9 Oct R2 City Blocks): an optional claimer is not a claiming
+  // race - say which kind today's race is, so a tag figure is not read as the race.
+  if (h.todayClaim){
+    const t = String(h.ai3RaceType || '').toUpperCase();
+    const kind = (t === 'AO' || t === 'CO' || t === 'NO' || t === 'MO') ? 'optional claiming' : 'claiming';
+    bits.push(`today ${kind} at ${money(h.todayClaim)}${h.classTxtToday ? ' (' + escHtml(String(h.classTxtToday).trim()) + ')' : ''}`);
+  }
   const lastCls = h.ppRaces && h.ppRaces[0] ? h.ppRaces[0].classTxt : null;
   if (lastCls) bits.push(`last out ${escHtml(lastCls)}`);
   if (classLevelText(h)) bits.push(classLevelText(h));
@@ -8830,7 +8842,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v2.98 · released 8 October 2026 · build 2026-10-08-g</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v3.00 · released 9 October 2026 · build 2026-10-09-b</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
