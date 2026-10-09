@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v2.96 — Race Card Reader</title>
+<title>Overlay Board v2.97 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1192,7 +1192,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v2.96</span> · released 8 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v2.97</span> · released 8 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -1323,7 +1323,7 @@
         <p><b>When the Main Threat matters least.</b> When the figure favourite is BET — DEFINITIVE, and above all a <b>CLEAR FIGURE FAV</b>, read the Main Threat as the horse to run second, not as a reason to change the call.</p>
         <p><b>Top 4 — which of the four the record backs.</b> Each Top 4 horse shows the facts it leads the other three on (last figure, 3-race average, Prime Power, early speed, recent form). The more of the five it leads, the more the past performances support it; a horse that leads on none of them is the first one to cross off.</p>
         <p><b>\u2b07 Demotion flags.</b> Two facts push a horse down the ranking: <b>FIGURE FROM OTHER SURFACE</b> \u2014 its top last figure was run on a different surface from today's \u2014 and <b>TROUBLE LAST OUT</b> \u2014 it finished 4th or worse last time with a trouble comment (steadied, bumped, checked, stumbled). The horses behind it move up; pretenders stay out of the ranking.</p>
-        <p><b>\u2296 Fade signals.</b> Five facts that mark a horse down: back within 14 days; stretching out from a sprint to a route; first blinkers on a horse with 4 or fewer starts; a trainer winning under 10% in this horse's situation (from the file's trainer statistics); the best closer in a dirt sprint. Each one is noted on the horse and adds 5 to its rank score. One signal: use the horse underneath, not on top. Two or more: strike it.</p>
+        <p><b>\u2296 Fade signals.</b> Five facts that mark a horse down: back within 14 days; stretching out from a sprint to a route; first blinkers on a horse with 4 or fewer starts; a trainer winning under 10% in this horse's situation (from the file's trainer statistics), unless the horse finished ahead of a rival in today's field within the last 90 days; the best closer in a dirt sprint. Each one is noted on the horse and adds 5 to its rank score. One signal: use the horse underneath, not on top. Two or more: strike it.</p>
         <p><b>Below the Top 4.</b> The 5th-ranked horse is a reasonable extra name for exotics. Horses ranked 7th or lower can be passed over.</p>
         <p><b>PRICE PLAY and the Concurrence fold — information only.</b> The Price Play names the favourite from the earnings line in races with no figure favourite; read it, don't bet it. The Concurrence fold shows whether two other selection methods agree; agreement alone does not make a stronger bet.</p>
         <p><b>In one line:</b> follow the verdicts — BET — DEFINITIVE and BET — NORMAL to win, EXOTICS as exactas only, check the Main Threat when the favourite is flagged, and use the Top 4 leads to decide who belongs in your exotics.</p>
@@ -4007,7 +4007,7 @@ function fadeSignals(h, live){
   if (String(h.equipChange || '').trim() === '1' && pp.length <= 4) out.push(`first blinkers, ${pp.length} start${pp.length === 1 ? '' : 's'}`);
   let best = null;
   (h.keyStats || []).forEach(k => { if (FADE_SIT.includes(String(k.category || '').trim()) && k.starts >= 15 && k.winPct != null && (best == null || k.winPct > best.winPct)) best = k; });
-  if (best && best.winPct < 10) out.push(`trainer ${Math.round(best.winPct)}% in "${String(best.category).trim()}" (${best.starts} starts)`);
+  if (best && best.winPct < 10 && !(globalThis.__waiveH2H !== false && h2hEdge90(h, live))   /* v2.97: no trainer fade when the horse beat a rival in this field within 90 days */) out.push(`trainer ${Math.round(best.winPct)}% in "${String(best.category).trim()}" (${best.starts} starts)`);
   const g = ai3_surfaceGroup(h.surface || '');
   if (g !== 'T' && h.raceDistYds && h.raceDistYds < 1760){
     const lp = x => { const v = (x.ppRaces || []).slice(0, 3).map(q => q.latePace).filter(v => v != null && v > 0); return v.length ? Math.max(...v) : null; };
@@ -4018,6 +4018,20 @@ function fadeSignals(h, live){
     }
   }
   return out;
+}
+function h2hEdge90(h, live){
+  const today = String(h.raceDateYmd || '');
+  const mine = {}; (h.ppRaces || []).forEach(q => { mine[q.date + '|' + q.track + '|' + q.raceNum] = parseInt(q.fin, 10); });
+  const ymd = v => { const t = String(v || ''); return t.length === 8 ? new Date(+t.slice(0, 4), +t.slice(4, 6) - 1, +t.slice(6, 8)) : null; };
+  return live.some(y => {
+    if (y === h) return false;
+    const sh = (y.ppRaces || []).filter(q => mine[q.date + '|' + q.track + '|' + q.raceNum] != null && !isNaN(parseInt(q.fin, 10)));
+    if (!sh.length) return false;
+    const q = sh.sort((a, b) => String(b.date).localeCompare(String(a.date)))[0];
+    const d0 = ymd(today), d1 = ymd(q.date);
+    if (d0 && d1 && (d0 - d1) / 864e5 > 90) return false;
+    return mine[q.date + '|' + q.track + '|' + q.raceNum] < parseInt(q.fin, 10);
+  });
 }
 function fadeNotes(list){
   if (!list || !list.length) return '';
@@ -8788,7 +8802,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v2.96 · released 8 October 2026 · build 2026-10-08-e</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v2.97 · released 8 October 2026 · build 2026-10-08-f</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
