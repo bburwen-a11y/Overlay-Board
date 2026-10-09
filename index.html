@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v3.00 — Race Card Reader</title>
+<title>Overlay Board v3.01 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -807,6 +807,10 @@
   .bo-chip{display:inline-block; margin-left:6px; padding:1px 6px; border:1px solid #1F5A33; border-radius:3px; color:#1F5A33; font-family:var(--mono); font-size:10.5px; font-weight:700; vertical-align:middle;}
   .h2h-note{font-size:12px; color:#1F5A33; margin:2px 0 0;}
   table.rf-t td.rf-h2h{white-space:normal; min-width:150px;}
+  .vb-value .vb-tier, .vb-c.vb-value{background:#2E6E8E; color:#fff;}
+  .vb-threat .vb-tier, .vb-c.vb-threat{background:#8E4B2E; color:#fff;}
+  .vd-value{border-color:#2E6E8E; background:#e7f1f6;} .vd-value .vd-tier{color:#2E6E8E;}
+  .vd-threat{border-color:#8E4B2E; background:#f6ece7;} .vd-threat .vd-tier{color:#8E4B2E;}
   .pp-lvl{font-family:var(--mono); font-size:10px; opacity:.7; margin-left:3px;}
   .pp-works{font-family:var(--mono); font-size:11.5px; line-height:1.7;}
   .pp-record{
@@ -1193,7 +1197,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v3.00</span> · released 9 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v3.01</span> · released 9 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -1315,7 +1319,7 @@
 
       <div class="help-block help-guide">
         <h3>Using the board — what to bet, what to read</h3>
-        <p><b>Today’s verdicts.</b> Every race gets one verdict at the top of the Decision board and on its card. <b>BET — DEFINITIVE</b> (the figure favourite meets every definitive condition): win, plus an exacta with it on top of the next four ranked. <b>BET — NORMAL</b> (a figure favourite with no flag that misses one definitive condition): win as a conditional wager, only if the horse is 2-1 or higher at post; below that, skip it. <b>EXOTICS</b> (top-ranked horse with no ⬇ flag or ⊖ fade, 8 or fewer runners, race not red): exacta with it on top of the next three ranked, no win bet. <b>PASS</b>: no bet, with the reason.</p>
+        <p><b>Today’s verdicts.</b> Every race gets one verdict at the top of the Decision board and on its card. <b>BET — DEFINITIVE</b> (the figure favourite meets every definitive condition): win, plus an exacta with it on top of the next four ranked. <b>BET — NORMAL</b> (a figure favourite with no flag that misses one definitive condition): win as a conditional wager, only if the horse is 2-1 or higher at post; below that, skip it. <b>BET — VALUE</b> (no figure favourite; the horse with the top 3-race figure average is dropping 2 or more class points, has 2 or more speed points and no \u2b07 flag or \u2296 fade): win at any price, or only at 2-1 or higher if it is the morning-line favourite. <b>BET — THREAT</b> (the figure favourite is flagged and its Main Threat carries no flag or fade): win on the Main Threat. <b>EXOTICS</b> (top-ranked horse with no ⬇ flag or ⊖ fade, 8 or fewer runners, race not red): exacta with it on top of the next three ranked, no win bet. <b>PASS</b>: no bet, with the reason.</p>
         <p>Every race lands in one of four situations. Work down the Decision board and treat each one this way.</p>
         <p><b>1. BET — DEFINITIVE.</b> The figure favourite also has the top last figure on its own, has been in the money in most of its recent starts, and shows early speed (2 or more speed points), with no claiming drop or surface switch against it. Every condition points the same way: win, plus the exacta key.</p>
         <p><b>2. BET — NORMAL.</b> The favourite holds the top 3-race average on its own with no flag, but misses one definitive condition (the top last figure, recent form or early speed). Win as a conditional wager, only at 2-1 or higher at post. Check the <b>MAIN THREAT</b> line and the Top 4 for the horse most likely to beat it.</p>
@@ -7823,8 +7827,25 @@ function verdictOf(rs){
       return {tier: 'BET', h: p.h, under: next(p.h, 3), why: 'figure favourite (the market favourite also holds the top 3-race figure average, no flag), not definitive: ' + playMissingText(rs, p.h)};
     }
     const why = flags.map(f => String(f).replace(/<[^>]+>/g, '')).join('; ');
-    return {tier: 'PASS', why: `figure favourite ${p.h.horse} is flagged (${why}) \u2014 if you play, look at the Main Threat`};
+    // v3.01 BET - THREAT: a flagged figure favourite's Main Threat, if it carries
+    // no flag or fade of its own.
+    const sep = pickSeparation(rs, p.h);
+    const T = sep && sep.T ? sep.T : null;
+    const tr = T ? rf.find(r => r.h === T) : null;
+    if (T && tr && !(tr.dflags || []).length && !(tr.fades || []).length && !isScratchedNow(rs, T))
+      return {tier: 'THREAT', h: T, under: [], why: `figure favourite ${p.h.horse} is flagged (${why}); its Main Threat carries no flag or fade`};
+    return {tier: 'PASS', why: `figure favourite ${p.h.horse} is flagged (${why}), and its Main Threat ${T ? T.horse + ' carries a \u2b07 flag or \u2296 fade' : 'is not clear'}`};
   }
+  // v3.01 BET - VALUE: no figure favourite; the horse holding the top 3-race
+  // figure average, dropping 2+ class points, with 2+ speed points and no flag or
+  // fade. If it is the morning-line favourite, only at 2-1 or higher.
+  const live = (rs.horses || []).filter(h => !isScratchedNow(rs, h));
+  const a3top = Math.max(...live.map(h => avg3Of(h)).filter(v => v != null));
+  const mlFavH = live.slice().sort((a, b) => (a.decimalOdds || 99) - (b.decimalOdds || 99))[0];
+  const val = rf.find(r => { const h = r.h, a = avg3Of(h);
+    return a != null && a === a3top && h.todayClassPar != null && h.lastClassPar != null && (h.todayClassPar - h.lastClassPar) <= -2
+      && h.quirin != null && h.quirin >= 2 && !(r.dflags || []).length && !(r.fades || []).length; });
+  if (val) return {tier: 'VALUE', h: val.h, under: [], fav: val.h === mlFavH, why: `top 3-race figure average, dropping ${Math.abs(val.h.todayClassPar - val.h.lastClassPar).toFixed(1)} class points, ${val.h.quirin} speed points, no flag or fade`};
   const top = rf[0];
   const clean = top && !(top.dflags || []).length && !(top.fades || []).length;
   if (top && clean && n <= 8 && lvl !== 'red')
@@ -7836,7 +7857,7 @@ function verdictOf(rs){
     : 'no figure favourite';
   return {tier: 'PASS', why};
 }
-const V_LABEL = {STRONG: 'BET \u2014 DEFINITIVE', BET: 'BET \u2014 NORMAL', EXOTICS: 'EXOTICS', PASS: 'PASS'};
+const V_LABEL = {STRONG: 'BET \u2014 DEFINITIVE', BET: 'BET \u2014 NORMAL', VALUE: 'BET \u2014 VALUE', THREAT: 'BET \u2014 THREAT', EXOTICS: 'EXOTICS', PASS: 'PASS'};
 function verdictTicket(v){
   if (!v.h) return '';
   const num = h => '#' + (h.post || '?');
@@ -7845,6 +7866,8 @@ function verdictTicket(v){
   // condition; DEFINITIVE is bet at any price.
   if (v.tier === 'STRONG') return `Win ${num(v.h)} at any price \u00b7 Exacta ${num(v.h)} over ${under}`;
   if (v.tier === 'BET') return `Win ${num(v.h)} \u2014 conditional: only if ${num(v.h)} is 2-1 or higher at post`;
+  if (v.tier === 'VALUE') return v.fav ? `Win ${num(v.h)} \u2014 conditional: only if ${num(v.h)} is 2-1 or higher at post` : `Win ${num(v.h)} at any price`;
+  if (v.tier === 'THREAT') return `Win ${num(v.h)} at any price (the Main Threat)`;
   if (v.tier === 'EXOTICS') return `Exacta ${num(v.h)} over ${under} \u2014 no win bet`;
   return '';
 }
@@ -7856,7 +7879,7 @@ function verdictBanner(rs){
 }
 function buildVerdictBoard(raceSummaries){
   const rows = raceSummaries.map(rs => ({rs, v: verdictOf(rs)}));
-  const order = ['STRONG', 'BET', 'EXOTICS', 'PASS'];
+  const order = ['STRONG', 'BET', 'VALUE', 'THREAT', 'EXOTICS', 'PASS'];
   const counts = order.map(t => rows.filter(r => r.v.tier === t).length);
   const line = r => `<div class="vb-row vb-${r.v.tier.toLowerCase()}"><a class="race-jump vb-race" data-goto-pick="${escAttr(r.rs.race)}" href="#">R${escHtml(r.rs.race)}</a>`
     + `<span class="vb-tier">${V_LABEL[r.v.tier]}</span>`
@@ -8155,7 +8178,7 @@ function renderPicks(raceSummaries){
   const verdicts = buildVerdictBoard(raceSummaries);
   // v2.91: the verdicts lead the board on every card, plays or not.
   list.innerHTML = verdicts + index + best + blocks.join('');
-  document.getElementById('pickCount').textContent = raceSummaries.filter(rs => ['STRONG', 'BET'].includes(verdictOf(rs).tier)).length;
+  document.getElementById('pickCount').textContent = raceSummaries.filter(rs => ['STRONG', 'BET', 'VALUE', 'THREAT'].includes(verdictOf(rs).tier)).length;
   bindTapHandlers(list);
   // The race-number block carries its own handler: bindTapHandlers keys off
   // .race-jump + data-jump, and wrapping the number in that anchor let other
@@ -8842,7 +8865,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v3.00 · released 9 October 2026 · build 2026-10-09-b</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v3.01 · released 9 October 2026 · build 2026-10-09-c</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
