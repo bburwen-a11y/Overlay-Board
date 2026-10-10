@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v3.10 — Race Card Reader</title>
+<title>Overlay Board v3.12 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -817,6 +817,8 @@
   .vd-play{border-color:#2F6B3F; background:#eef6ef;} .vd-play .vd-tier{color:#2F6B3F;}
   .vd-use{font-size:13.5px; margin-top:2px;}
   .vd-win{font-size:13px; margin-top:4px; color:#1F5A33;}
+  .vd-warn, .vb-warn{color:#A33A2A; font-size:12.5px; font-weight:700; margin-top:3px;}
+  .rf-warn{color:#A33A2A; margin-top:3px;}
   .pp-lvl{font-family:var(--mono); font-size:10px; opacity:.7; margin-left:3px;}
   .pp-works{font-family:var(--mono); font-size:11.5px; line-height:1.7;}
   .pp-record{
@@ -1203,7 +1205,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v3.10</span> · released 9 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v3.12</span> · released 10 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -6921,7 +6923,7 @@ function raceFactsTable(rs, extra, label){
       + `<td>${escHtml(sd)}</td>`
       + `<td class="rf-cls${cmWarn ? ' rf-bold' : ''}">${pastClassCode(l) ? `${escHtml(pastClassCode(l))} \u2192 ${escHtml(todayClassCode(rs, true))}<br>` : ''}${h.todayClassPar != null && h.lastClassPar != null ? `level ${Math.round(h.lastClassPar)} \u2192 ${Math.round(h.todayClassPar)} (${h.todayClassPar - h.lastClassPar > 0 ? '+' : ''}${(h.todayClassPar - h.lastClassPar).toFixed(1)}) \u00b7 ` : ''}${escHtml(cm)} vs last race${f.cd ? ` \u00b7 today's tag is ${f.cd.pct}% of its highest in the last 4` : ''}</td>`
       + `<td>${lastTxt}</td>`
-      + `<td class="rf-h2h">${escHtml(h2hCell(h, rows.map(x => x.h)))}</td>`
+      + `<td class="rf-h2h">${escHtml(h2hCell(h, rows.map(x => x.h)))}${(() => { const ra = rivalsAhead(rs, h); return ra.length ? `<div class="rf-warn"><b>\u26a0 Rated behind ${ra.map(x => '#' + (x.h.post || '?') + ' (' + escHtml(x.why) + ')').join(', ')}</b></div>` : ''; })()}</td>`
       + `<td${cls(f.er && f.er.rank === 1 ? 'best' : '')}>${f.eps != null ? money(Math.round(f.eps)) + ' ' + rk(f.er) : '—'}</td>`
       + `<td>${escHtml(style || '—')}</td>`
       + `<td>${h.layoffDays != null ? h.layoffDays + 'd' : '—'}</td>`
@@ -7910,15 +7912,36 @@ function verdictTicket(v){
   if (v.tier === 'EXOTICS') return `Exacta ${num(v.h)} over ${under} \u2014 no win bet`;
   return '';
 }
+// v3.11 (Robert, BEL 9 Oct R2: "you stated this plainly then ignored it"). The
+// race card already showed Kay Cup beating City Blocks and rating 8.5L ahead on
+// common company; the plan now carries that warning beside the horse it names.
+function rivalsAhead(rs, h){
+  if (!h) return [];
+  const live = (rs.horses || []).filter(x => !isScratchedNow(rs, x));
+  const out = [];
+  try { h2hFacts(h, live).behind.forEach(x => out.push({h: x.h, why: 'beat it in their last meeting (' + x.md + ')'})); } catch(e){}
+  try { findCommonCompany(live).filter(c => c.oth === h && !c.viaInField).forEach(c => {
+    const prev = out.find(o => o.h === c.fav);
+    const t = 'rates ' + (Math.round(c.sep * 10) / 10) + 'L ahead on common company';
+    if (prev) prev.why += '; ' + t; else out.push({h: c.fav, why: t});
+  }); } catch(e){}
+  return out;
+}
+function rivalsNote(rs, h){
+  const r = rivalsAhead(rs, h);
+  if (!r.length) return '';
+  return `<div class="vd-warn"><b>\u26a0 Rated behind: ${r.map(x => '#' + (x.h.post || '?') + ' ' + escHtml(x.h.horse) + ' \u2014 ' + escHtml(x.why)).join(' \u00b7 ')}</b></div>`;
+}
+
 function verdictBanner(rs){
   const pl = racePlan(rs);
   if (!pl.play) return `<div class="vd vd-pass"><div class="vd-tier">SKIP</div><div class="vd-why">${escHtml(pl.why)}</div></div>`;
   const t = planTickets(pl);
   return `<div class="vd vd-play"><div class="vd-tier">PLAY${pl.wide ? ' \u00b7 WIDE FIELD' : ''}</div>`
-    + `<div class="vd-horse">Key ${horseLabel(pl.key)}</div>`
+    + `<div class="vd-horse">Key ${horseLabel(pl.key)}</div>` + rivalsNote(rs, pl.key)
     + `<div class="vd-use">Use ${pl.use.map(h => horseLabel(h)).join(' \u00b7 ')}</div>`
     + `<div class="vd-ticket">${escHtml(t[0])}<br>${escHtml(t[1])}</div>`
-    + (pl.win ? `<div class="vd-win"><b>${escHtml(pl.win.label)}</b> \u00b7 ${escHtml(pl.win.text)}</div>` : `<div class="vd-why">No win bet in this race.</div>`)
+    + (pl.win ? `<div class="vd-win"><b>${escHtml(pl.win.label)}</b> \u00b7 ${escHtml(pl.win.text)}</div>` + (pl.v.h !== pl.key ? rivalsNote(rs, pl.v.h) : '') : `<div class="vd-why">No win bet in this race.</div>`)
     + `</div>`;
 }
 function buildVerdictBoard(raceSummaries){
@@ -7934,6 +7957,7 @@ function buildVerdictBoard(raceSummaries){
       + `<span class="vb-horse">Key ${num(r.pl.key)} ${escHtml(r.pl.key.horse)} (${escHtml(r.pl.key.oddsStr || '')})</span>`
       + `<span class="vb-ticket">Use ${r.pl.use.map(num).join(', ')} \u00b7 ${escHtml(t[0])} \u00b7 or ${escHtml(t[1])}</span>`
       + (r.pl.win ? `<span class="vb-ticket vb-win">${escHtml(r.pl.win.label)}: ${escHtml(r.pl.win.text)}</span>` : '')
+      + (rivalsAhead(r.rs, r.pl.win ? r.pl.v.h : r.pl.key).length ? `<span class="vb-ticket vb-warn"><b>\u26a0 Rated behind: ${rivalsAhead(r.rs, r.pl.win ? r.pl.v.h : r.pl.key).map(x => '#' + (x.h.post || '?') + ' ' + escHtml(x.h.horse) + ' \u2014 ' + escHtml(x.why)).join(' \u00b7 ')}</b></span>` : '')
       + `</div>`;
   };
   return `<div class="verdict-board"><h3>Today\u2019s race plans</h3>`
@@ -8916,7 +8940,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v3.10 · released 9 October 2026 · build 2026-10-09-e</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v3.12 · released 10 October 2026 · build 2026-10-10-b</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
