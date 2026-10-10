@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v3.13 — Race Card Reader</title>
+<title>Overlay Board v3.20 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -820,6 +820,10 @@
   .vd-warn, .vb-warn{color:#A33A2A; font-size:12.5px; font-weight:700; margin-top:3px;}
   .rf-warn{color:#A33A2A; margin-top:3px;}
   .vd-diff{color:#A33A2A; font-weight:700;}
+  .fa{margin-top:6px; font-size:12.5px; line-height:1.45;}
+  .fa-for b{color:#1F5A33;} .fa-against b{color:#A33A2A;}
+  .vb-fa{font-family:inherit; font-size:12px; line-height:1.45;}
+  .vb-fa b:first-child{color:#1F5A33;}
   .pp-lvl{font-family:var(--mono); font-size:10px; opacity:.7; margin-left:3px;}
   .pp-works{font-family:var(--mono); font-size:11.5px; line-height:1.7;}
   .pp-record{
@@ -1206,7 +1210,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v3.13</span> · released 10 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v3.20</span> · released 10 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -7934,6 +7938,37 @@ function rivalsNote(rs, h){
   return `<div class="vd-warn"><b>\u26a0 Rated behind: ${r.map(x => '#' + (x.h.post || '?') + ' ' + escHtml(x.h.horse) + ' \u2014 ' + escHtml(x.why)).join(' \u00b7 ')}</b></div>`;
 }
 
+// v3.20 (Robert, 10 Oct: "anything to make it clearer"). Every call shows its
+// working: the facts FOR and AGAINST the named horse, past-performance only.
+function forAgainst(rs, h){
+  const live = (rs.horses || []).filter(x => !isScratchedNow(rs, x));
+  const rf = rankedField(rs, []); const me = rf.find(r => r.h === h) || {};
+  const rk = (get, desc) => { const v = get(h); if (v == null) return null; const vals = live.map(get).filter(x => x != null); const better = vals.filter(x => desc ? x > v : x < v).length; const tie = vals.filter(x => x === v).length > 1; return {rank: better + 1, tie, of: vals.length}; };
+  const F = [], A = [];
+  const a3 = rk(x => avg3Of(x), true), lf = rk(x => x.lastSpd, true), pp = rk(x => x.rawPP, true), ml = rk(x => x.decimalOdds, false);
+  const pos = r => r ? '#' + r.rank + (r.tie ? '=' : '') : '';
+  if (a3){ if (a3.rank === 1) F.push('best 3-race figure average' + (a3.tie ? ' (shared)' : '')); else if (a3.rank >= 4) A.push('3-race figure average only ' + pos(a3)); }
+  if (lf){ if (lf.rank === 1) F.push(`best last figure (${h.lastSpd})` + (lf.tie ? ' (shared)' : '')); else if (lf.rank >= 4) A.push(`last figure only ${pos(lf)} (${h.lastSpd})`); }
+  if (pp){ if (pp.rank === 1) F.push('best Prime Power'); else if (pp.rank >= 4) A.push('Prime Power only ' + pos(pp)); }
+  if (ml){ if (ml.rank === 1) F.push('morning-line favourite (' + (h.mlOddsStr || '') + ')'); else if (ml.rank >= 3) A.push(`not favoured (morning line ${h.mlOddsStr || ''}, ${pos(ml)} choice)`); }
+  const q = h.quirin; if (q != null){ const top = Math.max(...live.map(x => x.quirin || 0)); if (q >= 2 && q === top) F.push(`most early speed (${q} points)`); else if (q >= 2) F.push(`early speed (${q} points)`); else A.push(`little early speed (${q} point${q === 1 ? '' : 's'})`); }
+  const rec = (h.ppRaces || []).slice(0, 4); if (rec.length >= 2){ const itm = rec.filter(r => parseInt(r.fin, 10) <= 3).length; if (itm >= 3) F.push(`in the money ${itm} of last ${rec.length}`); else if (itm <= 1) A.push(`in the money only ${itm} of last ${rec.length}`); }
+  if ((h.ppRaces || [])[0] && parseInt(h.ppRaces[0].fin, 10) === 1) F.push('won its last start');
+  if (h.todayClassPar != null && h.lastClassPar != null){ const d = h.todayClassPar - h.lastClassPar; if (d <= -2) F.push(`dropping ${Math.abs(d).toFixed(1)} class points`); else if (d >= 2) A.push(`moving up ${d.toFixed(1)} class points`); }
+  if (h.layoffDays != null && h.layoffDays >= 60) A.push(`off ${h.layoffDays} days`);
+  (me.dflags || []).forEach(f => A.push(f.text));
+  (me.fades || []).forEach(f => A.push(f));
+  if ((me.boosts || []).some(b => b.code === 'epsup')) F.push('top earnings per start, moving up');
+  try { const hf = h2hFacts(h, live); const above = hf.ahead.filter(x => { const r = rf.find(y => y.h === x.h); return r && me.rank && r.rank < me.rank; }); if (above.length) F.push('finished ahead of ' + above.map(x => '#' + (x.h.post || '?')).join(', ') + ' (ranked above it) in their last meeting'); } catch(e){}
+  rivalsAhead(rs, h).forEach(x => A.push('rated behind #' + (x.h.post || '?') + ' ' + x.h.horse + ' (' + x.why + ')'));
+  if (me.rank && me.rank > 1) A.push(`ranked #${me.rank} overall (#${rf[0].h.post || '?'} ${rf[0].h.horse} ranks higher)`);
+  return {F, A};
+}
+function forAgainstHTML(rs, h){
+  const fa = forAgainst(rs, h);
+  return `<div class="fa"><div class="fa-for"><b>For:</b> ${fa.F.length ? fa.F.map(escHtml).join(' \u00b7 ') : '\u2014'}</div><div class="fa-against"><b>Against:</b> ${fa.A.length ? fa.A.map(escHtml).join(' \u00b7 ') : '\u2014'}</div></div>`;
+}
+
 function verdictBanner(rs){
   const pl = racePlan(rs);
   if (!pl.play) return `<div class="vd vd-pass"><div class="vd-tier">SKIP</div><div class="vd-why">${escHtml(pl.why)}</div></div>`;
@@ -7942,7 +7977,7 @@ function verdictBanner(rs){
     + `<div class="vd-horse">Key ${horseLabel(pl.key)}</div>` + rivalsNote(rs, pl.key)
     + `<div class="vd-use">Use ${pl.use.map(h => horseLabel(h)).join(' \u00b7 ')}</div>`
     + `<div class="vd-ticket">${escHtml(t[0])}<br>${escHtml(t[1])}</div>`
-    + (pl.win ? `<div class="vd-win"><b>${escHtml(pl.win.label)}</b> \u00b7 ${escHtml(pl.win.text)}${pl.v.h !== pl.key ? ` <span class="vd-diff">\u2014 win bet is ${horseLabel(pl.v.h)}, not the Key</span>` : ''}</div>` + (pl.v.h !== pl.key ? rivalsNote(rs, pl.v.h) : '') : `<div class="vd-why">No win bet in this race.</div>`)
+    + (pl.win ? `<div class="vd-win"><b>${escHtml(pl.win.label)}</b> \u00b7 ${escHtml(pl.win.text)}${pl.v.h !== pl.key ? ` <span class="vd-diff">\u2014 win bet is ${horseLabel(pl.v.h)}, not the Key</span>` : ''}</div>` + forAgainstHTML(rs, pl.v.h) : `<div class="vd-why">No win bet in this race.</div>` + forAgainstHTML(rs, pl.key))
     + `</div>`;
 }
 function buildVerdictBoard(raceSummaries){
@@ -7957,7 +7992,8 @@ function buildVerdictBoard(raceSummaries){
     return `<div class="vb-row vb-play">${go}<span class="vb-tier">PLAY</span>`
       + `<span class="vb-horse">Key ${num(r.pl.key)} ${escHtml(r.pl.key.horse)} (${escHtml(r.pl.key.oddsStr || '')})</span>`
       + `<span class="vb-ticket">Use ${r.pl.use.map(num).join(', ')} \u00b7 ${escHtml(t[0])} \u00b7 or ${escHtml(t[1])}</span>`
-      + (r.pl.win ? `<span class="vb-ticket vb-win">${escHtml(r.pl.win.label)}: ${escHtml(r.pl.win.text)}${r.pl.v.h !== r.pl.key ? ` \u2014 win bet is #${escHtml(r.pl.v.h.post || '?')} ${escHtml(r.pl.v.h.horse)}, not the Key` : ''}</span>` : '')
+      + (r.pl.win ? `<span class="vb-ticket vb-win">${escHtml(r.pl.win.label)}: ${escHtml(r.pl.win.text)}${r.pl.v.h !== r.pl.key ? ` <span class="vd-diff">\u2014 win bet is #${escHtml(r.pl.v.h.post || '?')} ${escHtml(r.pl.v.h.horse)}, not the Key</span>` : ''}</span>` : '')
+      + (() => { const fa = forAgainst(r.rs, r.pl.win ? r.pl.v.h : r.pl.key); return `<span class="vb-ticket vb-fa"><b>For:</b> ${fa.F.slice(0, 4).map(escHtml).join(' \u00b7 ') || '\u2014'}<br><b>Against:</b> ${fa.A.slice(0, 4).map(escHtml).join(' \u00b7 ') || '\u2014'}</span>`; })()
       + (rivalsAhead(r.rs, r.pl.win ? r.pl.v.h : r.pl.key).length ? `<span class="vb-ticket vb-warn"><b>\u26a0 Rated behind: ${rivalsAhead(r.rs, r.pl.win ? r.pl.v.h : r.pl.key).map(x => '#' + (x.h.post || '?') + ' ' + escHtml(x.h.horse) + ' \u2014 ' + escHtml(x.why)).join(' \u00b7 ')}</b></span>` : '')
       + `</div>`;
   };
@@ -8941,7 +8977,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v3.13 · released 10 October 2026 · build 2026-10-10-c</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v3.20 · released 10 October 2026 · build 2026-10-10-e</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
