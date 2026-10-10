@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v3.21 — Race Card Reader</title>
+<title>Overlay Board v3.23 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1210,7 +1210,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v3.21</span> · released 10 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v3.23</span> · released 10 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -7842,6 +7842,15 @@ function racePlan(rs){
   const p = pickFor(rs);
   const figFav = p && !p.none && p.line === 'primary' && !pickPassReasons(p.h).length;
   let skip = null;
+  // v3.22 (Robert, BEL 10 Oct R1: "top pick #4 while definitive #7"): a BET
+  // verdict always stands - the race is never shown as SKIP when it carries a
+  // win bet. In a thin field only the win bet is given, no exotics.
+  const hasBet = v && v.h && ['STRONG', 'BET', 'VALUE', 'THREAT'].includes(v.tier);
+  if (hasBet && (lvl === 'red' || (n >= 9 && !figFav) || rf.length < 4)){
+    const why = lvl === 'red' ? 'too few past starts in this field for exotics' : n >= 9 && !figFav ? `${n} runners and no figure favourite \u2014 too open for exotics` : 'too few ranked runners for exotics';
+    const nb = rf.map(r => r.h).find(h => h !== v.h) || null;
+    return {play: true, winOnly: true, why, key: v.h, nextBest: nb, use: [], v, win: {label: vLabel(v), text: verdictTicket(v).split(' \u00b7 ')[0]}, n};
+  }
   if (lvl === 'red') skip = 'too few past starts in this field to read';
   else if (n >= 9 && !figFav) skip = `${n} runners and no figure favourite`;
   else if (rf.length < 4) skip = 'too few ranked runners';
@@ -7961,7 +7970,7 @@ function forAgainst(rs, h){
   if ((me.boosts || []).some(b => b.code === 'epsup')) F.push('top earnings per start, moving up');
   try { const hf = h2hFacts(h, live); const above = hf.ahead.filter(x => { const r = rf.find(y => y.h === x.h); return r && me.rank && r.rank < me.rank; }); if (above.length) F.push('finished ahead of ' + above.map(x => '#' + (x.h.post || '?')).join(', ') + ' (ranked above it) in their last meeting'); } catch(e){}
   rivalsAhead(rs, h).forEach(x => A.push('rated behind #' + (x.h.post || '?') + ' ' + x.h.horse + ' (' + x.why + ')'));
-  if (me.rank && me.rank > 1) A.push(`ranked #${me.rank} overall (#${rf[0].h.post || '?'} ${rf[0].h.horse} ranks higher)`);
+  if (me.rank && me.rank > 1) A.push(`#${rf[0].h.post || '?'} ${rf[0].h.horse} ranks higher on the overall score`);
   return {F, A};
 }
 function forAgainstHTML(rs, h){
@@ -7972,12 +7981,16 @@ function forAgainstHTML(rs, h){
 function verdictBanner(rs){
   const pl = racePlan(rs);
   if (!pl.play) return `<div class="vd vd-pass"><div class="vd-tier">SKIP \u2014 NO BET</div><div class="vd-why">${escHtml(pl.why)}</div>${pl.top ? `<div class="vd-horse" style="font-size:14px">Top pick ${horseLabel(pl.top)}</div>` + forAgainstHTML(rs, pl.top) : ''}</div>`;
+  if (pl.winOnly) return `<div class="vd vd-play"><div class="vd-tier">PLAY \u2014 WIN BET ONLY</div><div class="vd-why">${escHtml(pl.why)}</div>`
+    + `<div class="vd-win"><b>${escHtml(pl.win.label)}</b> \u00b7 ${escHtml(pl.win.text)} \u00b7 ${horseLabel(pl.v.h)}</div>`
+    + (pl.nextBest ? `<div class="vd-use">Next best ${horseLabel(pl.nextBest)}</div>` : '')
+    + rivalsNote(rs, pl.v.h) + forAgainstHTML(rs, pl.v.h) + `</div>`;
   const t = planTickets(pl);
   return `<div class="vd vd-play"><div class="vd-tier">PLAY${pl.wide ? ' \u00b7 WIDE FIELD' : ''}</div>`
     + `<div class="vd-horse">Key ${horseLabel(pl.key)}</div>` + rivalsNote(rs, pl.key)
     + `<div class="vd-use">Use ${pl.use.map(h => horseLabel(h)).join(' \u00b7 ')}</div>`
     + `<div class="vd-ticket">${escHtml(t[0])}<br>${escHtml(t[1])}</div>`
-    + (pl.win ? `<div class="vd-win"><b>${escHtml(pl.win.label)}</b> \u00b7 ${escHtml(pl.win.text)}${pl.v.h !== pl.key ? ` <span class="vd-diff">\u2014 win bet is ${horseLabel(pl.v.h)}, not the Key</span>` : ''}</div>` + forAgainstHTML(rs, pl.v.h) : `<div class="vd-why">No win bet in this race.</div>` + forAgainstHTML(rs, pl.key))
+    + (pl.win ? `<div class="vd-win"><b>${escHtml(pl.win.label)}</b> \u00b7 ${escHtml(pl.win.text)}${pl.v.h !== pl.key ? ` <span class="vd-diff">\u2014 win bet is ${horseLabel(pl.v.h)}; the Key ${horseLabel(pl.key)} is next best</span>` : ''}</div>` + forAgainstHTML(rs, pl.v.h) : `<div class="vd-why">No win bet in this race.</div>` + forAgainstHTML(rs, pl.key))
     + `</div>`;
 }
 function buildVerdictBoard(raceSummaries){
@@ -7988,11 +8001,16 @@ function buildVerdictBoard(raceSummaries){
   const line = r => {
     const go = `<a class="race-jump vb-race" data-goto-pick="${escAttr(r.rs.race)}" href="#">R${escHtml(r.rs.race)}</a>`;
     if (!r.pl.play) return `<div class="vb-row vb-pass">${go}<span class="vb-tier">SKIP</span><span class="vb-why">No bet \u2014 ${escHtml(r.pl.why)}</span>${r.pl.top ? `<span class="vb-ticket">Top pick ${num(r.pl.top)} ${escHtml(r.pl.top.horse)} (${escHtml(r.pl.top.oddsStr || '')})</span>` : ''}</div>`;
+    if (r.pl.winOnly){ const fa = forAgainst(r.rs, r.pl.v.h);
+      return `<div class="vb-row vb-play">${go}<span class="vb-tier">PLAY</span><span class="vb-horse">Win only: #${escHtml(r.pl.v.h.post || '?')} ${escHtml(r.pl.v.h.horse)} (${escHtml(r.pl.v.h.oddsStr || '')})</span>`
+        + `<span class="vb-ticket vb-win">${escHtml(r.pl.win.label)}: ${escHtml(r.pl.win.text)} \u2014 ${escHtml(r.pl.why)}</span>`
+        + (r.pl.nextBest ? `<span class="vb-ticket">Next best #${escHtml(r.pl.nextBest.post || '?')} ${escHtml(r.pl.nextBest.horse)} (${escHtml(r.pl.nextBest.oddsStr || '')})</span>` : '')
+        + `<span class="vb-ticket vb-fa"><b>For:</b> ${fa.F.slice(0, 4).map(escHtml).join(' \u00b7 ') || '\u2014'}<br><b>Against:</b> ${fa.A.slice(0, 4).map(escHtml).join(' \u00b7 ') || '\u2014'}</span></div>`; }
     const t = planTickets(r.pl);
     return `<div class="vb-row vb-play">${go}<span class="vb-tier">PLAY</span>`
       + `<span class="vb-horse">Key ${num(r.pl.key)} ${escHtml(r.pl.key.horse)} (${escHtml(r.pl.key.oddsStr || '')})</span>`
       + `<span class="vb-ticket">Use ${r.pl.use.map(num).join(', ')} \u00b7 ${escHtml(t[0])} \u00b7 or ${escHtml(t[1])}</span>`
-      + (r.pl.win ? `<span class="vb-ticket vb-win">${escHtml(r.pl.win.label)}: ${escHtml(r.pl.win.text)}${r.pl.v.h !== r.pl.key ? ` <span class="vd-diff">\u2014 win bet is #${escHtml(r.pl.v.h.post || '?')} ${escHtml(r.pl.v.h.horse)}, not the Key</span>` : ''}</span>` : '')
+      + (r.pl.win ? `<span class="vb-ticket vb-win">${escHtml(r.pl.win.label)}: ${escHtml(r.pl.win.text)}${r.pl.v.h !== r.pl.key ? ` <span class="vd-diff">\u2014 win bet is #${escHtml(r.pl.v.h.post || '?')} ${escHtml(r.pl.v.h.horse)}; the Key #${escHtml(r.pl.key.post || '?')} is next best</span>` : ''}</span>` : '')
       + (() => { const fa = forAgainst(r.rs, r.pl.win ? r.pl.v.h : r.pl.key); return `<span class="vb-ticket vb-fa"><b>For:</b> ${fa.F.slice(0, 4).map(escHtml).join(' \u00b7 ') || '\u2014'}<br><b>Against:</b> ${fa.A.slice(0, 4).map(escHtml).join(' \u00b7 ') || '\u2014'}</span>`; })()
       + (rivalsAhead(r.rs, r.pl.win ? r.pl.v.h : r.pl.key).length ? `<span class="vb-ticket vb-warn"><b>\u26a0 Rated behind: ${rivalsAhead(r.rs, r.pl.win ? r.pl.v.h : r.pl.key).map(x => '#' + (x.h.post || '?') + ' ' + escHtml(x.h.horse) + ' \u2014 ' + escHtml(x.why)).join(' \u00b7 ')}</b></span>` : '')
       + `</div>`;
@@ -8977,7 +8995,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v3.21 · released 10 October 2026 · build 2026-10-10-f</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v3.23 · released 10 October 2026 · build 2026-10-10-h</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
