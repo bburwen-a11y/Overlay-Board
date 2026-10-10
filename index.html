@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v3.20 — Race Card Reader</title>
+<title>Overlay Board v3.21 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1210,7 +1210,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v3.20</span> · released 10 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v3.21</span> · released 10 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -7845,7 +7845,7 @@ function racePlan(rs){
   if (lvl === 'red') skip = 'too few past starts in this field to read';
   else if (n >= 9 && !figFav) skip = `${n} runners and no figure favourite`;
   else if (rf.length < 4) skip = 'too few ranked runners';
-  if (skip) return {play: false, why: skip, v};
+  if (skip) return {play: false, why: skip, v, top: rf.length ? rf[0].h : null};   // v3.21: the top pick is still shown
   const wide = n >= 9;
   const key = rf[0].h, use = rf.slice(1, wide ? 5 : 4).map(r => r.h);
   let win = null;
@@ -7971,7 +7971,7 @@ function forAgainstHTML(rs, h){
 
 function verdictBanner(rs){
   const pl = racePlan(rs);
-  if (!pl.play) return `<div class="vd vd-pass"><div class="vd-tier">SKIP</div><div class="vd-why">${escHtml(pl.why)}</div></div>`;
+  if (!pl.play) return `<div class="vd vd-pass"><div class="vd-tier">SKIP \u2014 NO BET</div><div class="vd-why">${escHtml(pl.why)}</div>${pl.top ? `<div class="vd-horse" style="font-size:14px">Top pick ${horseLabel(pl.top)}</div>` + forAgainstHTML(rs, pl.top) : ''}</div>`;
   const t = planTickets(pl);
   return `<div class="vd vd-play"><div class="vd-tier">PLAY${pl.wide ? ' \u00b7 WIDE FIELD' : ''}</div>`
     + `<div class="vd-horse">Key ${horseLabel(pl.key)}</div>` + rivalsNote(rs, pl.key)
@@ -7987,7 +7987,7 @@ function buildVerdictBoard(raceSummaries){
   const num = h => '#' + (h.post || '?');
   const line = r => {
     const go = `<a class="race-jump vb-race" data-goto-pick="${escAttr(r.rs.race)}" href="#">R${escHtml(r.rs.race)}</a>`;
-    if (!r.pl.play) return `<div class="vb-row vb-pass">${go}<span class="vb-tier">SKIP</span><span class="vb-why">${escHtml(r.pl.why)}</span></div>`;
+    if (!r.pl.play) return `<div class="vb-row vb-pass">${go}<span class="vb-tier">SKIP</span><span class="vb-why">No bet \u2014 ${escHtml(r.pl.why)}</span>${r.pl.top ? `<span class="vb-ticket">Top pick ${num(r.pl.top)} ${escHtml(r.pl.top.horse)} (${escHtml(r.pl.top.oddsStr || '')})</span>` : ''}</div>`;
     const t = planTickets(r.pl);
     return `<div class="vb-row vb-play">${go}<span class="vb-tier">PLAY</span>`
       + `<span class="vb-horse">Key ${num(r.pl.key)} ${escHtml(r.pl.key.horse)} (${escHtml(r.pl.key.oddsStr || '')})</span>`
@@ -8977,7 +8977,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v3.20 · released 10 October 2026 · build 2026-10-10-e</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v3.21 · released 10 October 2026 · build 2026-10-10-f</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
