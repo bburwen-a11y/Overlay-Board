@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v3.23 — Race Card Reader</title>
+<title>Overlay Board v3.24 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1210,7 +1210,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v3.23</span> · released 10 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v3.24</span> · released 10 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -1332,7 +1332,7 @@
 
       <div class="help-block help-guide">
         <h3>Using the board — what to bet, what to read</h3>
-        <p><b>Race plans.</b> Every race is <b>PLAY</b> or <b>SKIP</b>. <b>SKIP</b>: the field is too lightly raced to read, or it has 9 or more runners and no figure favourite. <b>PLAY</b>: the <b>Key</b> is the top-ranked horse and <b>Use</b> lists the next three (next four in a field of 9 or more) — the horses to build exotics around, with two ready tickets: the Key on top of the Use horses, or a box of the four. A <b>win bet</b> is shown only where a BET verdict applies, with its condition.</p>
+        <p><b>Race plans.</b> Every race is <b>PLAY</b> or <b>SKIP</b>. <b>SKIP</b>: the field is too lightly raced to read, it has 9 or more runners and no figure favourite, or it is a maiden race with 2 or more first-time starters. <b>PLAY</b>: the <b>Key</b> is the top-ranked horse and <b>Use</b> lists the next three (next four in a field of 9 or more) — the horses to build exotics around, with two ready tickets: the Key on top of the Use horses, or a box of the four. A <b>win bet</b> is shown only where a BET verdict applies, with its condition.</p>
         <p><b>Today’s verdicts.</b> Every race gets one verdict at the top of the Decision board and on its card. <b>BET — DEFINITIVE</b> (the figure favourite meets every definitive condition): win, plus an exacta with it on top of the next four ranked. <b>BET — CONDITIONAL</b> (a figure favourite with no flag that misses one definitive condition): a conditional win wager \u2014 only if the horse is 2-1 or higher at post. Enter it with that condition and the odds at the off decide. <b>BET — VALUE</b> (no figure favourite; the horse with the top 3-race figure average is dropping 2 or more class points, has 2 or more speed points and no \u2b07 flag or \u2296 fade): win at any price, or only at 2-1 or higher if it is the morning-line favourite. <b>BET — THREAT</b> (the figure favourite is flagged and its Main Threat carries no flag or fade): win on the Main Threat. <b>EXOTICS</b> (top-ranked horse with no ⬇ flag or ⊖ fade, 8 or fewer runners, race not red): exacta with it on top of the next three ranked, no win bet. <b>PASS</b>: no bet, with the reason.</p>
         <p>Every race lands in one of four situations. Work down the Decision board and treat each one this way.</p>
         <p><b>1. BET — DEFINITIVE.</b> The figure favourite also has the top last figure on its own, has been in the money in most of its recent starts, and shows early speed (2 or more speed points), with no claiming drop or surface switch against it. Every condition points the same way: win, plus the exacta key.</p>
@@ -7842,6 +7842,14 @@ function racePlan(rs){
   const p = pickFor(rs);
   const figFav = p && !p.none && p.line === 'primary' && !pickPassReasons(p.h).length;
   let skip = null;
+  // v3.24 (Robert, 10 Oct: "if you can't pick a winner why bet exotics?"). A
+  // maiden race with 2 or more first-time starters is skipped outright - no win
+  // bet, no exotics. The top pick is still shown.
+  const liveH = (rs.horses || []).filter(h => !isScratchedNow(rs, h));
+  const rtype = String((liveH[0] || {}).ai3RaceType || '').toUpperCase();
+  const nDebut = liveH.filter(h => !(h.ppRaces || []).length).length;
+  if ((rtype === 'S' || rtype === 'M' || rtype === 'MO') && nDebut >= 2)
+    return {play: false, why: `maiden race with ${nDebut} first-time starters`, v, top: rf.length ? rf[0].h : null};
   // v3.22 (Robert, BEL 10 Oct R1: "top pick #4 while definitive #7"): a BET
   // verdict always stands - the race is never shown as SKIP when it carries a
   // win bet. In a thin field only the win bet is given, no exotics.
@@ -8995,7 +9003,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v3.23 · released 10 October 2026 · build 2026-10-10-h</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v3.24 · released 10 October 2026 · build 2026-10-10-i</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
