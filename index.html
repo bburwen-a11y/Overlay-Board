@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v3.31 — Race Card Reader</title>
+<title>Overlay Board v3.40 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -824,6 +824,7 @@
   .fa-for b{color:#1F5A33;} .fa-against b{color:#A33A2A;}
   .vb-fa{font-family:inherit; font-size:12px; line-height:1.45;}
   .vb-fa b:first-child{color:#1F5A33;}
+  .rf-fair{white-space:nowrap;} .rf-fvm{font-size:11px; color:var(--ink-soft);}
   .pp-lvl{font-family:var(--mono); font-size:10px; opacity:.7; margin-left:3px;}
   .pp-works{font-family:var(--mono); font-size:11.5px; line-height:1.7;}
   .pp-record{
@@ -1210,7 +1211,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v3.31</span> · released 11 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v3.40</span> · released 11 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -4176,13 +4177,13 @@ function rankedField(rs, extra){
     const mr = byMl.indexOf(h) + 1;
     const dflags = demotionFlags(h, live);
     const fades = fadeSignals(h, live);
-    const score = fr + pr + (typeof globalThis.__mlw === 'number' ? globalThis.__mlw : 2) * mr + demotePts() * dflags.length + fadePts() * fades.length;
+    const score = fr + pr + (typeof globalThis.__mlw === 'number' ? globalThis.__mlw : 1) * mr + demotePts() * dflags.length + fadePts() * fades.length;
     // v2.54 (Robert: "abbreviated rank with final number"): compact score.
     // figure rank + Prime Power rank (figure rank again under 3 starts, *)
     // + morning-line rank x2. No figure counts as 15. Lower is better.
     const fTxt = a3 ? String(fr) : '15';
-    const why = `${score} = ${fTxt} + ${few ? fTxt + '*' : String(pr)} + ${mr}\u00d72`;
-    const whyLong = debutByMl ? `RS ${score} = first-time starter in a lightly raced field, ranked by morning line #${mlr} (counted for figures, Prime Power and morning line \u00d72) \u00b7 lower is better` : `RS ${score} = figures ${a3 ? '#' + a3.rank : 'none (15)'} + ${few ? `figures again* (${h.ltStarts || 0} start${(h.ltStarts || 0) === 1 ? '' : 's'})` : `Prime Power #${pp ? pp.rank : '\u2014'}`} + morning line #${mr} \u00d72 \u00b7 lower is better`;
+    const why = `${score} = ${fTxt} + ${few ? fTxt + '*' : String(pr)} + ${mr}`;
+    const whyLong = debutByMl ? `RS ${score} = first-time starter in a lightly raced field, ranked by morning line #${mlr} (counted for figures, Prime Power and morning line) \u00b7 lower is better` : `RS ${score} = figures ${a3 ? '#' + a3.rank : 'none (15)'} + ${few ? `figures again* (${h.ltStarts || 0} start${(h.ltStarts || 0) === 1 ? '' : 's'})` : `Prime Power #${pp ? pp.rank : '\u2014'}`} + morning line #${mr} \u00b7 lower is better`;
     return {h, q: qSet.has(h), score, ml: mlOf(h), why, whyLong: whyLong + (dflags.length ? ` + ${demotePts() * dflags.length} flagged` : '') + (fades.length ? ` + ${fadePts() * fades.length} fade` : ''), dflags, fades};
   }).map(x => x).sort((a, b) => a.score - b.score || a.ml - b.ml)
     .map((x, i, arr) => { applyBoosts(x, arr, pool, byMl); return x; })
@@ -6873,6 +6874,7 @@ function ftsTable(rs){
 }
 
 function raceFactsTable(rs, extra, label){
+  const __fair = fairOddsTable(rs);
   const R = raceFactsRows(rs, extra);
   if (!R) return '';
   const {rows, today, word, td} = R;
@@ -6898,7 +6900,9 @@ function raceFactsTable(rs, extra, label){
     const bigLevelDrop = h.todayClassPar != null && h.lastClassPar != null && (h.todayClassPar - h.lastClassPar) <= -8;
     const cmWarn = f.cd || bigLevelDrop || (h.classMove === 'down' && l && parseInt(l.fin, 10) === 1 && h.claimDropRatio != null && h.claimDropRatio <= 0.75);
     const style = [String(h.runStyle || '').trim(), h.quirin != null && h.quirin !== '' ? `Q${h.quirin}` : ''].filter(Boolean).join(' ');
+    const __f = __fair.get(h);
     return `<tr><td>${i + 1}</td><td>${horseTap(h)}</td><td>${escHtml(h.mlOddsStr || '')}</td>`
+      + `<td class="rf-fair">${__f ? escHtml(oddsFrac(__f.odds)) + '<br><span class="rf-fvm">' + escHtml(fairVsMl(__f, h)) + '</span>' : '\u2014'}</td><td>${__f ? '#' + __f.rank : '\u2014'}</td>`
       + `<td${cls(f.a3 && f.a3.rank === 1 ? 'best' : '')}>${avg3Of(h) != null ? avg3Of(h).toFixed(1) + ' ' + rk(f.a3) : '—'}</td>`
       + `<td${cls(f.lf && f.lf.rank === 1 ? 'best' : '')}>${h.lastSpd != null ? Math.round(h.lastSpd) + ' ' + rk(f.lf) : '—'}</td>`
       + `<td${cls(f.pr && f.pr.rank === 1 ? 'best' : '')}>${rk(f.pr)}</td>`
@@ -6918,8 +6922,8 @@ function raceFactsTable(rs, extra, label){
       + `<td style="opacity:.75">${escHtml(f.why)}</td></tr>`;
   }).join('');
   return `<details class="rf"><summary>RACE FACTS \u25b8 ${escHtml(label || 'ranked horses side by side')}</summary><div class="rf-wrap"><table class="rf-t">`
-    + `<tr><th>RK</th><th>HORSE</th><th>ML</th><th>LAST-3</th><th>LAST</th><th>PRIME PWR</th><th>ON ${escHtml(word(today).toUpperCase())} ST-W-P-S</th><th>SAME SURF & TRIP (last 10)</th><th>CLASS &amp; LEVEL (LAST \u2192 TODAY)</th><th>LAST RACE</th><th>H2H (LAST MEETING)</th><th>$/START</th><th>STYLE</th><th>OFF</th><th>TRAINER MEET</th><th>JOCKEY MEET</th><th>POST</th><th>WT</th><th>NOTES</th><th>RS (LOW = BETTER)</th></tr>`
-    + body + `</table></div>${ftsTable(rs)}<div class="rf-key"><b>RS</b> (rank score) = fig + PP + ML\u00d72, +10 per \u2b07 flag, +5 per \u2296 fade signal, \u22125 for \u2b06 top $/start moving up, lower is better \u00b7 <b>H2H</b> = rivals in this field it finished ahead of / behind in their latest meeting (date) \u00b7 <b>CLASS</b> last \u2192 today, level \u00b12+ = up/down, <b>bold</b> = big drop \u00b7 red = never on today\u2019s surface \u00b7 green = best in field. Today: ${escHtml(word(today))}${td ? ', ' + escHtml(fmtDistY(td)) : ''}.<details class="rf-key-more"><summary>\u25b8 Full key</summary>SCORE = figure rank + Prime Power rank + morning-line rank \u00d72; lower is better. * = under 3 starts, figure rank used in place of Prime Power; no figure counts as 15. Tap a horse for its past performances. Surface record is starts-wins-places-shows: turf and all-weather are lifetime records from the file; dirt is counted from the past-performance lines shown (up to 10), as the file carries no separate dirt record; green there = best win rate on today's surface (2+ starts). Elsewhere green = best in this field on that line. Red = never raced on today's surface. Bold in CLASS = a big drop: class level 8+ points below the last race, or today's tag 50% or less of its highest in the last 4, or a last-out winner entered at 75% or less of its last tag. Class codes: MC maiden claiming, MOC maiden optional claiming, MSW maiden special weight, CLM claiming, OC optional claiming, ALW allowance, AOC allowance optional claiming, STR starter, STK stakes; number = claiming tag, (amount) = purse where there is no tag, n2l/n1x = eligibility, (s) = state-bred. LEVEL = class level in BRIS figure points, the figure a race of that kind normally draws: the average of BRIS's own class par printed in the file and a reading from its type, purse, tag, state-bred and fillies restrictions and track; every race is on this one scale. Up or down = 2 points or more. Today: ${escHtml(word(today))}${td ? ', ' + escHtml(fmtDistY(td)) : ''}.</details></div></details>`;
+    + `<tr><th>RK</th><th>HORSE</th><th>ML</th><th>FAIR (DATA)</th><th>ABILITY</th><th>LAST-3</th><th>LAST</th><th>PRIME PWR</th><th>ON ${escHtml(word(today).toUpperCase())} ST-W-P-S</th><th>SAME SURF & TRIP (last 10)</th><th>CLASS &amp; LEVEL (LAST \u2192 TODAY)</th><th>LAST RACE</th><th>H2H (LAST MEETING)</th><th>$/START</th><th>STYLE</th><th>OFF</th><th>TRAINER MEET</th><th>JOCKEY MEET</th><th>POST</th><th>WT</th><th>NOTES</th><th>RS (LOW = BETTER)</th></tr>`
+    + body + `</table></div>${ftsTable(rs)}<div class="rf-key"><b>RS</b> (rank score) = fig + PP + ML, +10 per \u2b07 flag, +5 per \u2296 fade signal, \u22125 for \u2b06 top $/start moving up, lower is better \u00b7 <b>H2H</b> = rivals in this field it finished ahead of / behind in their latest meeting (date) \u00b7 <b>CLASS</b> last \u2192 today, level \u00b12+ = up/down, <b>bold</b> = big drop \u00b7 red = never on today\u2019s surface \u00b7 green = best in field. Today: ${escHtml(word(today))}${td ? ', ' + escHtml(fmtDistY(td)) : ''}.<details class="rf-key-more"><summary>\u25b8 Full key</summary>SCORE = figure rank + Prime Power rank + morning-line rank; lower is better. FAIR (DATA) = fair odds from the horse's record alone (no odds used); ABILITY = its rank on that record; the comparison says whether the morning line is shorter or longer than the record suggests. * = under 3 starts, figure rank used in place of Prime Power; no figure counts as 15. Tap a horse for its past performances. Surface record is starts-wins-places-shows: turf and all-weather are lifetime records from the file; dirt is counted from the past-performance lines shown (up to 10), as the file carries no separate dirt record; green there = best win rate on today's surface (2+ starts). Elsewhere green = best in this field on that line. Red = never raced on today's surface. Bold in CLASS = a big drop: class level 8+ points below the last race, or today's tag 50% or less of its highest in the last 4, or a last-out winner entered at 75% or less of its last tag. Class codes: MC maiden claiming, MOC maiden optional claiming, MSW maiden special weight, CLM claiming, OC optional claiming, ALW allowance, AOC allowance optional claiming, STR starter, STK stakes; number = claiming tag, (amount) = purse where there is no tag, n2l/n1x = eligibility, (s) = state-bred. LEVEL = class level in BRIS figure points, the figure a race of that kind normally draws: the average of BRIS's own class par printed in the file and a reading from its type, purse, tag, state-bred and fillies restrictions and track; every race is on this one scale. Up or down = 2 points or more. Today: ${escHtml(word(today))}${td ? ', ' + escHtml(fmtDistY(td)) : ''}.</details></div></details>`;
 }
 
 
@@ -7942,6 +7946,37 @@ function rivalsNote(rs, h){
 
 // v3.20 (Robert, 10 Oct: "anything to make it clearer"). Every call shows its
 // working: the facts FOR and AGAINST the named horse, past-performance only.
+// v3.40 (Robert, 11 Oct: "a fair odds calculation from the data"). Data fair
+// odds from the horse's record alone - no odds of any kind. Weights fitted on the
+// pack; on unseen cards its chances matched how often horses actually won.
+const FAIR_W = {a3: 0.0127, last: 0.0089, best: 0.0036, pp: 0.0601, q: 0.0481, itm: 0.5295, wonLast: 0.0805, nflag: -0.3317, debut: 0.5015};
+function fairOddsTable(rs){
+  const live = (rs.horses || []).filter(h => !isScratchedNow(rs, h));
+  if (!live.length) return new Map();
+  const rf = rankedField(rs, []); const marks = new Map(rf.map(r => [r.h, (r.dflags || []).length + (r.fades || []).length]));
+  const best10 = h => { const v = (h.ppRaces || []).slice(0, 10).map(q => q.spd).filter(x => x != null && x > 0); return v.length ? Math.max(...v) : null; };
+  const raw = live.map(h => ({h, a3: avg3Of(h), last: h.lastSpd, best: best10(h), pp: h.rawPP}));
+  const rel = key => { const vals = raw.map(x => x[key]).filter(v => v != null); const mx = vals.length ? Math.max(...vals) : null; const mn = vals.length ? Math.min(...vals) : null;
+    return x => { if (mx == null) return -30; const v = x[key] != null ? x[key] : mn; return Math.max(-30, v - mx); }; };
+  const ra3 = rel('a3'), rl = rel('last'), rb = rel('best'), rp = rel('pp');
+  const sc = raw.map(x => { const h = x.h; const pr = (h.ppRaces || []); const rec = pr.slice(0, 4); const itm = rec.length ? rec.filter(q => parseInt(q.fin, 10) <= 3).length / rec.length : 0;
+    const z = FAIR_W.a3 * ra3(x) + FAIR_W.last * rl(x) + FAIR_W.best * rb(x) + FAIR_W.pp * rp(x) + FAIR_W.q * (h.quirin || 0) + FAIR_W.itm * itm
+      + FAIR_W.wonLast * (pr[0] && parseInt(pr[0].fin, 10) === 1 ? 1 : 0) + FAIR_W.nflag * (marks.get(h) || 0) + FAIR_W.debut * (pr.length ? 0 : 1);
+    return {h, e: Math.exp(z)}; });
+  const tot = sc.reduce((a, b) => a + b.e, 0);
+  const out = sc.map(x => ({h: x.h, p: x.e / tot})).sort((a, b) => b.p - a.p);
+  const m = new Map(); out.forEach((x, i) => m.set(x.h, {p: x.p, rank: i + 1, odds: 1 / x.p - 1})); return m;
+}
+function oddsFrac(o){
+  const L = [[0.2,'1-5'],[0.4,'2-5'],[0.5,'1-2'],[0.6,'3-5'],[0.8,'4-5'],[1,'1-1'],[1.2,'6-5'],[1.4,'7-5'],[1.5,'3-2'],[1.6,'8-5'],[1.8,'9-5'],[2,'2-1'],[2.5,'5-2'],[3,'3-1'],[3.5,'7-2'],[4,'4-1'],[4.5,'9-2'],[5,'5-1'],[6,'6-1'],[8,'8-1'],[10,'10-1'],[12,'12-1'],[15,'15-1'],[20,'20-1'],[30,'30-1'],[50,'50-1'],[99,'99-1']];
+  let b = L[0]; L.forEach(x => { if (Math.abs(x[0] - o) < Math.abs(b[0] - o)) b = x; }); return b[1];
+}
+function fairVsMl(f, h){
+  if (!f || h.decimalOdds == null) return '';
+  const r = (h.decimalOdds + 1) / (f.odds + 1);
+  return r < 0.6 ? 'ML much shorter' : r < 0.85 ? 'ML shorter' : r > 1.6 ? 'ML much longer' : r > 1.2 ? 'ML longer' : 'in line';
+}
+
 function forAgainst(rs, h){
   const live = (rs.horses || []).filter(x => !isScratchedNow(rs, x));
   const rf = rankedField(rs, []); const me = rf.find(r => r.h === h) || {};
@@ -7958,6 +7993,11 @@ function forAgainst(rs, h){
   if ((h.ppRaces || [])[0] && parseInt(h.ppRaces[0].fin, 10) === 1) F.push('won its last start');
   if (h.todayClassPar != null && h.lastClassPar != null){ const d = h.todayClassPar - h.lastClassPar; if (d <= -2) F.push(`dropping ${Math.abs(d).toFixed(1)} class points`); else if (d >= 2) A.push(`moving up ${d.toFixed(1)} class points`); }
   if (h.layoffDays != null && h.layoffDays >= 60) A.push(`off ${h.layoffDays} days`);
+  { const ft = fairOddsTable(rs), f = ft.get(h); if (f){
+      if (ml && ml.rank === 1 && f.rank >= 4) A.push(`morning-line favourite, but #${f.rank} on ability (record alone)`);
+      const c = fairVsMl(f, h); if (c === 'ML much shorter' || c === 'ML shorter') A.push(`data fair odds ${oddsFrac(f.odds)} against morning line ${h.mlOddsStr || ''}`);
+      else if (c === 'ML much longer' || c === 'ML longer') F.push(`data fair odds ${oddsFrac(f.odds)}, shorter than its morning line ${h.mlOddsStr || ''}`);
+      if (f.rank === 1) F.push('#1 on ability (record alone)'); } }
   // v3.25: shown, not scored - the ranking test came out neutral
   { const lj = String(h.lastJockey || '').toUpperCase().replace(/[^A-Z]/g, ''), tj = String(h.jockey || '').toUpperCase().replace(/[^A-Z]/g, '');
     if (lj && tj && lj !== tj && h.jkyStarts >= 20 && h.jkyWins != null && h.jkyWins / h.jkyStarts >= 0.20) A.push(`jockey switch to ${h.jockey} (${Math.round(100 * h.jkyWins / h.jkyStarts)}% this meet)`); }
@@ -8991,7 +9031,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v3.31 · released 11 October 2026 · build 2026-10-11-c</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v3.40 · released 11 October 2026 · build 2026-10-11-d</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
