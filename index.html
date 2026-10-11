@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v3.30 — Race Card Reader</title>
+<title>Overlay Board v3.31 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1210,7 +1210,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v3.30</span> · released 11 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v3.31</span> · released 11 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -4176,7 +4176,7 @@ function rankedField(rs, extra){
     const mr = byMl.indexOf(h) + 1;
     const dflags = demotionFlags(h, live);
     const fades = fadeSignals(h, live);
-    const score = fr + pr + 2 * mr + demotePts() * dflags.length + fadePts() * fades.length;
+    const score = fr + pr + (typeof globalThis.__mlw === 'number' ? globalThis.__mlw : 2) * mr + demotePts() * dflags.length + fadePts() * fades.length;
     // v2.54 (Robert: "abbreviated rank with final number"): compact score.
     // figure rank + Prime Power rank (figure rank again under 3 starts, *)
     // + morning-line rank x2. No figure counts as 15. Lower is better.
@@ -6965,7 +6965,7 @@ function buildPick(rs){
       + `<div class="dc-box b-none">${why}</div>`
       + nextRankedBlock(rs)
       + fold(`Ranked contenders (${rankedField(rs, []).length})`, noPickContenders(rs))
-      + fold('Concurrence \u2014 AI(1) / AI(2) / AI(3)', crossCheckBlockHTML(rs))   // v2.70: moved here from the race card
+      + fold('Concurrence \u2014 AI(1) / AI(2)', crossCheckBlockHTML(rs))   // v2.70: moved here from the race card
       + raceFactsTable(rs)
       + fold('Race notes: pace and near ties', `${nearTieCallout(rs)}${paceLineFor(rs, null)}${paceContenderNote(rs)}`)
       + `</div>`;
@@ -6982,7 +6982,7 @@ function buildPick(rs){
       + `<div class="dc-box b-flag"><b>Not named:</b> ${escHtml(pickPassReasons(h).join(', and '))}.</div>`
       + (h2hThreat(rs, h) ? `<div class="dc-box b-flag">${h2hThreatLine(rs, h)}</div>` : '')
       + fold(`Ranked contenders (${rankedField(rs, [h]).length})`, noPickContenders(rs, h))
-      + fold('Concurrence \u2014 AI(1) / AI(2) / AI(3)', crossCheckBlockHTML(rs))   // v2.70: moved here from the race card
+      + fold('Concurrence \u2014 AI(1) / AI(2)', crossCheckBlockHTML(rs))   // v2.70: moved here from the race card
       + raceFactsTable(rs, [h])
       + fold('Race notes: pace', paceLineFor(rs, null))
       + `</div>`;
@@ -7014,7 +7014,7 @@ function buildPick(rs){
     + decision
     + (p.line === 'primary' ? pickSeparationBlock(rs, h) : (h2hThreat(rs, h) ? `<div class="dc-box b-flag">${h2hThreatLine(rs, h)}</div>` : ''))
     + fold(`Ranked contenders (${rankedField(rs, [h]).length})`, pickContenders(rs, h))
-    + fold('Concurrence \u2014 AI(1) / AI(2) / AI(3)', crossCheckBlockHTML(rs))   // v2.70: moved here from the race card
+    + fold('Concurrence \u2014 AI(1) / AI(2)', crossCheckBlockHTML(rs))   // v2.70: moved here from the race card
     + raceFactsTable(rs, [h])
     + fold(`More on #${escHtml(h.post || '?')} ${escHtml(h.horse)}${p.line === 'primary' ? ' (the figure favourite)' : ' (price play)'}`, `<div class="dc-cap" style="margin:4px 0 6px">EVERYTHING BELOW IS ABOUT #${escHtml(h.post || '?')} ${escHtml(String(h.horse).toUpperCase())}</div>` + more)
     + `</div>`;
@@ -8991,7 +8991,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v3.30 · released 11 October 2026 · build 2026-10-11-b</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v3.31 · released 11 October 2026 · build 2026-10-11-c</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
