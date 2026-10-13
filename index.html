@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v3.62 — Race Card Reader</title>
+<title>Overlay Board v3.71 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -839,6 +839,12 @@
   .pace-flag.pace-lone{background:#e6eef6; color:#23435f;}
   .vb-ticket.pace-contested{color:#7a5c00;} .vb-ticket.pace-lone{color:#23435f;}
   .pace-flag.debut-flag{background:#f6e3df; color:#7a2a1c;} .vb-ticket.debut-w{color:#A33A2A; font-weight:700;}
+  .prio{border-radius:5px; padding:8px 11px; margin:0 0 8px; font-size:13px; border:1px solid;}
+  .prio-focus{background:#e3f1e6; border-color:#1F5A33; color:#173f26;} .prio-consider{background:#f5f0e3; border-color:#b9a77a; color:#4a3f22;} .prio-low{background:#f4e6e3; border-color:#b98a80; color:#6b2a1e;}
+  .prio-top{margin-top:4px; font-weight:600;} .prio-why{margin-top:4px; font-size:12px; opacity:.9;}
+  .prio-chip{font-family:var(--mono); font-size:10px; font-weight:800; padding:1px 5px; border-radius:3px; margin-right:4px;}
+  .prio-chip.prio-focus{background:#1F5A33; color:#fff;} .prio-chip.prio-consider{background:#b9a77a; color:#fff;} .prio-chip.prio-low{background:#b98a80; color:#fff;}
+  .prio-sum{background:#fff8e6; border:1px solid #d8c48f; border-radius:5px; padding:8px 10px; margin:0 0 10px; font-size:13.5px; line-height:1.5;}
   .pp-lvl{font-family:var(--mono); font-size:10px; opacity:.7; margin-left:3px;}
   .pp-works{font-family:var(--mono); font-size:11.5px; line-height:1.7;}
   .pp-record{
@@ -1225,7 +1231,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v3.62</span> · released 11 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v3.71</span> · released 12 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -8109,6 +8115,41 @@ function paceFlag(rs){
 }
 // v3.62 (Robert, 11 Oct: "raise flags ... first time starters bet down suggest this
 // race should be watched"). A first-time starter at 5-2 to 9-2 on the morning line.
+// v3.70 (Robert, 11 Oct: "3-5 solid bets per card ... races to spend my time on and
+// those that are high uncertainty"). Race priority from six checks, each a fact
+// about this field: AI(2) ranks the same horse first; the case rank agrees with the
+// rank score's #1; 8 or fewer runners; no debut runner to watch; not a maiden with
+// 2+ first-time starters; a figure favourite is present.
+function racePriority(rs){
+  const rf = rankedField(rs, []); const top = rf.length ? rf[0].h : null;
+  const live = (rs.horses || []).filter(h => !isScratchedNow(rs, h));
+  const m = rscsMap(rs); const csTop = top ? (m.get(top) || {}).cs === 1 : false;
+  const o2 = ai2ModelPick(rs);
+  const rtype = String((live[0] || {}).ai3RaceType || '').toUpperCase(); const mdn = rtype === 'S' || rtype === 'M' || rtype === 'MO';
+  const nDebut = live.filter(h => !(h.ppRaces || []).length).length;
+  const p = pickFor(rs); const fig = !!(p && !p.none && p.line === 'primary');
+  const checks = [
+    ['both ranking methods put the same horse first', !!(o2 && top && o2 === top)],
+    ['the strongest case is also the top-ranked horse', csTop],
+    ['8 or fewer runners', live.length <= 8],
+    ['no debut runner to watch', !debutWatch(rs).length],
+    ['not a maiden with 2 or more first-time starters', !(mdn && nDebut >= 2)],
+    ['a figure favourite is present', fig]];
+  const score = checks.filter(c => c[1]).length;
+  let level = score >= 5 ? 'FOCUS' : score >= 3 ? 'CONSIDER' : 'LOW';
+  // at most 5 FOCUS races per card: the strongest by checks, then the smaller field
+  if (level === 'FOCUS' && window.__focusSet && !window.__focusSet.has(String(rs.race).trim())) level = 'CONSIDER';
+  return {score, level, checks, top3: rf.slice(0, 3).map(r => r.h)};
+}
+function priorityHTML(rs){
+  const pr = racePriority(rs);
+  const met = pr.checks.filter(c => c[1]).map(c => c[0]), miss = pr.checks.filter(c => !c[1]).map(c => c[0]);
+  const t3 = pr.top3.map(h => horseLabel(h) + rscsChip(rs, h)).join(' \u00b7 ');
+  return `<div class="prio prio-${pr.level.toLowerCase()}"><b>${pr.level === 'FOCUS' ? 'FOCUS RACE' : pr.level === 'CONSIDER' ? 'CONSIDER' : 'LOW CONFIDENCE \u2014 HIGH UNCERTAINTY'}</b> \u00b7 ${pr.score} of 6 checks`
+    + (pr.level !== 'LOW' ? `<div class="prio-top">Top 3: ${t3}</div>` : '')
+    + `<div class="prio-why">${met.length ? '\u2713 ' + escHtml(met.join(' \u00b7 ')) : ''}${miss.length ? '<br>\u2717 ' + escHtml(miss.join(' \u00b7 ')) : ''}</div></div>`;
+}
+
 function debutWatch(rs){
   return (rs.horses || []).filter(h => !isScratchedNow(rs, h) && !(h.ppRaces || []).length && h.decimalOdds != null && (h.decimalOdds - 1) >= 2.5 && (h.decimalOdds - 1) <= 4.5);   // decimalOdds is odds + 1
 }
@@ -8118,7 +8159,7 @@ function debutWatchHTML(rs){
 }
 function paceFlagHTML(rs){ const f = paceFlag(rs); return f ? `<div class="pace-flag pace-${f.kind}">\u26a1 ${escHtml(f.text)}</div>` : ''; }
 
-function verdictBanner(rs){ return verdictBanner0(rs).replace(/<\/div>$/, debutWatchHTML(rs) + paceFlagHTML(rs) + '</div>'); }
+function verdictBanner(rs){ return priorityHTML(rs) + verdictBanner0(rs).replace(/<\/div>$/, debutWatchHTML(rs) + paceFlagHTML(rs) + '</div>'); }
 function verdictBanner0(rs){
   const pl = racePlan(rs);
   if (!pl.play) return `<div class="vd vd-pass"><div class="vd-tier">SKIP \u2014 NO BET</div><div class="vd-why">${escHtml(pl.why)}</div>${pl.top ? `<div class="vd-horse" style="font-size:14px">Top pick ${horseLabel(pl.top)}${rscsChip(rs, pl.top)}</div>` + forAgainstHTML(rs, pl.top) : ''}</div>`;
@@ -8156,8 +8197,12 @@ function buildVerdictBoard(raceSummaries){
       + (rivalsAhead(r.rs, r.pl.win ? r.pl.v.h : r.pl.key).length ? `<span class="vb-ticket vb-warn"><b>\u26a0 Rated behind: ${rivalsAhead(r.rs, r.pl.win ? r.pl.v.h : r.pl.key).map(x => '#' + (x.h.post || '?') + ' ' + escHtml(x.h.horse) + ' \u2014 ' + escHtml(x.why)).join(' \u00b7 ')}</b></span>` : '')
       + `</div>`;
   };
-  const line0 = line; const lineP = r => line0(r).replace(/<\/div>$/, (() => { const dw = debutWatch(r.rs); return dw.length ? `<span class="vb-ticket debut-w">\u26a0 debut runner to watch: ${dw.map(h => '#' + (h.post || '?') + ' ' + escHtml(h.horse) + ' (' + escHtml(h.mlOddsStr || '') + ')').join(', ')}</span>` : ''; })() + (() => { const f = paceFlag(r.rs); return f ? `<span class="vb-ticket pace-${f.kind}">\u26a1 ${escHtml(f.kind === 'contested' ? 'contested pace possible: ' + f.speed.map(h => '#' + (h.post || '?')).join(', ') + (f.stalk.length ? ' \u00b7 sitting behind: ' + f.stalk.map(h => '#' + (h.post || '?')).join(', ') : '') : 'lone speed: #' + (f.speed[0].post || '?') + ' ' + f.speed[0].horse)}</span>` : ''; })() + '</div>');
-  return `<div class="verdict-board"><h3>Today\u2019s race plans</h3>`
+  const line0 = line; const lineP = r => line0(r).replace('<span class="vb-tier">', (() => { const pr = racePriority(r.rs); return `<span class="prio-chip prio-${pr.level.toLowerCase()}">${pr.level}</span><span class="vb-tier">`; })()).replace(/<\/div>$/, (() => { const dw = debutWatch(r.rs); return dw.length ? `<span class="vb-ticket debut-w">\u26a0 debut runner to watch: ${dw.map(h => '#' + (h.post || '?') + ' ' + escHtml(h.horse) + ' (' + escHtml(h.mlOddsStr || '') + ')').join(', ')}</span>` : ''; })() + (() => { const f = paceFlag(r.rs); return f ? `<span class="vb-ticket pace-${f.kind}">\u26a1 ${escHtml(f.kind === 'contested' ? 'contested pace possible: ' + f.speed.map(h => '#' + (h.post || '?')).join(', ') + (f.stalk.length ? ' \u00b7 sitting behind: ' + f.stalk.map(h => '#' + (h.post || '?')).join(', ') : '') : 'lone speed: #' + (f.speed[0].post || '?') + ' ' + f.speed[0].horse)}</span>` : ''; })() + '</div>');
+  const prs = rows.map(r => ({r, pr: racePriority(r.rs)}));
+  const focus = prs.filter(x => x.pr.level === 'FOCUS'), low = prs.filter(x => x.pr.level === 'LOW');
+  const focusHTML = `<div class="prio-sum"><div><b>Spend your time on:</b> ${focus.length ? focus.map(x => `<a class="race-jump" data-goto-pick="${escAttr(x.r.rs.race)}" href="#">R${escHtml(x.r.rs.race)}</a> (top 3 ${x.pr.top3.map(h => '#' + (h.post || '?')).join(', ')})`).join(' \u00b7 ') : 'no race passes 5 of the 6 checks today'}</div>`
+    + `<div><b>High uncertainty \u2014 skip:</b> ${low.length ? low.map(x => 'R' + escHtml(x.r.rs.race)).join(', ') : 'none'}</div></div>`;
+  return `<div class="verdict-board"><h3>Today\u2019s race plans</h3>` + focusHTML
     + `<div class="vb-counts"><span class="vb-c vb-play">PLAY ${plays}</span><span class="vb-c vb-pass">SKIP ${rows.length - plays}</span><span class="vb-c vb-winc">WIN BETS ${wins}</span></div>`
     + rows.map(lineP).join('') + `</div>`;
 }
@@ -8447,6 +8492,13 @@ function renderPicks(raceSummaries){
   const n = blocks.filter(b => b.indexOf('pick-card') !== -1).length;
   document.getElementById('pickCount').textContent = n;
   const index = buildBoardIndex(raceSummaries);
+  // v3.71: pick at most five FOCUS races for the day
+  try {
+    window.__focusSet = null;
+    const cand = raceSummaries.map(rs => ({rs, pr: racePriority(rs), n: (rs.horses || []).filter(h => !isScratchedNow(rs, h)).length})).filter(x => x.pr.score >= 5);
+    cand.sort((a, b) => b.pr.score - a.pr.score || a.n - b.n);
+    window.__focusSet = new Set(cand.slice(0, 5).map(x => String(x.rs.race).trim()));
+  } catch(e){ window.__focusSet = null; }
   const verdicts = buildVerdictBoard(raceSummaries);
   // v2.91: the verdicts lead the board on every card, plays or not.
   list.innerHTML = verdicts + blocks.join('');   // v3.50: the old summary lists and the old per-race index are retired - the race plans are the one call
@@ -9137,7 +9189,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v3.62 · released 11 October 2026 · build 2026-10-11-n</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v3.71 · released 12 October 2026 · build 2026-10-12-a</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
