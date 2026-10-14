@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v3.76 — Race Card Reader</title>
+<title>Overlay Board v3.80 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -849,6 +849,7 @@
   .sort-btn{border:1px solid #1b2a22; background:#fff; color:#1b2a22; border-radius:4px; padding:4px 9px; font-family:var(--mono); font-size:12px; font-weight:700;}
   .sort-btn.on{background:#1b2a22; color:#fff;}
   .pace-flag.close-flag{background:#eef0f6; color:#2b3550;} .vb-ticket.close-w{color:#2b3550; font-weight:700;}
+  .pace-flag.close2{background:#fff3df; color:#5a3a00; border:1px solid #e0b25a;} .cc2-h{margin-top:7px; padding-top:6px; border-top:1px dashed #e0b25a;}
   .pp-lvl{font-family:var(--mono); font-size:10px; opacity:.7; margin-left:3px;}
   .pp-works{font-family:var(--mono); font-size:11.5px; line-height:1.7;}
   .pp-record{
@@ -1235,7 +1236,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v3.76</span> · released 13 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v3.80</span> · released 13 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -2038,7 +2039,7 @@ function parseBrisnetSingleFile(text){
       const finTxt = get(616+i);
       const rawMargin = num(736+i);
       const wonIt = String(finTxt).trim() === '1';
-      ppRaces.push({date: d, track: get(276+i), raceNum: get(296+i), distYds: num(316+i), surf: get(326+i), fin: finTxt, margin: rawMargin, won: wonIt, lenBehind: (rawMargin == null ? null : (wonIt ? -rawMargin : rawMargin)), comment: get(396+i), pastPost: num(356+i), pastField: num(346+i), winner: get(406+i), second: get(416+i), third: get(426+i), rtype: get(1086+i), claim: num(546+i), classTxt: get(536+i), spd: num(846+i), pace2: num(766+i), pace4: num(776+i), pace6: num(786+i), pace8: num(796+i), latePace: num(816+i), c1pos: num(576+i), c1bl: num(656+i), c2pos: num(586+i), c2bl: num(676+i), strpos: num(606+i), strbl: num(716+i), purse: num(556+i), brisPar: num(1167+i), classPar: classLevelBlend(num(1167+i), classPar(get(276+i), get(1086+i), get(536+i), num(556+i))), classFit: classPar(get(276+i), get(1086+i), get(536+i), num(556+i)), trackCond: get(306+i),
+      ppRaces.push({date: d, track: get(276+i), raceNum: get(296+i), distYds: num(316+i), surf: get(326+i), fin: finTxt, margin: rawMargin, won: wonIt, lenBehind: (rawMargin == null ? null : (wonIt ? -rawMargin : rawMargin)), comment: get(396+i), extComment: get(1383+i), comment2: get(1383+i), pastPost: num(356+i), pastField: num(346+i), winner: get(406+i), second: get(416+i), third: get(426+i), rtype: get(1086+i), claim: num(546+i), classTxt: get(536+i), spd: num(846+i), pace2: num(766+i), pace4: num(776+i), pace6: num(786+i), pace8: num(796+i), latePace: num(816+i), c1pos: num(576+i), c1bl: num(656+i), c2pos: num(586+i), c2bl: num(676+i), strpos: num(606+i), strbl: num(716+i), purse: num(556+i), brisPar: num(1167+i), classPar: classLevelBlend(num(1167+i), classPar(get(276+i), get(1086+i), get(536+i), num(556+i))), classFit: classPar(get(276+i), get(1086+i), get(536+i), num(556+i)), trackCond: get(306+i),
         // WHO RODE THAT DAY. Fields 1066-1075 carry the rider of each past
         // race and 1056-1065 the trainer, so a line can be read against the
         // rider who was on it — verified on this file against today's rider
@@ -8004,6 +8005,13 @@ const FAIR_W = {a3: 0.0127, last: 0.0089, best: 0.0036, pp: 0.0601, q: 0.0481, i
 // you away from Mythical Man"). Last 4 races: how many were at today's class level or
 // higher (within 2 points), and in how many of those was the horse in the money or
 // beaten 3 lengths or less.
+// v3.80: trip comments in the last 4 that say the horse did not finish its race
+const NOFINISH_RX = /outfin|out-fin|outfnsh|no kick|no punch|lacked|weaken|wknd|tired|faded|gave way|empty|flatten|hung|no rally|no response|no threat|no factor|failed to|steadily dropped/i;
+function noFinishCount(h){
+  const L = (h.ppRaces || []).slice(0, 4); const hits = [];
+  L.forEach(q => { const t = String(q.comment || '') + ' ' + String(q.extComment || ''); const m = t.match(NOFINISH_RX); if (m) hits.push(m[0].toLowerCase()); });
+  return {n: hits.length, of: L.length, words: Array.from(new Set(hits))};
+}
 function competitiveAtLevel(h){
   const t = h.todayClassPar; const L = (h.ppRaces || []).slice(0, 4);
   let lv = 0, c = 0, closest = null;
@@ -8058,6 +8066,7 @@ function forAgainst(rs, h){
   if ((h.ppRaces || [])[0] && parseInt(h.ppRaces[0].fin, 10) === 1) F.push('won its last start');
   if (h.todayClassPar != null && h.lastClassPar != null){ const d = h.todayClassPar - h.lastClassPar; if (d <= -2) F.push(`dropping ${Math.abs(d).toFixed(1)} class points`); else if (d >= 2) A.push(`moving up ${d.toFixed(1)} class points`); }
   if (h.layoffDays != null && h.layoffDays >= 60) A.push(`off ${h.layoffDays} days`);
+  { const nf = noFinishCount(h); if (nf.n >= 2) A.push(`no finish in ${nf.n} of last ${nf.of} (${nf.words.join(', ')})`); }
   { const cl = competitiveAtLevel(h);
     if (cl.lv >= 1 && cl.c >= 1){ const q = cl.closest; F.push(`competitive at today's level or higher in ${cl.c} of last ${cl.n}` + (q ? ` (${ordinal(q.f)}${q.f > 1 && q.lb != null ? ', beaten ' + lengthsTxt(q.lb) : ''})` : '')); }
     else if (cl.lv >= 2 && cl.c === 0){ const q = cl.closest; A.push(`not competitive at today's level in last ${cl.n}` + (q ? ` (closest: ${ordinal(q.f)}${q.lb != null ? ', beaten ' + lengthsTxt(q.lb) : ''})` : '')); } }
@@ -8145,7 +8154,46 @@ function sortedForDecisions(raceSummaries){
   const L = raceSummaries.slice();
   if (decisionSortMode() !== 'focus') return L;
   const w = {FOCUS: 0, CONSIDER: 1, LOW: 2};
-  return L.map((rs, i) => ({rs, i, pr: racePriority(rs)})).sort((a, b) => (w[a.pr.level] - w[b.pr.level]) || (b.pr.score - a.pr.score) || (a.i - b.i)).map(x => x.rs);
+  return L.map((rs, i) => ({rs, i, pr: racePriority(rs), G: raceGroup(rs)})).sort((a, b) => (w[a.pr.level] - w[b.pr.level]) || (b.pr.score - a.pr.score) || a.G.g.localeCompare(b.G.g) || (b.G.alw - a.G.alw) || (a.i - b.i)).map(x => x.rs);
+}
+
+// v3.80 (Robert, 13 Oct: "open the field to additional contenders ... smaller fields
+// and allowance/optional claiming when sorted by focus; all other races a wider number").
+// How many ranked horses to consider, by race conditions (pool: these counts cover the
+// winner about three times in four or better in each group, in both halves).
+function raceGroup(rs){
+  const rf = rankedField(rs, []);
+  const live = (rs.horses || []).filter(h => !isScratchedNow(rs, h));
+  const rtype = String((live[0] || {}).ai3RaceType || '').toUpperCase();
+  const msw = rtype === 'S';
+  const alw = ['A','AO','N','NO','R'].includes(rtype);
+  const gap = rf.length > 1 ? rf[1].score - rf[0].score : 9;
+  const n = live.length;
+  // A: 6 or fewer runners, or an allowance / optional claiming race, with a clear #1 -> 3
+  // A2: same conditions, #1 within 1 point -> 4    B: other races of 7-8 runners -> 4
+  // C: maiden special weight of 8 or fewer -> 5     D: other races of 9 or more -> 6
+  const cond = n <= 6 || alw;
+  let g, k;
+  if (cond && gap >= 2){ g = 'A'; k = 3; }
+  else if (cond){ g = 'A2'; k = 4; }
+  else if (msw && n <= 8){ g = 'C'; k = 5; }
+  else if (n <= 8){ g = 'B'; k = 4; }
+  else { g = 'D'; k = 6; }
+  return {g, k: Math.min(k, rf.length), n, msw, alw, gap, rf, cond};
+}
+function contendersHTML(rs){
+  const G = raceGroup(rs);
+  const why = G.g === 'A' ? `${G.n} runners${G.alw ? ', allowance / optional claiming' : ''}, a clear #1`
+    : G.g === 'A2' ? `${G.n} runners${G.alw ? ', allowance / optional claiming' : ''}, but #1 leads #2 by only ${G.gap} point${G.gap === 1 ? '' : 's'}`
+    : G.g === 'C' ? `maiden special weight, ${G.n} runners`
+    : G.g === 'B' ? `${G.n} runners, not an allowance race`
+    : `${G.n} runners \u2014 a wide-open field`;
+  return `<div class="prio-top">Contenders to consider (${G.k}) \u2014 ${escHtml(why)}: ${G.rf.slice(0, G.k).map(r => horseLabel(r.h) + rscsChip(rs, r.h)).join(' \u00b7 ')}</div>`;
+}
+function closeCallHTML(rs){
+  const G = raceGroup(rs); if (G.rf.length < 2 || G.gap > 1) return '';
+  const side = r => { const fa = forAgainst(rs, r.h); return `<div class="cc2-h">${horseLabel(r.h)}${rscsChip(rs, r.h)}<div class="fa fa-small"><div class="fa-for"><b>For:</b> ${fa.F.map(escHtml).join(' \u00b7 ') || '\u2014'}</div><div class="fa-against"><b>Against:</b> ${fa.A.map(escHtml).join(' \u00b7 ') || '\u2014'}</div></div></div>`; };
+  return `<div class="pace-flag close2"><b>CLOSE \u2014 check #1 and #2</b> (rank scores ${G.rf[0].score} and ${G.rf[1].score})${side(G.rf[0])}${side(G.rf[1])}</div>`;
 }
 
 function racePriority(rs){
@@ -8159,22 +8207,26 @@ function racePriority(rs){
   const checks = [
     ['both ranking methods put the same horse first', !!(o2 && top && o2 === top)],
     ['the strongest case is also the top-ranked horse', csTop],
-    ['8 or fewer runners', live.length <= 8],
+    ['6 or fewer runners, or an allowance / optional claiming race', raceGroup(rs).cond],
     ['no debut runner to watch', !debutWatch(rs).length],
     ['not a maiden with 2 or more first-time starters', !(mdn && nDebut >= 2)],
-    ['a figure favourite is present', fig]];
+    ['a figure favourite is present', fig],
+    ['a clear #1 (rank score 2 or more points ahead)', (() => { const G = raceGroup(rs); return G.gap >= 2; })()],
+    ['not a maiden special weight', rtype !== 'S']];
   const score = checks.filter(c => c[1]).length;
-  let level = score >= 5 ? 'FOCUS' : score >= 3 ? 'CONSIDER' : 'LOW';
+  // v3.80: FOCUS needs the race conditions (small field or allowance race) and 6 of the 8 checks
+  let level = (raceGroup(rs).cond && score >= 6) ? 'FOCUS' : score >= 4 ? 'CONSIDER' : 'LOW';
   // at most 5 FOCUS races per card: the strongest by checks, then the smaller field
   if (level === 'FOCUS' && window.__focusSet && !window.__focusSet.has(String(rs.race).trim())) level = 'CONSIDER';
-  return {score, level, checks, top3: rf.slice(0, 3).map(r => r.h)};
+  const G = raceGroup(rs);
+  return {score, level, checks, k: G.k, top3: rf.slice(0, G.k).map(r => r.h)};
 }
 function priorityHTML(rs){
   const pr = racePriority(rs);
   const met = pr.checks.filter(c => c[1]).map(c => c[0]), miss = pr.checks.filter(c => !c[1]).map(c => c[0]);
   const t3 = pr.top3.map(h => horseLabel(h) + rscsChip(rs, h)).join(' \u00b7 ');
-  return `<div class="prio prio-${pr.level.toLowerCase()}"><b>${pr.level === 'FOCUS' ? 'FOCUS RACE' : pr.level === 'CONSIDER' ? 'CONSIDER' : 'LOW CONFIDENCE \u2014 HIGH UNCERTAINTY'}</b> \u00b7 ${pr.score} of 6 checks`
-    + (pr.level !== 'LOW' ? `<div class="prio-top">Top 3: ${t3}</div>` : '')
+  return `<div class="prio prio-${pr.level.toLowerCase()}"><b>${pr.level === 'FOCUS' ? 'FOCUS RACE' : pr.level === 'CONSIDER' ? 'CONSIDER' : 'LOW CONFIDENCE \u2014 HIGH UNCERTAINTY'}</b> \u00b7 ${pr.score} of ${pr.checks.length} checks`
+    + contendersHTML(rs) + closeCallHTML(rs)
     + `<div class="prio-why">${met.length ? '\u2713 ' + escHtml(met.join(' \u00b7 ')) : ''}${miss.length ? '<br>\u2717 ' + escHtml(miss.join(' \u00b7 ')) : ''}</div></div>`;
 }
 
@@ -8270,7 +8322,7 @@ function buildVerdictBoard(raceSummaries){
   const line0 = line; const lineP = r => line0(r).replace('<span class="vb-tier">', (() => { const pr = racePriority(r.rs); return `<span class="prio-chip prio-${pr.level.toLowerCase()}">${pr.level}</span><span class="vb-tier">`; })()).replace(/<\/div>$/, (() => { const pr = racePriority(r.rs); if (pr.level === 'FOCUS') return ''; const c = challengers(r.rs); return c.length ? `<span class="vb-ticket close-w">\u2696 close call: ${c.map(x => '#' + (x.h.post || '?') + ' ' + escHtml(x.h.horse) + ' (' + escHtml(x.why[0]) + ')').join(', ')}</span>` : ''; })() + (() => { const dw = debutWatch(r.rs); return dw.length ? `<span class="vb-ticket debut-w">\u26a0 debut runner to watch: ${dw.map(h => '#' + (h.post || '?') + ' ' + escHtml(h.horse) + ' (' + escHtml(h.mlOddsStr || '') + ')').join(', ')}</span>` : ''; })() + (() => { const f = paceFlag(r.rs); return f ? `<span class="vb-ticket pace-${f.kind}">\u26a1 ${escHtml(f.kind === 'contested' ? 'contested pace possible: ' + f.speed.map(h => '#' + (h.post || '?')).join(', ') + (f.stalk.length ? ' \u00b7 sitting behind: ' + f.stalk.map(h => '#' + (h.post || '?')).join(', ') : '') : 'lone speed: #' + (f.speed[0].post || '?') + ' ' + f.speed[0].horse)}</span>` : ''; })() + '</div>');
   const prs = rows.map(r => ({r, pr: racePriority(r.rs)}));
   const focus = prs.filter(x => x.pr.level === 'FOCUS'), low = prs.filter(x => x.pr.level === 'LOW');
-  const focusHTML = `<div class="prio-sum"><div><b>Spend your time on:</b> ${focus.length ? focus.map(x => `<a class="race-jump" data-goto-pick="${escAttr(x.r.rs.race)}" href="#">R${escHtml(x.r.rs.race)}</a> (top 3 ${x.pr.top3.map(h => '#' + (h.post || '?')).join(', ')})`).join(' \u00b7 ') : 'no race passes 5 of the 6 checks today'}</div>`
+  const focusHTML = `<div class="prio-sum"><div><b>Spend your time on:</b> ${focus.length ? focus.map(x => `<a class="race-jump" data-goto-pick="${escAttr(x.r.rs.race)}" href="#">R${escHtml(x.r.rs.race)}</a> (consider ${raceGroup(x.r.rs).rf.slice(0, raceGroup(x.r.rs).k).map(r => '#' + (r.h.post || '?')).join(', ')})`).join(' \u00b7 ') : 'no race passes 5 of the 6 checks today'}</div>`
     + `<div><b>High uncertainty \u2014 skip:</b> ${low.length ? low.map(x => 'R' + escHtml(x.r.rs.race)).join(', ') : 'none'}</div></div>`;
   return `<div class="verdict-board"><h3>Today\u2019s race plans</h3>` + focusHTML
     + `<div class="vb-counts"><span class="vb-c vb-play">PLAY ${plays}</span><span class="vb-c vb-pass">SKIP ${rows.length - plays}</span><span class="vb-c vb-winc">WIN BETS ${wins}</span></div>`
@@ -8565,8 +8617,8 @@ function renderPicks(raceSummaries){
   // v3.71: pick at most five FOCUS races for the day
   try {
     window.__focusSet = null;
-    const cand = raceSummaries.map(rs => ({rs, pr: racePriority(rs), n: (rs.horses || []).filter(h => !isScratchedNow(rs, h)).length})).filter(x => x.pr.score >= 5);
-    cand.sort((a, b) => b.pr.score - a.pr.score || a.n - b.n);
+    const cand = raceSummaries.map(rs => ({rs, pr: racePriority(rs), G: raceGroup(rs), n: (rs.horses || []).filter(h => !isScratchedNow(rs, h)).length})).filter(x => x.pr.score >= 7);
+    cand.sort((a, b) => b.pr.score - a.pr.score || a.G.g.localeCompare(b.G.g) || (b.G.alw - a.G.alw) || a.n - b.n);
     window.__focusSet = new Set(cand.slice(0, 5).map(x => String(x.rs.race).trim()));
   } catch(e){ window.__focusSet = null; }
   const __ordered = sortedForDecisions(raceSummaries);
@@ -9262,7 +9314,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v3.76 · released 13 October 2026 · build 2026-10-13-a</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v3.80 · released 13 October 2026 · build 2026-10-13-b</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
