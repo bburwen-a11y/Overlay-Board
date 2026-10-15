@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v3.81 — Race Card Reader</title>
+<title>Overlay Board v3.82 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1236,7 +1236,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v3.81</span> · released 14 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v3.82</span> · released 14 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -7990,6 +7990,7 @@ function rivalsAhead(rs, h){
   return out;
 }
 function rivalsNote(rs, h){
+  return '';   // v3.82: head-to-head lives only in Race Facts
   const r = rivalsAhead(rs, h);
   if (!r.length) return '';
   return `<div class="vd-warn"><b>\u26a0 Rivals rated ahead of #${escHtml(h.post || '?')} ${escHtml(h.horse)}: ${r.map(x => '#' + (x.h.post || '?') + ' ' + escHtml(x.h.horse) + ' \u2014 ' + escHtml(x.why)).join(' \u00b7 ')}</b></div>`;
@@ -8082,7 +8083,7 @@ function forAgainst(rs, h){
   (me.fades || []).forEach(f => A.push(f));
   if ((me.boosts || []).some(b => b.code === 'epsup')) F.push('top earnings per start, moving up');
   try { const hf = h2hFacts(h, live); const above = hf.ahead.filter(x => { const r = rf.find(y => y.h === x.h); return r && me.rank && r.rank < me.rank; }); if (above.length) F.push('finished ahead of ' + above.map(x => '#' + (x.h.post || '?')).join(', ') + ' (ranked above it) in their last meeting'); } catch(e){}
-  rivalsAhead(rs, h).forEach(x => A.push('#' + (x.h.post || '?') + ' ' + x.h.horse + ' ' + x.why));
+  // v3.82: head-to-head shown only in Race Facts
   if (me.rank && me.rank > 1) A.push(`#${rf[0].h.post || '?'} ${rf[0].h.horse} ranks higher on the overall score`);
   return {F, A};
 }
@@ -8241,7 +8242,7 @@ function defWarnings(rs, h){
     if (pf && pf.kind === 'lone' && pf.speed[0] !== h) w.push('lone speed #' + (pf.speed[0].post || '?'));
     if (pf && pf.kind === 'contested' && pf.speed.includes(h)) w.push('contested pace');
     const dw = debutWatch(rs); if (dw.length) w.push('debut runner #' + dw.map(x => x.post || '?').join(', #'));
-    const ra = rivalsAhead(rs, h); if (ra.length) w.push('#' + ra.map(x => x.h.post || '?').join(', #') + ' rated ahead');
+
     const f = fairOddsTable(rs).get(h); if (f && fairVsMl(f, h).indexOf('shorter') >= 0) w.push('morning line shorter than its fair odds');
   } catch(e){}
   return w;
@@ -8261,7 +8262,7 @@ function challengers(rs){
     const v = m.get(h) || {}; if (v.cs === 1) why.push('strongest case (CS 1)'); else if (v.cs === 2) why.push('CS 2');
     if (o2 && o2 === h) why.push("AI(2)'s top pick");
     if ((r.boosts || []).some(b => b.code === 'epsup')) why.push('top earnings per start, moving up');
-    if (beatTop.includes(h)) why.push(beatWhy.get(h));
+
     if (why.length) out.push({h, why}); });
   return out.slice(0, 3);
 }
@@ -8316,7 +8317,7 @@ function buildVerdictBoard(raceSummaries){
       + `<span class="vb-ticket">Use ${r.pl.use.map(h => num(h) + rscsChip(r.rs, h)).join(', ')} \u00b7 ${escHtml(t[0])} \u00b7 or ${escHtml(t[1])}</span>`
       + (r.pl.win ? `<span class="vb-ticket vb-win">${escHtml(r.pl.win.label)}: ${escHtml(r.pl.win.text)}${r.pl.v.h !== r.pl.key ? ` <span class="vd-diff">\u2014 win bet is #${escHtml(r.pl.v.h.post || '?')} ${escHtml(r.pl.v.h.horse)}${rscsChip(r.rs, r.pl.v.h)}; the Key #${escHtml(r.pl.key.post || '?')} is next best</span>` : ''}</span>` : '')
       + (() => { const fa = forAgainst(r.rs, r.pl.win ? r.pl.v.h : r.pl.key); return `<span class="vb-ticket vb-fa"><b>For:</b> ${fa.F.slice(0, 4).map(escHtml).join(' \u00b7 ') || '\u2014'}<br><b>Against:</b> ${fa.A.slice(0, 4).map(escHtml).join(' \u00b7 ') || '\u2014'}</span>`; })()
-      + (rivalsAhead(r.rs, r.pl.win ? r.pl.v.h : r.pl.key).length ? `<span class="vb-ticket vb-warn"><b>\u26a0 Rated ahead of the pick: ${rivalsAhead(r.rs, r.pl.win ? r.pl.v.h : r.pl.key).map(x => '#' + (x.h.post || '?') + ' ' + escHtml(x.h.horse) + ' \u2014 ' + escHtml(x.why)).join(' \u00b7 ')}</b></span>` : '')
+      + ''   /* v3.82: head-to-head only in Race Facts */
       + `</div>`;
   };
   const line0 = line; const lineP = r => line0(r).replace('<span class="vb-tier">', (() => { const pr = racePriority(r.rs); return `<span class="prio-chip prio-${pr.level.toLowerCase()}">${pr.level}</span><span class="vb-tier">`; })()).replace(/<\/div>$/, (() => { const pr = racePriority(r.rs); if (pr.level === 'FOCUS') return ''; const c = challengers(r.rs); return c.length ? `<span class="vb-ticket close-w">\u2696 close call: ${c.map(x => '#' + (x.h.post || '?') + ' ' + escHtml(x.h.horse) + ' (' + escHtml(x.why[0]) + ')').join(', ')}</span>` : ''; })() + (() => { const dw = debutWatch(r.rs); return dw.length ? `<span class="vb-ticket debut-w">\u26a0 debut runner to watch: ${dw.map(h => '#' + (h.post || '?') + ' ' + escHtml(h.horse) + ' (' + escHtml(h.mlOddsStr || '') + ')').join(', ')}</span>` : ''; })() + (() => { const f = paceFlag(r.rs); return f ? `<span class="vb-ticket pace-${f.kind}">\u26a1 ${escHtml(f.kind === 'contested' ? 'contested pace possible: ' + f.speed.map(h => '#' + (h.post || '?')).join(', ') + (f.stalk.length ? ' \u00b7 sitting behind: ' + f.stalk.map(h => '#' + (h.post || '?')).join(', ') : '') : 'lone speed: #' + (f.speed[0].post || '?') + ' ' + f.speed[0].horse)}</span>` : ''; })() + '</div>');
@@ -9314,7 +9315,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v3.81 · released 14 October 2026 · build 2026-10-14-a</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v3.82 · released 14 October 2026 · build 2026-10-14-b</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
