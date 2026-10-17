@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v3.85 — Race Card Reader</title>
+<title>Overlay Board v3.86 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1240,7 +1240,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v3.85</span> · released 14 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v3.86</span> · released 14 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -1411,6 +1411,8 @@
       </div>
 
       <div class="help-block">
+        <h3>BET — SOLID PICK</h3>
+        <p>A win bet on the top-ranked horse when neither DEFINITIVE nor CONDITIONAL applies, and either (A) its morning line is 8-5 or shorter, it has the best Prime Power in the field, at most one no-finish trip comment in its last four, and the race is not low priority; or (B) its morning line is 2-1 or shorter, the field has 8 or fewer runners, it has the best last figure in the field, and its case tally is +4 or better.</p>
         <h3>Confidence in the top-ranked horse</h3>
         <p>Every race shows a confidence level for the horse at the top of the ranking. <b>HIGH</b>: a FOCUS race, the rank score and the case rank agree (RS #1 and CS 1), and no contender beats it on two or more of Prime Power, last figure and early speed. <b>GOOD</b>: the same, outside a FOCUS race. <b>FAIR</b>: the rank score and case rank disagree, or one contender beats it on two of those three. <b>LOW</b>: two or more contenders beat it on two of those three, or the race is low priority. The strong challengers are named; their edges are in Race Facts under EDGES OVER #1.</p>
         <h3>Ability and fair odds</h3>
@@ -7899,7 +7901,7 @@ function racePlan(rs){
   // v3.22 (Robert, BEL 10 Oct R1: "top pick #4 while definitive #7"): a BET
   // verdict always stands - the race is never shown as SKIP when it carries a
   // win bet. In a thin field only the win bet is given, no exotics.
-  const hasBet = v && v.h && ['STRONG', 'BET', 'VALUE', 'THREAT', 'CONC'].includes(v.tier);
+  const hasBet = v && v.h && ['STRONG', 'BET', 'VALUE', 'THREAT', 'CONC', 'SOLID'].includes(v.tier);
   if (hasBet && (lvl === 'red' || (n >= 9 && !figFav) || rf.length < 4)){
     const why = lvl === 'red' ? 'too few past starts in this field for exotics' : n >= 9 && !figFav ? `${n} runners and no figure favourite \u2014 too open for exotics` : 'too few ranked runners for exotics';
     const nb = rf.map(r => r.h).find(h => h !== v.h) || null;
@@ -7912,7 +7914,7 @@ function racePlan(rs){
   const wide = n >= 9;
   const key = rf[0].h, use = rf.slice(1, wide ? 5 : 4).map(r => r.h);
   let win = null;
-  if (v.h && ['STRONG', 'BET', 'VALUE', 'THREAT', 'CONC'].includes(v.tier)) win = {label: vLabel(v), text: verdictTicket(v).split(' \u00b7 ')[0]};
+  if (v.h && ['STRONG', 'BET', 'VALUE', 'THREAT', 'CONC', 'SOLID'].includes(v.tier)) win = {label: vLabel(v), text: verdictTicket(v).split(' \u00b7 ')[0]};
   return {play: true, key, use, wide, n, win, v};
 }
 function planTickets(pl){
@@ -7922,7 +7924,37 @@ function planTickets(pl){
   return out;
 }
 
+// v3.86 (Robert, 14 Oct: "find more top picks"). BET - SOLID PICK: a top-ranked horse
+// outside the DEFINITIVE / CONDITIONAL gates that meets either
+//  A: morning line 8-5 or shorter, best Prime Power in the field, 0-1 no-finish trip
+//     comments in its last 4, race not low priority; or
+//  B: morning line 2-1 or shorter, 8 or fewer runners, best last figure in the field,
+//     case tally +4 or better.
+let __solidGuard = false;
+function solidPick(rs){
+  if (__solidGuard) return null; __solidGuard = true;
+  try {
+    const rf = rankedField(rs, []); if (!rf.length) return null;
+    const top = rf[0].h; const live = (rs.horses || []).filter(h => !isScratchedNow(rs, h));
+    const ml = top.decimalOdds != null ? top.decimalOdds - 1 : null; if (ml == null) return null;
+    const maxOf = f => Math.max(...live.map(f).filter(v => v != null && isFinite(v)));
+    const bestPP = top.rawPP != null && top.rawPP >= maxOf(h => h.rawPP);
+    const bestLast = top.lastSpd != null && top.lastSpd >= maxOf(h => h.lastSpd);
+    const nf = noFinishCount(top).n; const pr = racePriority(rs); const tally = (rscsMap(rs).get(top) || {}).tally || 0;
+    const A = pr.level !== 'LOW' && ml <= 1.6 && bestPP && nf <= 1;
+    const B = ml <= 2 && live.length <= 8 && bestLast && tally >= 4;
+    if (!A && !B) return null;
+    const why = A ? 'short morning line, best Prime Power, a clean recent finish record' : 'short morning line, best last figure, a strong case in a field of ' + live.length;
+    return {tier: 'SOLID', h: top, under: rf.slice(1, 4).map(r => r.h), why};
+  } finally { __solidGuard = false; }
+}
 function verdictOf(rs){
+  const v0 = verdictOf0(rs);
+  if (v0 && ['STRONG', 'BET'].includes(v0.tier)) return v0;
+  const sp = solidPick(rs);
+  return sp || v0;
+}
+function verdictOf0(rs){
   const rf = rankedField(rs, []);
   const n = (rs.horses || []).filter(h => !isScratchedNow(rs, h)).length;
   const lvl = ((typeof readability === 'function' ? readability(rs) : null) || {}).level || '';
@@ -7972,7 +8004,7 @@ function verdictOf(rs){
     : 'no figure favourite';
   return {tier: 'PASS', why};
 }
-const V_LABEL = {STRONG: 'BET \u2014 DEFINITIVE', BET: 'BET \u2014 CONDITIONAL', VALUE: 'BET \u2014 VALUE', THREAT: 'BET \u2014 THREAT', CONC: 'BET \u2014 CONCURRENT', EXOTICS: 'EXOTICS', PASS: 'PASS'};
+const V_LABEL = {STRONG: 'BET \u2014 DEFINITIVE', BET: 'BET \u2014 CONDITIONAL', VALUE: 'BET \u2014 VALUE', THREAT: 'BET \u2014 THREAT', CONC: 'BET \u2014 CONCURRENT', SOLID: 'BET \u2014 SOLID PICK', EXOTICS: 'EXOTICS', PASS: 'PASS'};
 const vLabel = v => (v.tier === 'VALUE' && v.fav) ? 'BET \u2014 VALUE, CONDITIONAL' : V_LABEL[v.tier];
 function verdictTicket(v){
   if (!v.h) return '';
@@ -7985,6 +8017,7 @@ function verdictTicket(v){
   if (v.tier === 'VALUE') return v.fav ? `Conditional win #${(v.h.post || '?')}: only if 2-1 or higher at post` : `Win ${num(v.h)} at any price`;
   if (v.tier === 'THREAT') return `Win ${num(v.h)} at any price (the Main Threat)`;
   if (v.tier === 'CONC') return `Conditional win #${(v.h.post || '?')}: only if 2-1 or higher at post`;
+  if (v.tier === 'SOLID') return `Win ${num(v.h)} at any price`;
   if (v.tier === 'EXOTICS') return `Exacta ${num(v.h)} over ${under} \u2014 no win bet`;
   return '';
 }
@@ -9368,7 +9401,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v3.85 · released 14 October 2026 · build 2026-10-14-e</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v3.86 · released 14 October 2026 · build 2026-10-14-f</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
