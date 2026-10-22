@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v3.91 — Race Card Reader</title>
+<title>Overlay Board v3.92 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1251,7 +1251,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v3.91</span> · released 21 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v3.92</span> · released 21 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -1425,11 +1425,11 @@
         <h3>When the two methods disagree</h3>
         <p>If AI(1) and AI(2) rank different horses first, the race is labelled: <b>TWO-HORSE RACE</b> (7 or fewer runners and AI(2)'s horse is AI(1)'s #2 — one of the two usually wins); <b>SMALL FIELD, SPLIT</b> (8 or fewer, not a maiden, AI(2)'s horse in AI(1)'s top 3 — use both on top, with the next horse); <b>WIDE OPEN</b> (9 or more runners, or a maiden race — a third horse usually wins); otherwise <b>SPLIT</b>.</p>
         <h3>Tiers and percentages</h3>
-        <p>Each race shows a tier for its named horse and the share of such horses that won on the cards in the pack: <b>Tier 1</b> DEFINITIVE in a FOCUS race with a clear #1 (75%) · <b>Tier 2</b> DEFINITIVE (68%) · <b>Tier 3</b> SOLID PICK (58%) · <b>Tier 4</b> CONDITIONAL, when 2-1 or higher at post (53%) · <b>Tier 5</b> top pick in a FOCUS race (48%) · <b>Tier 6</b> top pick in a CONSIDER race (31%) · <b>Tier 7</b> top pick in a LOW race (22%). These are past results on the pack's cards, which the rules were built from; on new cards expect them to run a few points lower. When you record winners on the race cards, the percentages blend in your own results, and the scorecard at the top of the board shows how each tier, bet type and confidence level is doing.</p>
+        <p>Each race shows a tier for its named horse and the share of such horses that won on the cards in the pack: <b>Tier 1</b> DEFINITIVE in a FOCUS race with a clear #1 (75%) · <b>Tier 2</b> DEFINITIVE (64%) · <b>Tier 3</b> SOLID PICK (58%) · <b>Tier 4</b> CONDITIONAL, when 2-1 or higher at post (53%) · <b>Tier 5</b> top pick in a FOCUS race (39%) · <b>Tier 6</b> top pick in a CONSIDER race (23%) · <b>Tier 7</b> top pick in a LOW race (22%). Tiers 1-3 are bets, Tier 4 only at 2-1 or higher; Tiers 5-7 carry no win-bet edge and say so. These are past results on the pack's cards, which the rules were built from; on new cards expect them to run a few points lower. When you record winners on the race cards, the percentages blend in your own results, and the scorecard at the top of the board shows how each tier, bet type and confidence level is doing.</p>
         <h3>BET — SOLID PICK</h3>
         <p>A win bet on the top-ranked horse when neither DEFINITIVE nor CONDITIONAL applies, and either (A) its morning line is 8-5 or shorter, it has the best Prime Power in the field, at most one no-finish trip comment in its last four, and the race is not low priority; or (B) its morning line is 2-1 or shorter, the field has 8 or fewer runners, it has the best last figure in the field, and its case tally is +4 or better.</p>
-        <h3>Confidence in the top-ranked horse</h3>
-        <p>Every race shows a confidence level for the horse at the top of the ranking. <b>HIGH</b>: a FOCUS race, the rank score and the case rank agree (RS #1 and CS 1), and no contender beats it on two or more of Prime Power, last figure and early speed. <b>GOOD</b>: the same, outside a FOCUS race. <b>FAIR</b>: the rank score and case rank disagree, or one contender beats it on two of those three. <b>LOW</b>: two or more contenders beat it on two of those three, or the race is low priority. The strong challengers are named; their edges are in Race Facts under EDGES OVER #1.</p>
+        <h3>Strong challengers</h3>
+        <p>The tier line names any strong challenger: a contender that beats the top-ranked horse on two or more of Prime Power, last figure and early speed. Their edges are in Race Facts under EDGES OVER #1.</p>
         <h3>Ability and fair odds</h3>
         <p><b>FAIR (DATA)</b> is the price each horse's own record would justify, worked out from the past performances alone, with no odds of any kind: its 3-race, last and best figures against the best in today's field, its Prime Power against the best, its early-speed points, how often it was in the money in its last four starts, whether it won last time, any ⬇ flags or ⊖ fades, and whether it is a first-time starter. <b>ABILITY</b> is the horse's rank in the field on those same fair odds — #1 has the strongest record. Under FAIR, <i>ML shorter</i> means the morning line rates the horse better than its record does; <i>ML longer</i> means the record rates it better than the morning line.</p>
         <h3>Concurrence — AI(1) / AI(2)</h3>
@@ -8135,7 +8135,7 @@ function disagreeHTML(rs){ const d = disagreeCategory(rs); return d ? `<div clas
 
 // v3.90 (Robert, 20 Oct: "the program should be self learning"). Results you record are kept
 // in this browser; tier percentages blend the pack's record with yours.
-const TIER_POOL = {1: [12, 16], 2: [30, 44], 3: [28, 48], 4: [9, 17], 5: [60, 124], 6: [100, 321], 7: [22, 101]};
+const TIER_POOL = {1: [12, 16], 2: [25, 39], 3: [28, 48], 4: [9, 17], 5: [20, 51], 6: [51, 226], 7: [22, 98]};   // v3.92: from the v3.91 audit of 556 races
 function resultsStore(){ try { return JSON.parse(localStorage.getItem('ob_results') || '{}'); } catch(e){ return {}; } }
 function resultsSave(o){ try { localStorage.setItem('ob_results', JSON.stringify(o)); } catch(e){} }
 function raceKey(rs){ const h = (rs.horses || [])[0] || {}; return String(h.raceDateYmd || '') + '|' + String(h.trackCode || '') + '|' + String(rs.race).trim(); }
@@ -8176,7 +8176,6 @@ function scorecardHTML(){
   return `<details class="scorecard"><summary><b>Your results scorecard</b> \u2014 ${R.length} race${R.length === 1 ? '' : 's'} recorded</summary>`
     + `<table class="sc-t"><tr><th>Tier (named horse)</th><th>Races</th><th>Won</th><th>Rate</th></tr>${tierRows}</table>`
     + `<table class="sc-t"><tr><th>Bet</th><th>Bets</th><th>Won</th><th>Rate</th></tr>${grp('bet', ['STRONG', 'SOLID', 'BET']).replace(/>STRONG</g, '>DEFINITIVE<').replace(/>SOLID</g, '>SOLID PICK<').replace(/>BET</g, '>CONDITIONAL<')}</table>`
-    + `<table class="sc-t"><tr><th>Confidence in #1</th><th>Races</th><th>#1 won</th><th>Rate</th></tr>${grp('conf', ['HIGH', 'GOOD', 'FAIR', 'LOW'])}</table>`
     + `<div class="sc-note">Winner inside the contender list: ${inList} of ${R.length}. Tier percentages on the race plans now blend the pack's record with these results.</div>`
     + `<button type="button" class="sort-btn" onclick="if(confirm('Clear all recorded results?')){resultsSave({});renderPicks(window.__ccRaceSummaries);}">Clear recorded results</button></details>`;
 }
@@ -8194,7 +8193,9 @@ function winTier(rs){
 }
 function tierHTML(rs){
   const t = winTier(rs); if (!t) return '';
-  return `<div class="tier tier-${t.t}"><b>Tier ${t.t} \u00b7 #${escHtml(t.h.post || '?')} ${escHtml(t.h.horse)} \u00b7 picks like this won ${t.pct}% on past cards${tierPct(t.t).myN ? ' and your ' + tierPct(t.t).myN + ' recorded' : ''}</b> <span class="conf-why">(${escHtml(t.what)})</span></div>`;
+  const act = t.t <= 3 ? 'BET' : t.t === 4 ? 'BET ONLY AT 2-1 OR HIGHER' : t.t === 5 ? 'NO WIN-BET EDGE \u2014 exotics or a small bet at most' : 'NO EDGE \u2014 PASS';
+  const c = topConfidence(rs); const sc = c && c.strong.length ? ' \u00b7 strong challengers: ' + c.strong.map(h => '#' + (h.post || '?') + ' ' + h.horse).join(', ') : '';
+  return `<div class="tier tier-${t.t}"><b>Tier ${t.t} \u00b7 #${escHtml(t.h.post || '?')} ${escHtml(t.h.horse)} \u00b7 picks like this won ${t.pct}%${tierPct(t.t).myN ? ' (incl. your ' + tierPct(t.t).myN + ' recorded)' : ''} \u00b7 ${act}</b> <span class="conf-why">(${escHtml(t.what + sc)})</span></div>`;
 }
 function confidenceHTML(rs){
   const c = topConfidence(rs); if (!c) return '';
@@ -8473,7 +8474,7 @@ function debutWatchHTML(rs){
 }
 function paceFlagHTML(rs){ const f = paceFlag(rs); return f ? `<div class="pace-flag pace-${f.kind}">\u26a1 ${escHtml(f.text)}</div>` : ''; }
 
-function verdictBanner(rs){ return priorityHTML(rs) + verdictBanner0(rs).replace(/<\/div>$/, resultPickerHTML(rs) + tierHTML(rs) + disagreeHTML(rs) + confidenceHTML(rs) + challengersHTML(rs) + debutWatchHTML(rs) + paceFlagHTML(rs) + '</div>'); }
+function verdictBanner(rs){ return priorityHTML(rs) + verdictBanner0(rs).replace(/<\/div>$/, resultPickerHTML(rs) + tierHTML(rs) + disagreeHTML(rs) + challengersHTML(rs) + debutWatchHTML(rs) + paceFlagHTML(rs) + '</div>'); }
 function verdictBanner0(rs){
   const pl = racePlan(rs);
   if (!pl.play) return `<div class="vd vd-pass"><div class="vd-tier">SKIP \u2014 NO BET</div><div class="vd-why">${escHtml(pl.why)}</div>${pl.top ? `<div class="vd-horse" style="font-size:14px">Top pick ${horseLabel(pl.top)}${rscsChip(rs, pl.top)}</div>` + forAgainstHTML(rs, pl.top) : ''}</div>`;
@@ -8511,7 +8512,7 @@ function buildVerdictBoard(raceSummaries){
       + ''   /* v3.82: head-to-head only in Race Facts */
       + `</div>`;
   };
-  const line0 = line; const lineP = r => line0(r).replace('<span class="vb-tier">', (() => { const pr = racePriority(r.rs); return `<span class="prio-chip prio-${pr.level.toLowerCase()}">${pr.level}</span><span class="vb-tier">`; })()).replace(/<\/div>$/, (() => { const d = disagreeCategory(r.rs); return d ? `<span class="vb-ticket dis-t dis-${d.cat}">\u2696 ${escHtml(d.cat === 'two' ? 'two-horse race' : d.cat === 'wide' ? 'wide open' : d.cat === 'split' ? 'small field, split' : 'split')}</span>` : ''; })() + (() => { const t = winTier(r.rs); return t ? `<span class="vb-ticket tier-t tier-${t.t}">Tier ${t.t} \u00b7 #${escHtml(t.h.post || '?')} \u00b7 picks like this won ${t.pct}%</span>` : ''; })() + (() => { const c = topConfidence(r.rs); return c ? `<span class="vb-ticket conf-t conf-${c.level.toLowerCase()}">Confidence in #${escHtml(c.top.post || '?')}: ${c.level}${c.strong.length ? ' (strong challengers: ' + c.strong.map(h => '#' + (h.post || '?')).join(', ') + ')' : ''}</span>` : ''; })() + (() => { const pr = racePriority(r.rs); if (pr.level === 'FOCUS') return ''; const c = challengers(r.rs); return c.length ? `<span class="vb-ticket close-w">\u2696 close call: ${c.map(x => '#' + (x.h.post || '?') + ' ' + escHtml(x.h.horse) + ' (' + escHtml(x.why[0]) + ')').join(', ')}</span>` : ''; })() + (() => { const dw = debutWatch(r.rs); return dw.length ? `<span class="vb-ticket debut-w">\u26a0 debut runner to watch: ${dw.map(h => '#' + (h.post || '?') + ' ' + escHtml(h.horse) + ' (' + escHtml(h.mlOddsStr || '') + ')').join(', ')}</span>` : ''; })() + (() => { const f = paceFlag(r.rs); return f ? `<span class="vb-ticket pace-${f.kind}">\u26a1 ${escHtml(f.kind === 'contested' ? 'contested pace possible: ' + f.speed.map(h => '#' + (h.post || '?')).join(', ') + (f.stalk.length ? ' \u00b7 sitting behind: ' + f.stalk.map(h => '#' + (h.post || '?')).join(', ') : '') : 'lone speed: #' + (f.speed[0].post || '?') + ' ' + f.speed[0].horse)}</span>` : ''; })() + '</div>');
+  const line0 = line; const lineP = r => line0(r).replace('<span class="vb-tier">', (() => { const pr = racePriority(r.rs); return `<span class="prio-chip prio-${pr.level.toLowerCase()}">${pr.level}</span><span class="vb-tier">`; })()).replace(/<\/div>$/, (() => { const d = disagreeCategory(r.rs); return d ? `<span class="vb-ticket dis-t dis-${d.cat}">\u2696 ${escHtml(d.cat === 'two' ? 'two-horse race' : d.cat === 'wide' ? 'wide open' : d.cat === 'split' ? 'small field, split' : 'split')}</span>` : ''; })() + (() => { const t = winTier(r.rs); return t ? `<span class="vb-ticket tier-t tier-${t.t}">Tier ${t.t} \u00b7 #${escHtml(t.h.post || '?')} \u00b7 won ${t.pct}% \u00b7 ${t.t <= 3 ? 'BET' : t.t === 4 ? 'BET at 2-1+' : t.t === 5 ? 'no win edge' : 'PASS'}</span>` : ''; })() + (() => { const pr = racePriority(r.rs); if (pr.level === 'FOCUS') return ''; const c = challengers(r.rs); return c.length ? `<span class="vb-ticket close-w">\u2696 close call: ${c.map(x => '#' + (x.h.post || '?') + ' ' + escHtml(x.h.horse) + ' (' + escHtml(x.why[0]) + ')').join(', ')}</span>` : ''; })() + (() => { const dw = debutWatch(r.rs); return dw.length ? `<span class="vb-ticket debut-w">\u26a0 debut runner to watch: ${dw.map(h => '#' + (h.post || '?') + ' ' + escHtml(h.horse) + ' (' + escHtml(h.mlOddsStr || '') + ')').join(', ')}</span>` : ''; })() + (() => { const f = paceFlag(r.rs); return f ? `<span class="vb-ticket pace-${f.kind}">\u26a1 ${escHtml(f.kind === 'contested' ? 'contested pace possible: ' + f.speed.map(h => '#' + (h.post || '?')).join(', ') + (f.stalk.length ? ' \u00b7 sitting behind: ' + f.stalk.map(h => '#' + (h.post || '?')).join(', ') : '') : 'lone speed: #' + (f.speed[0].post || '?') + ' ' + f.speed[0].horse)}</span>` : ''; })() + '</div>');
   const prs = rows.map(r => ({r, pr: racePriority(r.rs)}));
   const focus = prs.filter(x => x.pr.level === 'FOCUS'), low = prs.filter(x => x.pr.level === 'LOW');
   const focusHTML = `<div class="prio-sum"><div><b>Spend your time on:</b> ${focus.length ? focus.map(x => `<a class="race-jump" data-goto-pick="${escAttr(x.r.rs.race)}" href="#">R${escHtml(x.r.rs.race)}</a> (consider ${raceGroup(x.r.rs).rf.slice(0, raceGroup(x.r.rs).k).map(r => '#' + (r.h.post || '?')).join(', ')})`).join(' \u00b7 ') : 'no race passes 5 of the 6 checks today'}</div>`
@@ -9506,7 +9507,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v3.91 · released 21 October 2026 · build 2026-10-21-a</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v3.92 · released 21 October 2026 · build 2026-10-21-b</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
