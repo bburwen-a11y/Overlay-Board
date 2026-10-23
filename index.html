@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v3.95 — Race Card Reader</title>
+<title>Overlay Board v3.96 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -867,6 +867,7 @@
   .sc-note{margin:6px 0; font-size:12px;}
   .dis-note{margin-top:4px; font-weight:400; font-size:12.5px;}
   .vd-tier, .vb-tier{white-space:normal;}
+  .race-hd{font-family:var(--mono); font-size:19px; font-weight:800; letter-spacing:.04em; color:#1b2a22; margin:0 0 6px;} .race-hd-sub{font-size:13px; font-weight:600; letter-spacing:0; color:var(--ink-soft);}
   .pp-lvl{font-family:var(--mono); font-size:10px; opacity:.7; margin-left:3px;}
   .pp-works{font-family:var(--mono); font-size:11.5px; line-height:1.7;}
   .pp-record{
@@ -1253,7 +1254,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v3.95</span> · released 24 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v3.96</span> · released 24 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -8361,8 +8362,11 @@ function setDecisionSort(m){ window.__sortMode = m; try { localStorage.setItem('
 function sortedForDecisions(raceSummaries){
   const L = raceSummaries.slice();
   if (decisionSortMode() !== 'focus') return L;
+  // v3.96 (Robert: "the best races to focus come first"): win bets first (Tier 1 to 4), then FOCUS,
+  // CONSIDER and LOW races, each in race order
   const w = {FOCUS: 0, CONSIDER: 1, LOW: 2};
-  return L.map((rs, i) => ({rs, i, pr: racePriority(rs), G: raceGroup(rs)})).sort((a, b) => (w[a.pr.level] - w[b.pr.level]) || (b.pr.score - a.pr.score) || a.G.g.localeCompare(b.G.g) || (b.G.alw - a.G.alw) || (a.i - b.i)).map(x => x.rs);
+  return L.map((rs, i) => { let t = 9; try { const x = winTier(rs); t = x ? x.t : 9; } catch(e){} return {rs, i, t, pr: racePriority(rs)}; })
+    .sort((a, b) => (Math.min(a.t, 5) - Math.min(b.t, 5)) || (w[a.pr.level] - w[b.pr.level]) || (a.t - b.t) || (a.i - b.i)).map(x => x.rs);
 }
 
 // v3.80 (Robert, 13 Oct: "open the field to additional contenders ... smaller fields
@@ -8489,7 +8493,13 @@ function debutWatchHTML(rs){
 }
 function paceFlagHTML(rs){ const f = paceFlag(rs); return f ? `<div class="pace-flag pace-${f.kind}">\u26a1 ${escHtml(f.text)}</div>` : ''; }
 
-function verdictBanner(rs){ return priorityHTML(rs) + verdictBanner0(rs).replace(/<\/div>$/, resultPickerHTML(rs) + tierHTML(rs) + disagreeHTML(rs) + challengersHTML(rs) + debutWatchHTML(rs) + paceFlagHTML(rs) + '</div>'); }
+function raceHeadHTML(rs){
+  const live = (rs.horses || []).filter(h => !isScratchedNow(rs, h)); const h = live[0] || {};
+  const bits = [fmtDistY(h.raceDistYds), surfWord(h.surface || '')].filter(Boolean).join(' ');
+  let cls = ''; try { cls = todayClassCode(rs) || ''; } catch(e){}
+  return `<div class="race-hd">RACE ${escHtml(String(rs.race).trim())}<span class="race-hd-sub"> \u00b7 ${escHtml(bits)}${cls ? ' \u00b7 ' + escHtml(cls) : ''} \u00b7 ${live.length} runners</span></div>`;
+}
+function verdictBanner(rs){ return raceHeadHTML(rs) + priorityHTML(rs) + verdictBanner0(rs).replace(/<\/div>$/, resultPickerHTML(rs) + tierHTML(rs) + disagreeHTML(rs) + challengersHTML(rs) + debutWatchHTML(rs) + paceFlagHTML(rs) + '</div>'); }
 function verdictBanner0(rs){
   const pl = racePlan(rs);
   if (!pl.play) return `<div class="vd vd-pass"><div class="vd-tier">SKIP \u2014 NO BET</div><div class="vd-why">${escHtml(pl.why)}</div>${pl.top ? `<div class="vd-horse" style="font-size:14px">Top pick ${horseLabel(pl.top)}${rscsChip(rs, pl.top)}</div>` + forAgainstHTML(rs, pl.top) : ''}</div>`;
@@ -8831,7 +8841,7 @@ function renderPicks(raceSummaries){
   } catch(e){ window.__focusSet = null; }
   const __ordered = sortedForDecisions(raceSummaries);
   const verdicts = buildVerdictBoard(__ordered);
-  const __sortBar = `<div class="sort-bar">Sort: <button type="button" class="sort-btn${decisionSortMode() !== 'focus' ? ' on' : ''}" onclick="setDecisionSort('race')">Race number</button><button type="button" class="sort-btn${decisionSortMode() === 'focus' ? ' on' : ''}" onclick="setDecisionSort('focus')">Focus first</button></div>`;
+  const __sortBar = `<div class="sort-bar">Sort: <button type="button" class="sort-btn${decisionSortMode() !== 'focus' ? ' on' : ''}" onclick="setDecisionSort('race')">Race number</button><button type="button" class="sort-btn${decisionSortMode() === 'focus' ? ' on' : ''}" onclick="setDecisionSort('focus')">Best first</button></div>`;
   // v2.91: the verdicts lead the board on every card, plays or not.
   const __blocks = decisionSortMode() === 'focus' ? __ordered.map(rs => blocks[raceSummaries.indexOf(rs)]) : blocks;
   list.innerHTML = __sortBar + scorecardHTML() + verdicts + __blocks.join('');   // v3.50: the old summary lists and the old per-race index are retired - the race plans are the one call
@@ -9522,7 +9532,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v3.95 · released 24 October 2026 · build 2026-10-24-a</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v3.96 · released 24 October 2026 · build 2026-10-24-b</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
