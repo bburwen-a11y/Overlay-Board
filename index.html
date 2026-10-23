@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v3.93 — Race Card Reader</title>
+<title>Overlay Board v3.94 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -865,6 +865,7 @@
   .scorecard{background:#f3efe2; border:1px solid #d8c48f; border-radius:5px; padding:8px 10px; margin:0 0 10px; font-size:13px;}
   table.sc-t{width:100%; border-collapse:collapse; margin-top:6px; font-size:12.5px;} table.sc-t th, table.sc-t td{padding:2px 4px; border-bottom:1px solid #e3d9bd; text-align:left;}
   .sc-note{margin:6px 0; font-size:12px;}
+  .dis-note{margin-top:4px; font-weight:400; font-size:12.5px;}
   .pp-lvl{font-family:var(--mono); font-size:10px; opacity:.7; margin-left:3px;}
   .pp-works{font-family:var(--mono); font-size:11.5px; line-height:1.7;}
   .pp-record{
@@ -1251,7 +1252,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v3.93</span> · released 23 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v3.94</span> · released 23 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -8131,7 +8132,19 @@ function disagreeCategory(rs){
   if (n <= 8 && a2rank >= 1 && a2rank <= 3) { const third = rf.find((r, i) => i > 0 && r.h !== o2); return {cat: 'split', text: `SMALL FIELD, SPLIT: ${lab(top)} and ${lab(o2)} on top${third ? ', with #' + (third.h.post || '?') + ' ' + third.h.horse + ' next' : ''}.`}; }
   return {cat: 'open', text: `SPLIT \u2014 the two methods disagree (${lab(top)} / ${lab(o2)}) and neither has a clear hold on this race.`};
 }
-function disagreeHTML(rs){ const d = disagreeCategory(rs); return d ? `<div class="dis dis-${d.cat}">\u2696 ${escHtml(d.text)}</div>` : ''; }
+function disagreeHTML(rs){
+  const d = disagreeCategory(rs); if (!d) return '';
+  let extra = '';
+  // v3.94 (BEL 10/22 R4, Emerald Ember): in a two-horse race, say when AI(2)'s horse is the morning-line favourite
+  if (d.cat === 'two'){
+    const o2 = ai2ModelPick(rs); const rf = rankedField(rs, []); const top = rf.length ? rf[0].h : null;
+    const live = (rs.horses || []).filter(h => !isScratchedNow(rs, h) && h.decimalOdds != null);
+    const fav = live.length ? live.reduce((a, b) => (b.decimalOdds < a.decimalOdds ? b : a)) : null;
+    if (o2 && fav === o2) extra = `<div class="dis-note">AI(2)'s horse #${escHtml(o2.post || '?')} ${escHtml(o2.horse)} is the morning-line favourite \u2014 in two-horse races like this it has won more often than our #1, but at a short price. The exacta both ways (#${escHtml(top ? top.post || '?' : '?')} and #${escHtml(o2.post || '?')}) covers either order.</div>`;
+    else if (o2 && top) extra = `<div class="dis-note">Exacta both ways (#${escHtml(top.post || '?')} and #${escHtml(o2.post || '?')}) covers either order.</div>`;
+  }
+  return `<div class="dis dis-${d.cat}">\u2696 ${escHtml(d.text)}${extra}</div>`;
+}
 
 // v3.90 (Robert, 20 Oct: "the program should be self learning"). Results you record are kept
 // in this browser; tier percentages blend the pack's record with yours.
@@ -9507,7 +9520,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v3.93 · released 23 October 2026 · build 2026-10-23-a</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v3.94 · released 23 October 2026 · build 2026-10-23-b</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
