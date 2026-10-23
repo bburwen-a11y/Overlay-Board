@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v3.92 — Race Card Reader</title>
+<title>Overlay Board v3.93 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1251,7 +1251,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v3.92</span> · released 21 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v3.93</span> · released 23 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -8392,14 +8392,14 @@ function closeCallHTML(rs){
 function racePriority(rs){
   const rf = rankedField(rs, []); const top = rf.length ? rf[0].h : null;
   const live = (rs.horses || []).filter(h => !isScratchedNow(rs, h));
-  const m = rscsMap(rs); const csTop = top ? (m.get(top) || {}).cs === 1 : false;
+  const m = rscsMap(rs); const csTop = top ? ((m.get(top) || {}).cs === 1 && ((m.get(top) || {}).tally || 0) > 0) : false;   // v3.93: the strongest case must also be a positive one
   const o2 = ai2ModelPick(rs);
   const rtype = String((live[0] || {}).ai3RaceType || '').toUpperCase(); const mdn = rtype === 'S' || rtype === 'M' || rtype === 'MO';
   const nDebut = live.filter(h => !(h.ppRaces || []).length).length;
   const p = pickFor(rs); const fig = !!(p && !p.none && p.line === 'primary');
   const checks = [
     ['both ranking methods put the same horse first', !!(o2 && top && o2 === top)],
-    ['the strongest case is also the top-ranked horse', csTop],
+    ['the strongest case is also the top-ranked horse, and it is a positive case', csTop],
     ['6 or fewer runners, or an allowance / optional claiming race', raceGroup(rs).cond],
     ['no debut runner to watch', !debutWatch(rs).length],
     ['not a maiden with 2 or more first-time starters', !(mdn && nDebut >= 2)],
@@ -9507,7 +9507,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v3.92 · released 21 October 2026 · build 2026-10-21-b</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v3.93 · released 23 October 2026 · build 2026-10-23-a</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
