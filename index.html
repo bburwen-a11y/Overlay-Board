@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v3.97 — Race Card Reader</title>
+<title>Overlay Board v3.99 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1254,7 +1254,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v3.97</span> · released 24 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v3.99</span> · released 24 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -2650,6 +2650,7 @@ function distanceTextToYards(text){
 }
 
 function applyChangesFeed(text){
+  try { window.__lastFeedText = text; } catch(e){}   // v3.98: kept so AI(2) sees surface and distance changes too
   const statusEl = document.getElementById('rssStatus');
   const reportEl = document.getElementById('rssReport');
   reportEl.innerHTML = '';
@@ -2747,7 +2748,7 @@ function applyChangesFeed(text){
     feed.courses.forEach(c => {
       const to = surfCode(c.to);
       rows.filter(r => String(r.race).trim() === String(c.race).trim()).forEach(r => {
-        if (r.surface !== to){ r.surface = to; courseApplied++; }
+        if (r.surface !== to){ if (/^t/i.test(String(r.surface || '')) && to !== 'T') r.offTurf = true; r.surface = to; courseApplied++; }
         // ai3SurfaceToday mirrors r.surface but starts from a different raw
         // field (BRIS field 25's explicit all-weather flag) — it needs the
         // same live update or it goes stale the moment weather changes a
@@ -3179,7 +3180,7 @@ document.getElementById('computeBtn').addEventListener('click', () => {
       recentWorks: r.recentWorks || [],
       ltStarts: r.ltStarts, ltWins: r.ltWins, ltPlaces: r.ltPlaces,
       ltShows: r.ltShows, ltEarn: r.ltEarn,
-      ppRaces: r.ppRaces || [],
+      ppRaces: r.ppRaces || [], offTurf: !!r.offTurf,
       // The AI(3) port's own fields — never copied into this object before,
       // so every surface-dependent read in it (surface itself, all six
       // best-speed variants, trainer/jockey combo, today's raceType and
@@ -4071,7 +4072,9 @@ function demotionFlags(h, live){
   const figLine = (h.ppRaces || []).find(q => q.spd != null && q.spd > 0);
   const today = ai3_surfaceGroup(h.surface || ''), ls = figLine ? ai3_surfaceGroup(figLine.surf || '') : '';
   const top = Math.max(...live.map(x => x.lastSpd || 0));
-  if (h.lastSpd && h.lastSpd === top && today && ls && ls !== today)
+  // v3.99 (GP 10/23 R4 Army Salute; GP 10/11 R9 Redland Rebels): when a race is taken off the turf, every
+  // horse is switching surface, so a top figure from another surface is no longer a flag
+  if (h.lastSpd && h.lastSpd === top && today && ls && ls !== today && !h.offTurf)
     out.push({code: 'surf', text: `top last figure ${h.lastSpd} earned on ${ls === 'T' ? 'turf' : ls === 'A' ? 'all-weather' : 'dirt'}`});
   const fin = parseInt(last.fin, 10);
   if (fin >= 4 && TROUBLE_RX.test(String(last.comment || '')))
@@ -4097,7 +4100,7 @@ function fadeSignals(h, live){
   (h.keyStats || []).forEach(k => { if (FADE_SIT.includes(String(k.category || '').trim()) && k.starts >= 15 && k.winPct != null && (best == null || k.winPct > best.winPct)) best = k; });
   if (best && best.winPct < 10 && !(globalThis.__waiveH2H !== false && h2hEdge90(h, live))   /* v2.97: no trainer fade when the horse beat a rival in this field within 90 days */) out.push(`trainer ${Math.round(best.winPct)}% in "${String(best.category).trim()}" (${best.starts} starts)`);
   const g = ai3_surfaceGroup(h.surface || '');
-  if (g !== 'T' && h.raceDistYds && h.raceDistYds < 1760){
+  if (g === 'D' && !h.offTurf && h.raceDistYds && h.raceDistYds < 1760){   // v3.99: dirt sprints only (not all-weather or off-turf races)
     const lp = x => { const v = (x.ppRaces || []).slice(0, 3).map(q => q.latePace).filter(v => v != null && v > 0); return v.length ? Math.max(...v) : null; };
     const mine = lp(h);
     if (mine != null){
@@ -5951,7 +5954,7 @@ async function runPeers(){
   for (const [key, id] of [['ai2', 'peerAI2']]){   // v3.30: AI(3) retired; two-method concurrence
     try {
       const f = await peerFrame(key, id);
-      out[key] = f.contentWindow.__peerRun(lastDrfText, scr) || {};
+      out[key] = f.contentWindow.__peerRun(lastDrfText, scr, window.__lastFeedText || '') || {};
     } catch(e){ out[key] = {__error: String((e && e.message) || e)}; }
   }
   window.__peer = out;
@@ -9532,7 +9535,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v3.97 · released 24 October 2026 · build 2026-10-24-c</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v3.99 · released 24 October 2026 · build 2026-10-24-e</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
@@ -14498,17 +14501,18 @@ IGNvbnN0IGlkPWVsLmdldEF0dHJpYnV0ZSgiZGF0YS1ob3JzZS1pZCIpOwogICAgICAgIGlmKGlkKXsg
 dCgpOyBvcGVuSG9yc2VQUEZyb21Bbnl3aGVyZShpZCk7IH0KICAgIH0KfSk7Cgo8L3NjcmlwdD4KCjxkaXYgc3R5bGU9InRleHQt
 YWxpZ246Y2VudGVyO3BhZGRpbmc6MTJweCAwIDIycHg7Zm9udC1mYW1pbHk6dmFyKC0tbW9ubyk7Zm9udC1zaXplOjEwcHg7Y29s
 b3I6dmFyKC0taW5rLXNvZnQpO29wYWNpdHk6Ljc1OyI+SG9yc2UgSGFuZGljYXAgdjguNTIgwrcgT2N0b2JlciAxMSwgMjAyNiDC
-tyBpUGhvbmUvU2FmYXJpPC9kaXY+CjxzY3JpcHQ+CndpbmRvdy5fX3BlZXJSdW49ZnVuY3Rpb24odGV4dCxzY3IpewogIHZhciBu
-b3JtPWZ1bmN0aW9uKG4pe3JldHVybiBTdHJpbmcobnx8JycpLnRvVXBwZXJDYXNlKCkucmVwbGFjZSgvXCgoPzpbQS1aXXsyLDN9
-KVwpL2csJycpLnJlcGxhY2UoL1teQS1aMC05XS9nLCcnKTt9OwogIHRyeXsgbG9hZERSRih0ZXh0KTsgfWNhdGNoKGUpe30KICBy
-b3dzLmZvckVhY2goZnVuY3Rpb24ocil7dmFyIEw9c2NyW1N0cmluZyhyLnJhY2UpLnRyaW0oKV18fFtdOyBpZihMLmluZGV4T2Yo
-bm9ybShyLmhvcnNlKSk+PTApIHIuc2NyYXRjaGVkPXRydWU7fSk7CiAgdHJ5eyBjb21wdXRlUmFjZUNhcmQoKTsgfWNhdGNoKGUp
-e30KICB2YXIgUj17fTsgcm93cy5mb3JFYWNoKGZ1bmN0aW9uKGgpeyBpZihoLnNjcmF0Y2hlZCkgcmV0dXJuOyB2YXIgaz1TdHJp
-bmcoaC5yYWNlKS50cmltKCk7IChSW2tdPVJba118fFtdKS5wdXNoKGgpOyB9KTsKICB2YXIgb3V0PXt9OyBPYmplY3Qua2V5cyhS
-KS5mb3JFYWNoKGZ1bmN0aW9uKGspeyB0cnl7IHZhciBzPWNhbGN1bGF0ZVByb2JhYmlsaXRpZXMoUltrXSk7IGlmKHMubGVuZ3Ro
-KSBvdXRba109e21vZGVsOnNbMF0uaG9yc2UuaG9yc2UsIHNoYXJlOnNbMF0ucHJvYmFiaWxpdHksIHNlY29uZDpzWzFdP3NbMV0u
-aG9yc2UuaG9yc2U6bnVsbH07IH1jYXRjaChlKXsgb3V0W2tdPXtfX2Vycm9yOlN0cmluZyhlJiZlLm1lc3NhZ2V8fGUpfTsgfSB9
-KTsKICByZXR1cm4gb3V0Owp9Owo8L3NjcmlwdD4KPC9ib2R5Pgo8L2h0bWw+Cg==
+tyBpUGhvbmUvU2FmYXJpPC9kaXY+CjxzY3JpcHQ+CndpbmRvdy5fX3BlZXJSdW49ZnVuY3Rpb24odGV4dCxzY3IsZmVlZCl7CiAg
+dmFyIG5vcm09ZnVuY3Rpb24obil7cmV0dXJuIFN0cmluZyhufHwnJykudG9VcHBlckNhc2UoKS5yZXBsYWNlKC9cKCg/OltBLVpd
+ezIsM30pXCkvZywnJykucmVwbGFjZSgvW15BLVowLTldL2csJycpO307CiAgdHJ5eyBsb2FkRFJGKHRleHQpOyB9Y2F0Y2goZSl7
+fQogIGlmKGZlZWQpeyB0cnl7IGFwcGx5UlNTKGZlZWQsJ2JvYXJkIGZlZWQnKTsgfWNhdGNoKGUpe30gfQogIHJvd3MuZm9yRWFj
+aChmdW5jdGlvbihyKXt2YXIgTD1zY3JbU3RyaW5nKHIucmFjZSkudHJpbSgpXXx8W107IGlmKEwuaW5kZXhPZihub3JtKHIuaG9y
+c2UpKT49MCkgci5zY3JhdGNoZWQ9dHJ1ZTt9KTsKICB0cnl7IGNvbXB1dGVSYWNlQ2FyZCgpOyB9Y2F0Y2goZSl7fQogIHZhciBS
+PXt9OyByb3dzLmZvckVhY2goZnVuY3Rpb24oaCl7IGlmKGguc2NyYXRjaGVkKSByZXR1cm47IHZhciBrPVN0cmluZyhoLnJhY2Up
+LnRyaW0oKTsgKFJba109UltrXXx8W10pLnB1c2goaCk7IH0pOwogIHZhciBvdXQ9e307IE9iamVjdC5rZXlzKFIpLmZvckVhY2go
+ZnVuY3Rpb24oayl7IHRyeXsgdmFyIHM9Y2FsY3VsYXRlUHJvYmFiaWxpdGllcyhSW2tdKTsgaWYocy5sZW5ndGgpIG91dFtrXT17
+bW9kZWw6c1swXS5ob3JzZS5ob3JzZSwgc2hhcmU6c1swXS5wcm9iYWJpbGl0eSwgc2Vjb25kOnNbMV0/c1sxXS5ob3JzZS5ob3Jz
+ZTpudWxsfTsgfWNhdGNoKGUpeyBvdXRba109e19fZXJyb3I6U3RyaW5nKGUmJmUubWVzc2FnZXx8ZSl9OyB9IH0pOwogIHJldHVy
+biBvdXQ7Cn07Cjwvc2NyaXB0Pgo8L2JvZHk+CjwvaHRtbD4K
 </script>
 
 </body>
