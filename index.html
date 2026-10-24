@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.00 — Race Card Reader</title>
+<title>Overlay Board v4.01 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1254,7 +1254,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.00</span> · released 24 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.01</span> · released 25 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -8131,14 +8131,18 @@ function reversalInfo(rs){
   const rf = rankedField(rs, []); if (rf.length < 2) return null;
   const plain = rf.slice().sort((a, b) => a.base - b.base || a.ml - b.ml)[0];
   const top = rf[0]; if (!plain || plain.h === top.h) return null;
-  const parts = []; const add = (x, lab) => { const extra = x.score - x.base; if (extra) parts.push(`#${x.h.post || '?'} ${x.h.horse} ${extra > 0 ? '+' : ''}${extra} (${lab(x)})`); };
-  const lab = x => { const L = []; (x.dflags || []).forEach(f => L.push(f.code === 'trouble' ? '\u2b07 trouble last out' : '\u2b07 figure from another surface')); (x.fades || []).forEach(f => L.push('\u2296 ' + f)); if ((x.boosts || []).some(b => b.code === 'epsup')) L.push('\u2b06 top $/start moving up'); if (x.score - x.base - 10 * (x.dflags || []).length - 5 * (x.fades || []).length + ((x.boosts || []).length ? 5 : 0) === 3) L.push('not competitive at level'); return L.join(', ') || 'adjustment'; };
-  add(plain, lab); add(top, lab);
-  return {plain: plain.h, top: top.h, why: parts.join('; ')};
+  // v4.01 (review of v4.00): explain from the score as actually calculated - the adjustment terms
+  // are read from the score line itself, so configurable penalties and boosts are always right
+  const adj = x => { const m = String(x.why || '').match(/^\s*-?\d+\s*=\s*\S+\s*\+\s*\S+\s*\+\s*\S+(.*)$/); const t = m ? m[1].trim() : '';
+    const fadeNames = (x.fades || []).map(f => typeof f === 'string' ? f : (f && (f.text || f.code)) || '').filter(Boolean);
+    return t ? t.replace(/^\+\s*/, '+') + (fadeNames.length ? ' [' + fadeNames.join('; ') + ']' : '') : ''; };
+  const parts = [];
+  [plain, top].forEach(x => { const a = adj(x); parts.push(`#${x.h.post || '?'} ${x.h.horse}: RS ${x.score} = plain ${x.base}${a ? ' ' + a : ''}`); });
+  return {plain: plain.h, top: top.h, why: parts.join(' \u00b7 ')};
 }
 function reversalHTML(rs){
   const r = reversalInfo(rs); if (!r) return '';
-  return `<div class="dis dis-open">\u21c4 Adjusted pick differs from the plain ranking: the plain formula (figures + Prime Power + morning line) puts <b>#${escHtml(r.plain.post || '?')} ${escHtml(r.plain.horse)}</b> first; the board's adjustments put <b>#${escHtml(r.top.post || '?')} ${escHtml(r.top.horse)}</b> first${r.why ? ' (' + escHtml(r.why) + ')' : ''}. Treat it as a contest between the two: exacta both ways; no win bet on either unless a tier bet says so.</div>`;
+  return `<div class="dis dis-open">\u21c4 <b>SELECTION REVERSAL</b> \u2014 the adjusted ranking differs from the plain ranking (figures + Prime Power + morning line): plain #1 is <b>#${escHtml(r.plain.post || '?')} ${escHtml(r.plain.horse)}</b>, adjusted #1 is <b>#${escHtml(r.top.post || '?')} ${escHtml(r.top.horse)}</b>. Compare both contenders' surface, pace, class and recent form. A reversal alone does not justify a wager.<div class="dis-note">${escHtml(r.why)}</div></div>`;
 }
 
 function disagreeCategory(rs){
@@ -8556,7 +8560,7 @@ function buildVerdictBoard(raceSummaries){
       + ''   /* v3.82: head-to-head only in Race Facts */
       + `</div>`;
   };
-  const line0 = line; const lineP = r => line0(r).replace('<span class="vb-tier">', (() => { const pr = racePriority(r.rs); return `<span class="prio-chip prio-${pr.level.toLowerCase()}">${pr.level}</span><span class="vb-tier">`; })()).replace(/<\/div>$/, (() => { const v = reversalInfo(r.rs); return v ? `<span class="vb-ticket dis-t dis-open">\u21c4 plain ranking prefers #${escHtml(v.plain.post || '?')}</span>` : ''; })() + (() => { const d = disagreeCategory(r.rs); return d ? `<span class="vb-ticket dis-t dis-${d.cat}">\u2696 ${escHtml(d.cat === 'two' ? 'two-horse race' : d.cat === 'wide' ? 'wide open' : d.cat === 'split' ? 'small field, split' : 'split')}</span>` : ''; })() + (() => { const t = winTier(r.rs); return t ? `<span class="vb-ticket tier-t tier-${t.t}">Tier ${t.t} \u00b7 #${escHtml(t.h.post || '?')} \u00b7 won ${t.pct}% \u00b7 ${t.t <= 3 ? 'WIN BET' : t.t === 4 ? 'win bet at 2-1+' : (r.pl && r.pl.play && !r.pl.win) ? 'no win bet' : t.t === 5 ? 'no win edge' : 'PASS'}</span>` : ''; })() + (() => { const pr = racePriority(r.rs); if (pr.level === 'FOCUS') return ''; const c = challengers(r.rs); return c.length ? `<span class="vb-ticket close-w">\u2696 close call: ${c.map(x => '#' + (x.h.post || '?') + ' ' + escHtml(x.h.horse) + ' (' + escHtml(x.why[0]) + ')').join(', ')}</span>` : ''; })() + (() => { const dw = debutWatch(r.rs); return dw.length ? `<span class="vb-ticket debut-w">\u26a0 debut runner to watch: ${dw.map(h => '#' + (h.post || '?') + ' ' + escHtml(h.horse) + ' (' + escHtml(h.mlOddsStr || '') + ')').join(', ')}</span>` : ''; })() + (() => { const f = paceFlag(r.rs); return f ? `<span class="vb-ticket pace-${f.kind}">\u26a1 ${escHtml(f.kind === 'contested' ? 'contested pace possible: ' + f.speed.map(h => '#' + (h.post || '?')).join(', ') + (f.stalk.length ? ' \u00b7 sitting behind: ' + f.stalk.map(h => '#' + (h.post || '?')).join(', ') : '') : 'lone speed: #' + (f.speed[0].post || '?') + ' ' + f.speed[0].horse)}</span>` : ''; })() + '</div>');
+  const line0 = line; const lineP = r => line0(r).replace('<span class="vb-tier">', (() => { const pr = racePriority(r.rs); return `<span class="prio-chip prio-${pr.level.toLowerCase()}">${pr.level}</span><span class="vb-tier">`; })()).replace(/<\/div>$/, (() => { const v = reversalInfo(r.rs); return v ? `<span class="vb-ticket dis-t dis-open">\u21c4 reversal: plain #1 is #${escHtml(v.plain.post || '?')}</span>` : ''; })() + (() => { const d = disagreeCategory(r.rs); return d ? `<span class="vb-ticket dis-t dis-${d.cat}">\u2696 ${escHtml(d.cat === 'two' ? 'two-horse race' : d.cat === 'wide' ? 'wide open' : d.cat === 'split' ? 'small field, split' : 'split')}</span>` : ''; })() + (() => { const t = winTier(r.rs); return t ? `<span class="vb-ticket tier-t tier-${t.t}">Tier ${t.t} \u00b7 #${escHtml(t.h.post || '?')} \u00b7 won ${t.pct}% \u00b7 ${t.t <= 3 ? 'WIN BET' : t.t === 4 ? 'win bet at 2-1+' : (r.pl && r.pl.play && !r.pl.win) ? 'no win bet' : t.t === 5 ? 'no win edge' : 'PASS'}</span>` : ''; })() + (() => { const pr = racePriority(r.rs); if (pr.level === 'FOCUS') return ''; const c = challengers(r.rs); return c.length ? `<span class="vb-ticket close-w">\u2696 close call: ${c.map(x => '#' + (x.h.post || '?') + ' ' + escHtml(x.h.horse) + ' (' + escHtml(x.why[0]) + ')').join(', ')}</span>` : ''; })() + (() => { const dw = debutWatch(r.rs); return dw.length ? `<span class="vb-ticket debut-w">\u26a0 debut runner to watch: ${dw.map(h => '#' + (h.post || '?') + ' ' + escHtml(h.horse) + ' (' + escHtml(h.mlOddsStr || '') + ')').join(', ')}</span>` : ''; })() + (() => { const f = paceFlag(r.rs); return f ? `<span class="vb-ticket pace-${f.kind}">\u26a1 ${escHtml(f.kind === 'contested' ? 'contested pace possible: ' + f.speed.map(h => '#' + (h.post || '?')).join(', ') + (f.stalk.length ? ' \u00b7 sitting behind: ' + f.stalk.map(h => '#' + (h.post || '?')).join(', ') : '') : 'lone speed: #' + (f.speed[0].post || '?') + ' ' + f.speed[0].horse)}</span>` : ''; })() + '</div>');
   const prs = rows.map(r => ({r, pr: racePriority(r.rs)}));
   const focus = prs.filter(x => x.pr.level === 'FOCUS'), low = prs.filter(x => x.pr.level === 'LOW');
   const focusHTML = `<div class="prio-sum"><div><b>Spend your time on:</b> ${focus.length ? focus.map(x => `<a class="race-jump" data-goto-pick="${escAttr(x.r.rs.race)}" href="#">R${escHtml(x.r.rs.race)}</a> (consider ${raceGroup(x.r.rs).rf.slice(0, raceGroup(x.r.rs).k).map(r => '#' + (r.h.post || '?')).join(', ')})`).join(' \u00b7 ') : 'no race passes 5 of the 6 checks today'}</div>`
@@ -9551,7 +9555,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.00 · released 24 October 2026 · build 2026-10-24-f</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.01 · released 25 October 2026 · build 2026-10-25-a</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
