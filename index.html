@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.01 — Race Card Reader</title>
+<title>Overlay Board v4.02 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1254,7 +1254,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.01</span> · released 25 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.02</span> · released 25 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -8295,6 +8295,17 @@ function forAgainst(rs, h){
   if ((h.ppRaces || [])[0] && parseInt(h.ppRaces[0].fin, 10) === 1) F.push('won its last start');
   if (h.todayClassPar != null && h.lastClassPar != null){ const d = h.todayClassPar - h.lastClassPar; if (d <= -2) F.push(`dropping ${Math.abs(d).toFixed(1)} class points`); else if (d >= 2) A.push(`moving up ${d.toFixed(1)} class points`); }
   if (h.layoffDays != null && h.layoffDays >= 60) A.push(`off ${h.layoffDays} days`);
+  // v4.02 (Robert, GP 10/23 R7 Roger That Dana): first start off a claim, and a conditions winner moving into
+  // open company. Pool: off-the-claim horses returned 55 cents per dollar; conditions winners moving to open 61 cents.
+  // Counted in the case (CS) only - adding them to the rank score did not improve the #1 in both halves.
+  { const L0 = (h.ppRaces || [])[0];
+    if (L0 && /(Clm|OC|Md|MC|Str)\S*c$/.test(String(L0.classTxt || '').trim())){
+      const ks = (h.keyStats || []).find(k => /^1st after clm$/i.test(String(k.category || '').trim()));
+      A.push('first start off a claim' + (ks && ks.starts ? ` (trainer ${Math.round(ks.winPct * ks.starts / 100)} of ${ks.starts} first off a claim)` : ' (trainer has no record first off a claim)'));
+    }
+    const cond = t => /n\d[lx]|nw\d/i.test(String(t || ''));
+    if (L0 && parseInt(L0.fin, 10) === 1 && cond(L0.classTxt) && !cond(h.raceClassTxt)) A.push('won a non-winners race last time; today is open company');
+  }
   { const nf = noFinishCount(h); if (nf.n >= 2) A.push(`no finish in ${nf.n} of last ${nf.of} (${nf.words.join(', ')})`); }
   { const cl = competitiveAtLevel(h);
     if (cl.lv >= 1 && cl.c >= 1){ const q = cl.closest; F.push(`competitive at today's level or higher in ${cl.c} of last ${cl.n}` + (q ? ` (${ordinal(q.f)}${q.f > 1 && q.lb != null ? ', beaten ' + lengthsTxt(q.lb) : ''})` : '')); }
@@ -9555,7 +9566,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.01 · released 25 October 2026 · build 2026-10-25-a</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.02 · released 25 October 2026 · build 2026-10-25-b</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
