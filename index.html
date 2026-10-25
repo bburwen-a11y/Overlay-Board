@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.15 — Race Card Reader</title>
+<title>Overlay Board v4.16 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1259,7 +1259,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.15</span> · released 26 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.16</span> · released 26 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -8661,13 +8661,22 @@ function paceFlagHTML(rs){ const f = paceFlag(rs); return f ? `<div class="pace-
 // horse's chance from RS and CS alone. Chances come from a model fitted on 583 races using only the
 // rank-score gap to the best, RS #1, CS rank and the case tally; on races it had not seen, horses it gave
 // 10-20% won 14%, 20-30% won 22%, 45-60% won 52% (the 30-45% band ran a little high: said 37, won 28).
-const RSCS_W = {gap: -0.0305, rs1: 0.0927, cs1: -0.2759, cs2: -0.2977, cs3: -0.2775, tal: 0.1108};
+const RSCS_W = {gap: -0.03, rs1: 0.084, cs1: -0.181, cs2: -0.188, cs3: -0.164, tal: 0.092, doubt: -1.291, fragile: 0.082, speedfav: 0.763};   // v4.16: reviewed model (warnings weighed)
+let __chGuard = false;
 function rscsChances(rs){
   const m = rscsMap(rs); const live = (rs.horses || []).filter(h => !isScratchedNow(rs, h) && m.get(h) && m.get(h).rs != null);
   if (!live.length) return new Map();
   const mn = Math.min(...live.map(h => m.get(h).rs));
   const sc = live.map(h => { const v = m.get(h); const gap = Math.min(v.rs - mn, 25), tal = Math.max(-8, Math.min(10, v.tally || 0));
-    return Math.exp(RSCS_W.gap * gap + RSCS_W.rs1 * (v.rs === mn ? 1 : 0) + RSCS_W.cs1 * (v.cs === 1 ? 1 : 0) + RSCS_W.cs2 * (v.cs === 2 ? 1 : 0) + RSCS_W.cs3 * (v.cs === 3 ? 1 : 0) + RSCS_W.tal * tal); });
+    let doubt = 0, fragile = 0, speedfav = 0;
+    if (!__chGuard){ __chGuard = true; try {
+      const fa = forAgainst(rs, h); const F = (fa.F || []).join(' | '); const A = (fa.A || []).join(' | ');
+      doubt = doubtfulFigureHorse(rs, h) ? 1 : 0;
+      const mlfav = /morning-line favourite/.test(F);
+      fragile = mlfav && ((v.tally || 0) <= 0 || /no finish in [234]/.test(A) || /tires late/.test(A)) ? 1 : 0;
+      speedfav = mlfav && /most early speed/.test(F) ? 1 : 0;
+    } catch(e){} finally { __chGuard = false; } }
+    return Math.exp(RSCS_W.gap * gap + RSCS_W.rs1 * (v.rs === mn ? 1 : 0) + RSCS_W.cs1 * (v.cs === 1 ? 1 : 0) + RSCS_W.cs2 * (v.cs === 2 ? 1 : 0) + RSCS_W.cs3 * (v.cs === 3 ? 1 : 0) + RSCS_W.tal * tal + RSCS_W.doubt * doubt + RSCS_W.fragile * fragile + RSCS_W.speedfav * speedfav); });
   const tot = sc.reduce((a, c) => a + c, 0); const out = new Map(); live.forEach((h, i) => out.set(h, sc[i] / tot)); return out;
 }
 // v4.15 (GP 10/24 R3 Poiema): a strong-figure horse with two or more of - off 60+ days, stretching out
@@ -8686,7 +8695,10 @@ function selectionSummaryHTML(rs){
   const rf = rankedField(rs, []); if (!rf.length) return '';
   const ch = rscsChances(rs); const m = rscsMap(rs); const pl = racePlan(rs);
   const xb = extraBets(rs); const t = winTier(rs);
-  const sel = (pl && pl.win && pl.v && pl.v.h) ? pl.v.h : (xb.length ? xb[0].h : rf[0].h);
+  const reviewed = [...ch.entries()].sort((a, b) => b[1] - a[1])[0];
+  // v4.16: with no win bet, the top pick is the horse that rates best after the review (tested: the reviewed #1 won
+  // 31.2% against 28.4% for the rank-score #1 in the later cards, 36.4% against 35.7% in the earlier ones)
+  const sel = (pl && pl.win && pl.v && pl.v.h) ? pl.v.h : (xb.length ? xb[0].h : (reviewed ? reviewed[0] : rf[0].h));
   const pct = h => Math.round(100 * (ch.get(h) || 0));
   const top = rf[0];
   const v = m.get(sel) || {}; const fa = forAgainst(rs, sel);
@@ -8695,7 +8707,8 @@ function selectionSummaryHTML(rs){
     : pl.v.tier === 'SOLID' ? 'SOLID PICK: top-ranked, short morning line, best Prime Power or best last figure, clean recent record'
     : pl.v.tier === 'BET' ? 'CONDITIONAL: figure favourite missing one extra condition; bet only at 2-1 or higher' : '';
   else if (xb.length && xb[0].h === sel) how = xb[0].type === 'FIGURE' ? 'FIGURE LEADER: best 3-race average, case +3 or better, 8 or fewer runners' : 'VALUE DROPPER: dropping in class on dirt, fair odds shorter than its morning line';
-  else how = 'top of the rank score (no win bet)';
+  else { const rs1 = rf[0].h; how = sel === rs1 ? 'first on the rank score and still first after weighing the warnings (no win bet)'
+      : 'rates best after weighing the warnings (no win bet). Calculated #1 was #' + (rs1.post || '?') + ' ' + rs1.horse + ' on the rank score; the review moved it'; }
   const rsLine = (rf.find(r => r.h === sel) || {}).why || '';
   const threats = rf.map(r => r.h).filter(h => h !== sel).sort((a, b) => (ch.get(b) || 0) - (ch.get(a) || 0)).slice(0, 3);
   const thr = threats.map(h => { const w = m.get(h) || {}; const f = forAgainst(rs, h); const eo = edgesOverTop(rs, h);
@@ -8707,12 +8720,12 @@ function selectionSummaryHTML(rs){
   const best = [...ch.entries()].sort((a, b) => b[1] - a[1])[0];
   const selDq = doubtfulFigureHorse(rs, sel);
   const bestDq = best ? doubtfulFigureHorse(rs, best[0]) : null;
-  const bestNote = best && best[0] !== sel && pct(best[0]) > pct(sel) && !bestDq ? `<div class="ss-l ss-warn">\u26a0 By RS and CS together, <b>#${escHtml(best[0].post || '?')} ${escHtml(best[0].horse)}</b> has the best chance (${pct(best[0])}%) \u2014 the selection leads only on the rank score.</div>` : '';
+  const bestNote = best && best[0] !== sel && pct(best[0]) > pct(sel) ? `<div class="ss-l ss-warn">\u26a0 By RS and CS together, <b>#${escHtml(best[0].post || '?')} ${escHtml(best[0].horse)}</b> has the best chance (${pct(best[0])}%) \u2014 the bet stands on its own rules, but this horse rates higher after weighing every warning.</div>` : '';
   return `<div class="selsum"><div class="ss-h">${isBet ? 'BET SELECTION' : 'TOP PICK (no bet)'}: #${escHtml(sel.post || '?')} ${escHtml(sel.horse)} (${escHtml(sel.mlOddsStr || '')}) \u2014 chance ${pct(sel)}%</div>` + (selDq ? `<div class="ss-l ss-warn">\u26a0 Doubtful: strong figures but ${escHtml(selDq.join(', '))} \u2014 horses like this have won far less than their figures suggest; read the chance as much lower.</div>` : '') + bestNote
     + `<div class="ss-l"><b>Why:</b> ${escHtml(how)}.</div>`
     + `<div class="ss-l"><b>Rank score:</b> ${escHtml(rsLine)} (lower is better; figures + Prime Power + morning line + adjustments) \u00b7 <b>Case:</b> CS ${v.cs} (${v.tally > 0 ? '+' : ''}${v.tally}: ${(fa.F || []).length} for, ${(fa.A || []).length} against)</div>`
     + `<div class="ss-l"><b>Threats:</b><ul class="ss-t">${thr}</ul>All other runners together: ${rest}%.</div>`
-    + `<div class="ss-n">Chances come from RS and CS alone (a model checked on past races); they are not the odds.</div></div>`;
+    + `<div class="ss-n">Chances: RS and CS, then reviewed for doubtful figure horses (cut sharply), speed favourites (raised) and fragile favourites \u2014 a model checked on past races it had not seen. They are not the odds.</div></div>`;
 }
 function raceHeadHTML(rs){
   const live = (rs.horses || []).filter(h => !isScratchedNow(rs, h)); const h = live[0] || {};
@@ -9750,7 +9763,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.15 · released 26 October 2026 · build 2026-10-26-d</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.16 · released 26 October 2026 · build 2026-10-26-e</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
