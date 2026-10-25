@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.12 — Race Card Reader</title>
+<title>Overlay Board v4.15 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -843,7 +843,7 @@
   .prio-focus{background:#e3f1e6; border-color:#1F5A33; color:#173f26;} .prio-consider{background:#f5f0e3; border-color:#b9a77a; color:#4a3f22;} .prio-low{background:#f4e6e3; border-color:#b98a80; color:#6b2a1e;}
   .prio-top{margin-top:4px; font-weight:600;} .prio-why{margin-top:4px; font-size:12px; opacity:.9;}
   .prio-chip{font-family:var(--mono); font-size:10px; font-weight:800; padding:1px 5px; border-radius:3px; margin-right:4px;}
-  .prio-chip.prio-focus{background:#1F5A33; color:#fff;} .prio-chip.prio-consider{background:#b9a77a; color:#fff;} .prio-chip.prio-low{background:#b98a80; color:#fff;}
+  .prio-chip.prio-bet{background:#173f26; color:#fff;} .prio-chip.prio-focus{background:#1F5A33; color:#fff;} .prio-chip.prio-consider{background:#b9a77a; color:#fff;} .prio-chip.prio-low{background:#b98a80; color:#fff;}
   .prio-sum{background:#fff8e6; border:1px solid #d8c48f; border-radius:5px; padding:8px 10px; margin:0 0 10px; font-size:13.5px; line-height:1.5;}
   .sort-bar{display:flex; gap:6px; align-items:center; margin:0 0 8px; font-family:var(--mono); font-size:12px;}
   .sort-btn{border:1px solid #1b2a22; background:#fff; color:#1b2a22; border-radius:4px; padding:4px 9px; font-family:var(--mono); font-size:12px; font-weight:700;}
@@ -871,6 +871,8 @@
   .tier-vul{margin-top:5px; font-size:12.5px; font-weight:400; background:rgba(255,255,255,.14); padding:3px 6px; border-radius:3px;}
   .xbet{margin-top:6px; padding:5px 8px; border-radius:4px; font-size:13px; background:#2F6B3F; color:#fff;} .xb-val{background:#7a5a12;}
   .vb-ticket.xb-t{background:#2F6B3F; color:#fff; font-weight:700; padding:1px 5px; border-radius:3px;}
+  .selsum{border:2px solid #173f26; border-radius:6px; padding:8px 10px; margin:4px 0 10px; background:#f4f8f2; font-size:13.5px;}
+  .ss-h{font-weight:800; font-size:15px; margin-bottom:4px;} .ss-l{margin-top:4px;} .ss-t{margin:4px 0 2px 18px; padding:0;} .ss-t li{margin:2px 0;} .ss-warn{color:#7a2a1c;} .ss-n{margin-top:5px; font-size:11.5px; opacity:.8;}
   .pp-lvl{font-family:var(--mono); font-size:10px; opacity:.7; margin-left:3px;}
   .pp-works{font-family:var(--mono); font-size:11.5px; line-height:1.7;}
   .pp-record{
@@ -1257,7 +1259,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.12</span> · released 26 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.15</span> · released 26 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -7963,7 +7965,7 @@ function raceUnreadable(rs){
 }
 function racePlan(rs){
   const pl = racePlan0(rs);
-  if (pl && pl.play && !pl.win && !pl.winOnly){ const r = raceUnreadable(rs); if (r.unreadable) return Object.assign({}, pl, {play: false, unreadable: true, why: 'UNREADABLE \u2014 ' + r.why.join('; ') + '. Races like this are too hard to call from the data or the odds; no exactas.'}); }
+  if (pl && pl.play && !pl.win && !pl.winOnly){ const r = raceUnreadable(rs); if (r.unreadable) return Object.assign({}, pl, {play: false, unreadable: true, why: 'UNREADABLE \u2014 ' + r.why.join('; ') + '. Races like this are too hard to call from the data or the odds.'}); }
   return pl;
 }
 function racePlan0(rs){
@@ -8283,8 +8285,7 @@ function disagreeHTML(rs){
     const o2 = ai2ModelPick(rs); const rf = rankedField(rs, []); const top = rf.length ? rf[0].h : null;
     const live = (rs.horses || []).filter(h => !isScratchedNow(rs, h) && h.decimalOdds != null);
     const fav = live.length ? live.reduce((a, b) => (b.decimalOdds < a.decimalOdds ? b : a)) : null;
-    if (o2 && fav === o2) extra = `<div class="dis-note">AI(2)'s horse #${escHtml(o2.post || '?')} ${escHtml(o2.horse)} is the morning-line favourite \u2014 in two-horse races like this it has won more often than our #1, but at a short price. The exacta both ways (#${escHtml(top ? top.post || '?' : '?')} and #${escHtml(o2.post || '?')}) covers either order.</div>`;
-    else if (o2 && top) extra = `<div class="dis-note">Exacta both ways (#${escHtml(top.post || '?')} and #${escHtml(o2.post || '?')}) covers either order.</div>`;
+    if (o2 && fav === o2) extra = `<div class="dis-note">AI(2)'s horse #${escHtml(o2.post || '?')} ${escHtml(o2.horse)} is the morning-line favourite \u2014 in two-horse races like this it has won more often than our #1, but at a short price.</div>`;
   }
   return `<div class="dis dis-${d.cat}">\u2696 ${escHtml(d.text)}${extra}</div>`;
 }
@@ -8350,16 +8351,18 @@ function winTier(rs){
   return {t: 7, pct: tierPct(7).pct, h: top, what: 'top pick in a LOW race'};
 }
 function tierHTML(rs){
-  const t = winTier(rs); if (!t) return '';
+  let t = winTier(rs); if (!t) return '';
   const pl0 = racePlan(rs); const exOnly = pl0 && pl0.play && !pl0.winOnly && !pl0.win;
   const xb = extraBets(rs).find(x => x.h === t.h);
-  const act = xb ? 'WIN BET \u2014 ' + (xb.type === 'FIGURE' ? 'FIGURE LEADER' : 'VALUE DROPPER') + ' (see below)' : t.t <= 3 ? 'WIN BET' : t.t === 4 ? 'WIN BET ONLY AT 2-1 OR HIGHER' : exOnly ? 'NO WIN BET \u2014 exactas only, as shown above' : t.t === 5 ? 'NO WIN-BET EDGE \u2014 exotics or a small bet at most' : 'NO EDGE \u2014 PASS';
+  if (xb){ t = Object.assign({}, t, {pct: xb.type === 'FIGURE' ? 37 : 18, what: xb.type === 'FIGURE' ? 'FIGURE LEADER' : 'VALUE DROPPER (long price)'}); }
+  const act = xb ? 'WIN BET \u2014 ' + (xb.type === 'FIGURE' ? 'FIGURE LEADER' : 'VALUE DROPPER') + ' (see below)' : t.t <= 3 ? 'WIN BET' : t.t === 4 ? 'WIN BET ONLY AT 2-1 OR HIGHER' : exOnly ? 'NO WIN BET' : t.t === 5 ? 'NO WIN-BET EDGE \u2014 exotics or a small bet at most' : 'NO EDGE \u2014 PASS';
   const c = topConfidence(rs); const sc = c && c.strong.length ? ' \u00b7 strong challengers: ' + c.strong.map(h => '#' + (h.post || '?') + ' ' + h.horse).join(', ') : '';
   // v4.04 (ChatGPT review / audit): a win bet on a horse with 2+ Against items is more vulnerable - flag it, keep the bet
   let vul = '';
   if (t.t <= 2){ try { const A = forAgainst(rs, t.h).A || []; if (A.length >= 2) vul = `<div class="tier-vul">\u26a0 <b>Vulnerable bet</b> \u2014 ${A.length} against (${escHtml(A.slice(0, 3).join('; '))}${A.length > 3 ? '; \u2026' : ''}). At Tiers 1-2 bets like this have still won and paid on past cards; the tier is unchanged.</div>`; } catch(e){} }
   const tierBox = `<div class="tier tier-${t.t}"><b>Tier ${t.t} \u00b7 #${escHtml(t.h.post || '?')} ${escHtml(t.h.horse)} \u00b7 picks like this won ${t.pct}%${tierPct(t.t).myN ? ' (incl. your ' + tierPct(t.t).myN + ' recorded)' : ''} \u00b7 ${act}</b> <span class="conf-why">(${escHtml(t.what + sc)})</span></div>`;
-  return vul ? tierBox.replace(/<\/div>$/, vul + '</div>') : tierBox;
+  const tierBox2 = xb ? tierBox.replace(/<b>Tier \d+ \u00b7 /, '<b>' + (xb.type === 'FIGURE' ? 'FIGURE LEADER' : 'VALUE DROPPER') + ' \u00b7 ').replace(/ \(see below\)/, '').replace(/<span class="conf-why">\([^)]*\)<\/span>/, '') : tierBox;
+  return vul ? tierBox2.replace(/<\/div>$/, vul + '</div>') : tierBox2;
 }
 function confidenceHTML(rs){
   const c = topConfidence(rs); if (!c) return '';
@@ -8597,7 +8600,8 @@ function priorityHTML(rs){
   const pr = racePriority(rs);
   const met = pr.checks.filter(c => c[1]).map(c => c[0]), miss = pr.checks.filter(c => !c[1]).map(c => c[0]);
   const t3 = pr.top3.map(h => horseLabel(h) + rscsChip(rs, h)).join(' \u00b7 ');
-  return `<div class="prio prio-${pr.level.toLowerCase()}"><b>${pr.level === 'FOCUS' ? 'FOCUS RACE' : pr.level === 'CONSIDER' ? 'CONSIDER' : 'LOW CONFIDENCE \u2014 HIGH UNCERTAINTY'}</b> \u00b7 ${pr.score} of ${pr.checks.length} checks`
+  const plB = racePlan(rs); const isBet = (plB && plB.win) || extraBets(rs).length;
+  return `<div class="prio prio-${isBet ? 'focus' : pr.level.toLowerCase()}"><b>${isBet ? 'BET RACE' + (pr.level !== 'FOCUS' ? ' (race screen: ' + pr.level.toLowerCase() + ')' : ' (race screen: focus)') : pr.level === 'FOCUS' ? 'FOCUS RACE' : pr.level === 'CONSIDER' ? 'CONSIDER' : 'LOW CONFIDENCE \u2014 HIGH UNCERTAINTY'}</b> \u00b7 ${pr.score} of ${pr.checks.length} checks`
     + contendersHTML(rs) + closeCallHTML(rs)
     + `<div class="prio-why">${met.length ? '\u2713 ' + escHtml(met.join(' \u00b7 ')) : ''}${miss.length ? '<br>\u2717 ' + escHtml(miss.join(' \u00b7 ')) : ''}</div></div>`;
 }
@@ -8653,26 +8657,81 @@ function debutWatchHTML(rs){
 }
 function paceFlagHTML(rs){ const f = paceFlag(rs); return f ? `<div class="pace-flag pace-${f.kind}">\u26a1 ${escHtml(f.text)}</div>` : ''; }
 
+// v4.14 (Robert, 26 Oct): one clear summary per race - why the selection, who the threats are, and each
+// horse's chance from RS and CS alone. Chances come from a model fitted on 583 races using only the
+// rank-score gap to the best, RS #1, CS rank and the case tally; on races it had not seen, horses it gave
+// 10-20% won 14%, 20-30% won 22%, 45-60% won 52% (the 30-45% band ran a little high: said 37, won 28).
+const RSCS_W = {gap: -0.0305, rs1: 0.0927, cs1: -0.2759, cs2: -0.2977, cs3: -0.2775, tal: 0.1108};
+function rscsChances(rs){
+  const m = rscsMap(rs); const live = (rs.horses || []).filter(h => !isScratchedNow(rs, h) && m.get(h) && m.get(h).rs != null);
+  if (!live.length) return new Map();
+  const mn = Math.min(...live.map(h => m.get(h).rs));
+  const sc = live.map(h => { const v = m.get(h); const gap = Math.min(v.rs - mn, 25), tal = Math.max(-8, Math.min(10, v.tally || 0));
+    return Math.exp(RSCS_W.gap * gap + RSCS_W.rs1 * (v.rs === mn ? 1 : 0) + RSCS_W.cs1 * (v.cs === 1 ? 1 : 0) + RSCS_W.cs2 * (v.cs === 2 ? 1 : 0) + RSCS_W.cs3 * (v.cs === 3 ? 1 : 0) + RSCS_W.tal * tal); });
+  const tot = sc.reduce((a, c) => a + c, 0); const out = new Map(); live.forEach((h, i) => out.set(h, sc[i] / tot)); return out;
+}
+// v4.15 (GP 10/24 R3 Poiema): a strong-figure horse with two or more of - off 60+ days, stretching out
+// from a sprint, tires late. Pool: 29 such horses won 4 (14%) against 7 expected, returning 38 cents.
+function doubtfulFigureHorse(rs, h){
+  const fa = forAgainst(rs, h); const F = (fa.F || []).join(' | ');
+  const figs = ['best 3-race figure average', 'best last figure', 'best Prime Power'].filter(x => F.includes(x)).length;
+  if (figs < 2) return null;
+  const why = [];
+  if (h.layoffDays != null && h.layoffDays >= 60) why.push('off ' + h.layoffDays + ' days');
+  if ((fa.A || []).some(a => /stretching out/.test(a))) why.push('stretching out from a sprint');
+  const lf = lateFade(h); if (lf.seen >= 3 && lf.n >= 2) why.push('tires late in ' + lf.n + ' of last ' + lf.seen);
+  return why.length >= 2 ? why : null;
+}
+function selectionSummaryHTML(rs){
+  const rf = rankedField(rs, []); if (!rf.length) return '';
+  const ch = rscsChances(rs); const m = rscsMap(rs); const pl = racePlan(rs);
+  const xb = extraBets(rs); const t = winTier(rs);
+  const sel = (pl && pl.win && pl.v && pl.v.h) ? pl.v.h : (xb.length ? xb[0].h : rf[0].h);
+  const pct = h => Math.round(100 * (ch.get(h) || 0));
+  const top = rf[0];
+  const v = m.get(sel) || {}; const fa = forAgainst(rs, sel);
+  let how = '';
+  if (pl && pl.win && pl.v) how = pl.v.tier === 'STRONG' ? 'DEFINITIVE: the figure favourite (best figures) meets every extra condition and both ranking methods name it'
+    : pl.v.tier === 'SOLID' ? 'SOLID PICK: top-ranked, short morning line, best Prime Power or best last figure, clean recent record'
+    : pl.v.tier === 'BET' ? 'CONDITIONAL: figure favourite missing one extra condition; bet only at 2-1 or higher' : '';
+  else if (xb.length && xb[0].h === sel) how = xb[0].type === 'FIGURE' ? 'FIGURE LEADER: best 3-race average, case +3 or better, 8 or fewer runners' : 'VALUE DROPPER: dropping in class on dirt, fair odds shorter than its morning line';
+  else how = 'top of the rank score (no win bet)';
+  const rsLine = (rf.find(r => r.h === sel) || {}).why || '';
+  const threats = rf.map(r => r.h).filter(h => h !== sel).sort((a, b) => (ch.get(b) || 0) - (ch.get(a) || 0)).slice(0, 3);
+  const thr = threats.map(h => { const w = m.get(h) || {}; const f = forAgainst(rs, h); const eo = edgesOverTop(rs, h);
+    const edges = eo && eo.top === sel && eo.e.length ? ' \u00b7 beats the selection on ' + eo.e.slice(0, 2).join('; ') : '';
+    const dq = doubtfulFigureHorse(rs, h);
+    return `<li><b>#${escHtml(h.post || '?')} ${escHtml(h.horse)}</b> (${escHtml(h.mlOddsStr || '')}) \u2014 <b>${pct(h)}%</b>${dq ? ' <span class="ss-warn">\u26a0 doubtful: strong figures but ' + escHtml(dq.join(', ')) + ' \u2014 horses like this have won far less than their figures suggest</span>' : ''} \u00b7 RS ${w.rs} \u00b7 CS ${w.cs} (${w.tally > 0 ? '+' : ''}${w.tally}) \u00b7 ${escHtml((f.F || []).slice(0, 2).join('; ') || 'no strong facts')}${escHtml(edges)}</li>`; }).join('');
+  const rest = Math.max(0, Math.round(100 * (1 - (ch.get(sel) || 0) - threats.reduce((a, h) => a + (ch.get(h) || 0), 0))));
+  const isBet = (pl && pl.win) || xb.length;
+  const best = [...ch.entries()].sort((a, b) => b[1] - a[1])[0];
+  const selDq = doubtfulFigureHorse(rs, sel);
+  const bestDq = best ? doubtfulFigureHorse(rs, best[0]) : null;
+  const bestNote = best && best[0] !== sel && pct(best[0]) > pct(sel) && !bestDq ? `<div class="ss-l ss-warn">\u26a0 By RS and CS together, <b>#${escHtml(best[0].post || '?')} ${escHtml(best[0].horse)}</b> has the best chance (${pct(best[0])}%) \u2014 the selection leads only on the rank score.</div>` : '';
+  return `<div class="selsum"><div class="ss-h">${isBet ? 'BET SELECTION' : 'TOP PICK (no bet)'}: #${escHtml(sel.post || '?')} ${escHtml(sel.horse)} (${escHtml(sel.mlOddsStr || '')}) \u2014 chance ${pct(sel)}%</div>` + (selDq ? `<div class="ss-l ss-warn">\u26a0 Doubtful: strong figures but ${escHtml(selDq.join(', '))} \u2014 horses like this have won far less than their figures suggest; read the chance as much lower.</div>` : '') + bestNote
+    + `<div class="ss-l"><b>Why:</b> ${escHtml(how)}.</div>`
+    + `<div class="ss-l"><b>Rank score:</b> ${escHtml(rsLine)} (lower is better; figures + Prime Power + morning line + adjustments) \u00b7 <b>Case:</b> CS ${v.cs} (${v.tally > 0 ? '+' : ''}${v.tally}: ${(fa.F || []).length} for, ${(fa.A || []).length} against)</div>`
+    + `<div class="ss-l"><b>Threats:</b><ul class="ss-t">${thr}</ul>All other runners together: ${rest}%.</div>`
+    + `<div class="ss-n">Chances come from RS and CS alone (a model checked on past races); they are not the odds.</div></div>`;
+}
 function raceHeadHTML(rs){
   const live = (rs.horses || []).filter(h => !isScratchedNow(rs, h)); const h = live[0] || {};
   const bits = [fmtDistY(h.raceDistYds), surfWord(h.surface || '')].filter(Boolean).join(' ');
   let cls = ''; try { cls = todayClassCode(rs) || ''; } catch(e){}
   return `<div class="race-hd">RACE ${escHtml(String(rs.race).trim())}<span class="race-hd-sub"> \u00b7 ${escHtml(bits)}${cls ? ' \u00b7 ' + escHtml(cls) : ''} \u00b7 ${live.length} runners</span></div>`;
 }
-function verdictBanner(rs){ return raceHeadHTML(rs) + priorityHTML(rs) + verdictBanner0(rs).replace(/<\/div>$/, resultPickerHTML(rs) + tierHTML(rs) + extraBetsHTML(rs) + fragileFavHTML(rs) + speedFavHTML(rs) + reversalHTML(rs) + disagreeHTML(rs) + challengersHTML(rs) + debutWatchHTML(rs) + paceFlagHTML(rs) + '</div>'); }
+function verdictBanner(rs){ return raceHeadHTML(rs) + selectionSummaryHTML(rs) + priorityHTML(rs) + verdictBanner0(rs).replace(/<\/div>$/, resultPickerHTML(rs) + tierHTML(rs) + extraBetsHTML(rs) + fragileFavHTML(rs) + speedFavHTML(rs) + reversalHTML(rs) + disagreeHTML(rs) + challengersHTML(rs) + debutWatchHTML(rs) + paceFlagHTML(rs) + '</div>'); }
 function verdictBanner0(rs){
   const pl = racePlan(rs);
-  if (!pl.play) return `<div class="vd vd-pass"><div class="vd-tier">${extraBets(rs).length ? 'WIN BET BELOW' : 'SKIP \u2014 NO BET'}</div><div class="vd-why">${escHtml(pl.why)}</div>${pl.top ? `<div class="vd-horse" style="font-size:14px">Top pick ${horseLabel(pl.top)}${rscsChip(rs, pl.top)}</div>` + forAgainstHTML(rs, pl.top) : ''}</div>`;
+  if (!pl.play) return `<div class="vd ${extraBets(rs).length ? 'vd-play' : 'vd-pass'}"><div class="vd-tier">${extraBets(rs).length ? 'PLAY \u2014 WIN BET (see below)' : 'SKIP \u2014 NO BET'}</div><div class="vd-why">${escHtml(pl.why)}</div>${pl.top ? `<div class="vd-horse" style="font-size:14px">Top pick ${horseLabel(pl.top)}${rscsChip(rs, pl.top)}</div>` + forAgainstHTML(rs, pl.top) : ''}</div>`;
   if (pl.winOnly) return `<div class="vd vd-play"><div class="vd-tier">PLAY \u2014 WIN BET ONLY</div><div class="vd-why">${escHtml(pl.why)}</div>`
     + `<div class="vd-win"><b>${escHtml(pl.win.label)}</b> \u00b7 ${escHtml(pl.win.text)} \u00b7 ${horseLabel(pl.v.h)}${rscsChip(rs, pl.v.h)}</div>`
     + (pl.nextBest ? `<div class="vd-use">Next best ${horseLabel(pl.nextBest)}${rscsChip(rs, pl.nextBest)}</div>` : '')
     + rivalsNote(rs, pl.v.h) + forAgainstHTML(rs, pl.v.h) + `</div>`;
   const t = planTickets(pl);
   return `<div class="vd vd-play"><div class="vd-tier">${pl.win ? 'PLAY \u2014 WIN BET' : (extraBets(rs).length ? 'WIN BET BELOW' : 'NO WIN BET \u2014 contenders only')}${pl.wide ? ' \u00b7 WIDE FIELD' : ''}</div>`
-    + `<div class="vd-horse">Key ${horseLabel(pl.key)}${rscsChip(rs, pl.key)}</div>` + rivalsNote(rs, pl.key)
-    + `<div class="vd-use">Use ${pl.use.map(h => horseLabel(h) + rscsChip(rs, h)).join(' \u00b7 ')}</div>`
-    + `<div class="vd-ticket">${escHtml(t[0])}<br>${escHtml(t[1])}</div>`
-    + (pl.win ? `<div class="vd-win"><b>${escHtml(pl.win.label)}</b> \u00b7 ${escHtml(pl.win.text)}${pl.v.h !== pl.key ? ` <span class="vd-diff">\u2014 win bet is ${horseLabel(pl.v.h)}${rscsChip(rs, pl.v.h)}; the Key ${horseLabel(pl.key)} is next best</span>` : ''}</div>` + forAgainstHTML(rs, pl.v.h) : `<div class="vd-why">No win bet in this race.</div>` + forAgainstHTML(rs, pl.key))
+    + `<div class="vd-horse">Top pick ${horseLabel(pl.key)}${rscsChip(rs, pl.key)}</div>` + rivalsNote(rs, pl.key)
+    + (pl.win ? `<div class="vd-win"><b>${escHtml(pl.win.label)}</b> \u00b7 ${escHtml(pl.win.text)}${pl.v.h !== pl.key ? ` <span class="vd-diff">\u2014 win bet is ${horseLabel(pl.v.h)}${rscsChip(rs, pl.v.h)}; the top pick ${horseLabel(pl.key)} is next best</span>` : ''}</div>` + forAgainstHTML(rs, pl.v.h) : `<div class="vd-why">No win bet in this race.</div>` + forAgainstHTML(rs, pl.key))
     + `</div>`;
 }
 function buildVerdictBoard(raceSummaries){
@@ -8682,7 +8741,7 @@ function buildVerdictBoard(raceSummaries){
   const num = h => '#' + (h.post || '?');
   const line = r => {
     const go = `<a class="race-jump vb-race" data-goto-pick="${escAttr(r.rs.race)}" href="#">R${escHtml(r.rs.race)}</a>`;
-    if (!r.pl.play) return `<div class="vb-row vb-pass">${go}<span class="vb-tier">SKIP</span><span class="vb-why">No bet \u2014 ${escHtml(r.pl.why)}</span>${r.pl.top ? `<span class="vb-ticket">Top pick ${num(r.pl.top)} ${escHtml(r.pl.top.horse)} (${escHtml(r.pl.top.oddsStr || '')})${rscsChip(r.rs, r.pl.top)}</span>` : ''}</div>`;
+    if (!r.pl.play) return `<div class="vb-row ${extraBets(r.rs).length ? 'vb-play' : 'vb-pass'}">${go}<span class="vb-tier">${extraBets(r.rs).length ? 'PLAY' : 'SKIP'}</span><span class="vb-why">${extraBets(r.rs).length ? 'Win bet only: ' + extraBets(r.rs).map(x => (x.type === 'FIGURE' ? 'figure leader' : 'value dropper') + ' #' + escHtml(x.h.post || '?') + ' ' + escHtml(x.h.horse)).join(', ') + '. Otherwise ' + escHtml(String(r.pl.why || '').replace(/^UNREADABLE \u2014 /, 'unreadable: ')) : 'No bet \u2014 ' + escHtml(r.pl.why)}</span>${r.pl.top ? `<span class="vb-ticket">Top pick ${num(r.pl.top)} ${escHtml(r.pl.top.horse)} (${escHtml(r.pl.top.oddsStr || '')})${rscsChip(r.rs, r.pl.top)}</span>` : ''}</div>`;
     if (r.pl.winOnly){ const fa = forAgainst(r.rs, r.pl.v.h);
       return `<div class="vb-row vb-play">${go}<span class="vb-tier">PLAY</span><span class="vb-horse">Win only: #${escHtml(r.pl.v.h.post || '?')} ${escHtml(r.pl.v.h.horse)} (${escHtml(r.pl.v.h.oddsStr || '')})${rscsChip(r.rs, r.pl.v.h)}</span>`
         + `<span class="vb-ticket vb-win">${escHtml(r.pl.win.label)}: ${escHtml(r.pl.win.text)} \u2014 ${escHtml(r.pl.why)}</span>`
@@ -8690,14 +8749,13 @@ function buildVerdictBoard(raceSummaries){
         + `<span class="vb-ticket vb-fa"><b>For:</b> ${fa.F.slice(0, 4).map(escHtml).join(' \u00b7 ') || '\u2014'}<br><b>Against:</b> ${fa.A.slice(0, 4).map(escHtml).join(' \u00b7 ') || '\u2014'}</span></div>`; }
     const t = planTickets(r.pl);
     return `<div class="vb-row vb-play">${go}<span class="vb-tier">${r.pl.win || extraBets(r.rs).length ? 'PLAY' : 'NO WIN BET'}</span>`
-      + `<span class="vb-horse">Key ${num(r.pl.key)} ${escHtml(r.pl.key.horse)} (${escHtml(r.pl.key.oddsStr || '')})${rscsChip(r.rs, r.pl.key)}</span>`
-      + `<span class="vb-ticket">Use ${r.pl.use.map(h => num(h) + rscsChip(r.rs, h)).join(', ')} \u00b7 ${escHtml(t[0])} \u00b7 or ${escHtml(t[1])}</span>`
+      + `<span class="vb-horse">Top pick ${num(r.pl.key)} ${escHtml(r.pl.key.horse)} (${escHtml(r.pl.key.oddsStr || '')})${rscsChip(r.rs, r.pl.key)}</span>`
       + (r.pl.win ? `<span class="vb-ticket vb-win">${escHtml(r.pl.win.label)}: ${escHtml(r.pl.win.text)}${r.pl.v.h !== r.pl.key ? ` <span class="vd-diff">\u2014 win bet is #${escHtml(r.pl.v.h.post || '?')} ${escHtml(r.pl.v.h.horse)}${rscsChip(r.rs, r.pl.v.h)}; the Key #${escHtml(r.pl.key.post || '?')} is next best</span>` : ''}</span>` : '')
       + (() => { const fa = forAgainst(r.rs, r.pl.win ? r.pl.v.h : r.pl.key); return `<span class="vb-ticket vb-fa"><b>For:</b> ${fa.F.slice(0, 4).map(escHtml).join(' \u00b7 ') || '\u2014'}<br><b>Against:</b> ${fa.A.slice(0, 4).map(escHtml).join(' \u00b7 ') || '\u2014'}</span>`; })()
       + ''   /* v3.82: head-to-head only in Race Facts */
       + `</div>`;
   };
-  const line0 = line; const lineP = r => line0(r).replace('<span class="vb-tier">', (() => { const pr = racePriority(r.rs); return `<span class="prio-chip prio-${pr.level.toLowerCase()}">${pr.level}</span><span class="vb-tier">`; })()).replace(/<\/div>$/, (() => { const L = extraBets(r.rs); return L.map(x => `<span class="vb-ticket xb-t">BET ${x.type === 'FIGURE' ? 'figure leader' : 'value dropper'} #${escHtml(x.h.post || '?')}</span>`).join(''); })() + (() => { const x = speedFavourite(r.rs); return x ? `<span class="vb-ticket dis-t dis-split">\u26a1 speed favourite #${escHtml(x.h.post || '?')} ranked #${x.rank}</span>` : ''; })() + (() => { const v = reversalInfo(r.rs); return v ? `<span class="vb-ticket dis-t dis-open">\u21c4 reversal: plain #1 is #${escHtml(v.plain.post || '?')}</span>` : ''; })() + (() => { const d = disagreeCategory(r.rs); return d ? `<span class="vb-ticket dis-t dis-${d.cat}">\u2696 ${escHtml(d.cat === 'two' ? 'two-horse race' : d.cat === 'wide' ? 'wide open' : d.cat === 'split' ? 'small field, split' : 'split')}</span>` : ''; })() + (() => { const t = winTier(r.rs); return t ? `<span class="vb-ticket tier-t tier-${t.t}">Tier ${t.t} \u00b7 #${escHtml(t.h.post || '?')} \u00b7 won ${t.pct}% \u00b7 ${extraBets(r.rs).some(x => x.h === t.h) ? 'WIN BET (' + (extraBets(r.rs).find(x => x.h === t.h).type === 'FIGURE' ? 'figure leader' : 'value dropper') + ')' : t.t <= 3 ? 'WIN BET' : t.t === 4 ? 'win bet at 2-1+' : (r.pl && r.pl.play && !r.pl.win) ? 'no win bet' : t.t === 5 ? 'no win edge' : 'PASS'}</span>` : ''; })() + (() => { const pr = racePriority(r.rs); if (pr.level === 'FOCUS') return ''; const c = challengers(r.rs); return c.length ? `<span class="vb-ticket close-w">\u2696 close call: ${c.map(x => '#' + (x.h.post || '?') + ' ' + escHtml(x.h.horse) + ' (' + escHtml(x.why[0]) + ')').join(', ')}</span>` : ''; })() + (() => { const dw = debutWatch(r.rs); return dw.length ? `<span class="vb-ticket debut-w">\u26a0 debut runner to watch: ${dw.map(h => '#' + (h.post || '?') + ' ' + escHtml(h.horse) + ' (' + escHtml(h.mlOddsStr || '') + ')').join(', ')}</span>` : ''; })() + (() => { const f = paceFlag(r.rs); return f ? `<span class="vb-ticket pace-${f.kind}">\u26a1 ${escHtml(f.kind === 'contested' ? 'contested pace possible: ' + f.speed.map(h => '#' + (h.post || '?')).join(', ') + (f.stalk.length ? ' \u00b7 sitting behind: ' + f.stalk.map(h => '#' + (h.post || '?')).join(', ') : '') : 'lone speed: #' + (f.speed[0].post || '?') + ' ' + f.speed[0].horse)}</span>` : ''; })() + '</div>');
+  const line0 = line; const lineP = r => line0(r).replace('<span class="vb-tier">', (() => { const pr = racePriority(r.rs); const bet = (r.pl && r.pl.win) || extraBets(r.rs).length; return bet ? `<span class="prio-chip prio-bet">BET</span><span class="vb-tier">` : `<span class="prio-chip prio-${pr.level.toLowerCase()}">${pr.level}</span><span class="vb-tier">`; })()).replace(/<\/div>$/, (() => { const L = extraBets(r.rs); return L.map(x => `<span class="vb-ticket xb-t">BET ${x.type === 'FIGURE' ? 'figure leader' : 'value dropper'} #${escHtml(x.h.post || '?')}</span>`).join(''); })() + (() => { const x = speedFavourite(r.rs); return x ? `<span class="vb-ticket dis-t dis-split">\u26a1 speed favourite #${escHtml(x.h.post || '?')} ranked #${x.rank}</span>` : ''; })() + (() => { const v = reversalInfo(r.rs); return v ? `<span class="vb-ticket dis-t dis-open">\u21c4 reversal: plain #1 is #${escHtml(v.plain.post || '?')}</span>` : ''; })() + (() => { const d = disagreeCategory(r.rs); return d ? `<span class="vb-ticket dis-t dis-${d.cat}">\u2696 ${escHtml(d.cat === 'two' ? 'two-horse race' : d.cat === 'wide' ? 'wide open' : d.cat === 'split' ? 'small field, split' : 'split')}</span>` : ''; })() + (() => { const t = winTier(r.rs); return t ? `<span class="vb-ticket tier-t tier-${t.t}">${extraBets(r.rs).some(x => x.h === t.h) ? (extraBets(r.rs).find(x => x.h === t.h).type === 'FIGURE' ? 'Figure leader' : 'Value dropper') + ' \u00b7 #' + escHtml(t.h.post || '?') + ' \u00b7 won ' + (extraBets(r.rs).find(x => x.h === t.h).type === 'FIGURE' ? 37 : 18) + '%' : 'Tier ' + t.t + ' \u00b7 #' + escHtml(t.h.post || '?') + ' \u00b7 won ' + t.pct + '%'} \u00b7 ${extraBets(r.rs).some(x => x.h === t.h) ? 'WIN BET (' + (extraBets(r.rs).find(x => x.h === t.h).type === 'FIGURE' ? 'figure leader' : 'value dropper') + ')' : t.t <= 3 ? 'WIN BET' : t.t === 4 ? 'win bet at 2-1+' : (r.pl && r.pl.play && !r.pl.win) ? 'no win bet' : t.t === 5 ? 'no win edge' : 'PASS'}</span>` : ''; })() + (() => { const pr = racePriority(r.rs); if (pr.level === 'FOCUS') return ''; const c = challengers(r.rs); return c.length ? `<span class="vb-ticket close-w">\u2696 close call: ${c.map(x => '#' + (x.h.post || '?') + ' ' + escHtml(x.h.horse) + ' (' + escHtml(x.why[0]) + ')').join(', ')}</span>` : ''; })() + (() => { const dw = debutWatch(r.rs); return dw.length ? `<span class="vb-ticket debut-w">\u26a0 debut runner to watch: ${dw.map(h => '#' + (h.post || '?') + ' ' + escHtml(h.horse) + ' (' + escHtml(h.mlOddsStr || '') + ')').join(', ')}</span>` : ''; })() + (() => { const f = paceFlag(r.rs); return f ? `<span class="vb-ticket pace-${f.kind}">\u26a1 ${escHtml(f.kind === 'contested' ? 'contested pace possible: ' + f.speed.map(h => '#' + (h.post || '?')).join(', ') + (f.stalk.length ? ' \u00b7 sitting behind: ' + f.stalk.map(h => '#' + (h.post || '?')).join(', ') : '') : 'lone speed: #' + (f.speed[0].post || '?') + ' ' + f.speed[0].horse)}</span>` : ''; })() + '</div>');
   const prs = rows.map(r => ({r, pr: racePriority(r.rs)}));
   const focus = prs.filter(x => x.pr.level === 'FOCUS'), low = prs.filter(x => x.pr.level === 'LOW');
   const focusHTML = `<div class="prio-sum"><div><b>Spend your time on:</b> ${focus.length ? focus.map(x => `<a class="race-jump" data-goto-pick="${escAttr(x.r.rs.race)}" href="#">R${escHtml(x.r.rs.race)}</a> (consider ${raceGroup(x.r.rs).rf.slice(0, raceGroup(x.r.rs).k).map(r => '#' + (r.h.post || '?')).join(', ')})`).join(' \u00b7 ') : 'no race passes 5 of the 6 checks today'}</div>`
@@ -9692,7 +9750,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.12 · released 26 October 2026 · build 2026-10-26-a</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.15 · released 26 October 2026 · build 2026-10-26-d</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
