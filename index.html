@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.11 — Race Card Reader</title>
+<title>Overlay Board v4.12 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1257,7 +1257,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.11</span> · released 25 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.12</span> · released 26 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -7931,7 +7931,9 @@ function extraBets(rs){
     live.forEach(h => {
       if (h === tierH) return;
       let fa; try { fa = forAgainst(rs, h); } catch(e){ return; }
-      const F = (fa.F || []).join(' | '); const tal = (m.get(h) || {}).tally || 0;
+      const F = (fa.F || []).join(' | '); const Ag = (fa.A || []).join(' | '); const tal = (m.get(h) || {}).tally || 0;
+      // v4.12 (GP 10/24 R2 Kinetic Stone): not when the data rates the horse overbet, or it tires late
+      if (/data fair odds .* against morning line/.test(Ag) || /tires late/.test(Ag)) return;
       if (tal >= 3 && /best 3-race figure average/.test(F) && live.length <= 8) out.push({type: 'FIGURE', h, tal});
       else if (!turf(h) && /dropping/.test(F) && /shorter than its morning line/.test(F)) out.push({type: 'VALUE', h, tal});
     });
@@ -8002,8 +8004,9 @@ function racePlan0(rs){
 function planTickets(pl){
   const num = h => '#' + (h.post || '?');
   const u = pl.use.map(num).join(', ');
-  const out = [`Exacta ${num(pl.key)} over ${u}`, `Exacta box ${[pl.key].concat(pl.use.slice(0, 3)).map(num).join(', ')}`];
-  return out;
+  // v4.12: exactas are no longer recommended - on 208 races with payoffs the key exacta hit 13% and returned
+  // 75 cents per dollar, and no exacta structure paid in both halves
+  return ['Exactas not recommended (they have lost money on past cards)'];
 }
 
 // v3.86 (Robert, 14 Oct: "find more top picks"). BET - SOLID PICK: a top-ranked horse
@@ -8349,7 +8352,8 @@ function winTier(rs){
 function tierHTML(rs){
   const t = winTier(rs); if (!t) return '';
   const pl0 = racePlan(rs); const exOnly = pl0 && pl0.play && !pl0.winOnly && !pl0.win;
-  const act = t.t <= 3 ? 'WIN BET' : t.t === 4 ? 'WIN BET ONLY AT 2-1 OR HIGHER' : exOnly ? 'NO WIN BET \u2014 exactas only, as shown above' : t.t === 5 ? 'NO WIN-BET EDGE \u2014 exotics or a small bet at most' : 'NO EDGE \u2014 PASS';
+  const xb = extraBets(rs).find(x => x.h === t.h);
+  const act = xb ? 'WIN BET \u2014 ' + (xb.type === 'FIGURE' ? 'FIGURE LEADER' : 'VALUE DROPPER') + ' (see below)' : t.t <= 3 ? 'WIN BET' : t.t === 4 ? 'WIN BET ONLY AT 2-1 OR HIGHER' : exOnly ? 'NO WIN BET \u2014 exactas only, as shown above' : t.t === 5 ? 'NO WIN-BET EDGE \u2014 exotics or a small bet at most' : 'NO EDGE \u2014 PASS';
   const c = topConfidence(rs); const sc = c && c.strong.length ? ' \u00b7 strong challengers: ' + c.strong.map(h => '#' + (h.post || '?') + ' ' + h.horse).join(', ') : '';
   // v4.04 (ChatGPT review / audit): a win bet on a horse with 2+ Against items is more vulnerable - flag it, keep the bet
   let vul = '';
@@ -8658,13 +8662,13 @@ function raceHeadHTML(rs){
 function verdictBanner(rs){ return raceHeadHTML(rs) + priorityHTML(rs) + verdictBanner0(rs).replace(/<\/div>$/, resultPickerHTML(rs) + tierHTML(rs) + extraBetsHTML(rs) + fragileFavHTML(rs) + speedFavHTML(rs) + reversalHTML(rs) + disagreeHTML(rs) + challengersHTML(rs) + debutWatchHTML(rs) + paceFlagHTML(rs) + '</div>'); }
 function verdictBanner0(rs){
   const pl = racePlan(rs);
-  if (!pl.play) return `<div class="vd vd-pass"><div class="vd-tier">${extraBets(rs).length ? 'NO EXACTAS \u2014 WIN BET BELOW' : 'SKIP \u2014 NO BET'}</div><div class="vd-why">${escHtml(pl.why)}</div>${pl.top ? `<div class="vd-horse" style="font-size:14px">Top pick ${horseLabel(pl.top)}${rscsChip(rs, pl.top)}</div>` + forAgainstHTML(rs, pl.top) : ''}</div>`;
+  if (!pl.play) return `<div class="vd vd-pass"><div class="vd-tier">${extraBets(rs).length ? 'WIN BET BELOW' : 'SKIP \u2014 NO BET'}</div><div class="vd-why">${escHtml(pl.why)}</div>${pl.top ? `<div class="vd-horse" style="font-size:14px">Top pick ${horseLabel(pl.top)}${rscsChip(rs, pl.top)}</div>` + forAgainstHTML(rs, pl.top) : ''}</div>`;
   if (pl.winOnly) return `<div class="vd vd-play"><div class="vd-tier">PLAY \u2014 WIN BET ONLY</div><div class="vd-why">${escHtml(pl.why)}</div>`
     + `<div class="vd-win"><b>${escHtml(pl.win.label)}</b> \u00b7 ${escHtml(pl.win.text)} \u00b7 ${horseLabel(pl.v.h)}${rscsChip(rs, pl.v.h)}</div>`
     + (pl.nextBest ? `<div class="vd-use">Next best ${horseLabel(pl.nextBest)}${rscsChip(rs, pl.nextBest)}</div>` : '')
     + rivalsNote(rs, pl.v.h) + forAgainstHTML(rs, pl.v.h) + `</div>`;
   const t = planTickets(pl);
-  return `<div class="vd vd-play"><div class="vd-tier">${pl.win ? 'PLAY \u2014 WIN BET + EXACTAS' : (extraBets(rs).length ? 'EXACTAS + WIN BET BELOW' : 'EXACTAS ONLY \u2014 NO WIN BET')}${pl.wide ? ' \u00b7 WIDE FIELD' : ''}</div>`
+  return `<div class="vd vd-play"><div class="vd-tier">${pl.win ? 'PLAY \u2014 WIN BET' : (extraBets(rs).length ? 'WIN BET BELOW' : 'NO WIN BET \u2014 contenders only')}${pl.wide ? ' \u00b7 WIDE FIELD' : ''}</div>`
     + `<div class="vd-horse">Key ${horseLabel(pl.key)}${rscsChip(rs, pl.key)}</div>` + rivalsNote(rs, pl.key)
     + `<div class="vd-use">Use ${pl.use.map(h => horseLabel(h) + rscsChip(rs, h)).join(' \u00b7 ')}</div>`
     + `<div class="vd-ticket">${escHtml(t[0])}<br>${escHtml(t[1])}</div>`
@@ -8685,7 +8689,7 @@ function buildVerdictBoard(raceSummaries){
         + (r.pl.nextBest ? `<span class="vb-ticket">Next best #${escHtml(r.pl.nextBest.post || '?')} ${escHtml(r.pl.nextBest.horse)} (${escHtml(r.pl.nextBest.oddsStr || '')})${rscsChip(r.rs, r.pl.nextBest)}</span>` : '')
         + `<span class="vb-ticket vb-fa"><b>For:</b> ${fa.F.slice(0, 4).map(escHtml).join(' \u00b7 ') || '\u2014'}<br><b>Against:</b> ${fa.A.slice(0, 4).map(escHtml).join(' \u00b7 ') || '\u2014'}</span></div>`; }
     const t = planTickets(r.pl);
-    return `<div class="vb-row vb-play">${go}<span class="vb-tier">${r.pl.win ? 'PLAY' : 'EXACTAS ONLY'}</span>`
+    return `<div class="vb-row vb-play">${go}<span class="vb-tier">${r.pl.win || extraBets(r.rs).length ? 'PLAY' : 'NO WIN BET'}</span>`
       + `<span class="vb-horse">Key ${num(r.pl.key)} ${escHtml(r.pl.key.horse)} (${escHtml(r.pl.key.oddsStr || '')})${rscsChip(r.rs, r.pl.key)}</span>`
       + `<span class="vb-ticket">Use ${r.pl.use.map(h => num(h) + rscsChip(r.rs, h)).join(', ')} \u00b7 ${escHtml(t[0])} \u00b7 or ${escHtml(t[1])}</span>`
       + (r.pl.win ? `<span class="vb-ticket vb-win">${escHtml(r.pl.win.label)}: ${escHtml(r.pl.win.text)}${r.pl.v.h !== r.pl.key ? ` <span class="vd-diff">\u2014 win bet is #${escHtml(r.pl.v.h.post || '?')} ${escHtml(r.pl.v.h.horse)}${rscsChip(r.rs, r.pl.v.h)}; the Key #${escHtml(r.pl.key.post || '?')} is next best</span>` : ''}</span>` : '')
@@ -8693,7 +8697,7 @@ function buildVerdictBoard(raceSummaries){
       + ''   /* v3.82: head-to-head only in Race Facts */
       + `</div>`;
   };
-  const line0 = line; const lineP = r => line0(r).replace('<span class="vb-tier">', (() => { const pr = racePriority(r.rs); return `<span class="prio-chip prio-${pr.level.toLowerCase()}">${pr.level}</span><span class="vb-tier">`; })()).replace(/<\/div>$/, (() => { const L = extraBets(r.rs); return L.map(x => `<span class="vb-ticket xb-t">BET ${x.type === 'FIGURE' ? 'figure leader' : 'value dropper'} #${escHtml(x.h.post || '?')}</span>`).join(''); })() + (() => { const x = speedFavourite(r.rs); return x ? `<span class="vb-ticket dis-t dis-split">\u26a1 speed favourite #${escHtml(x.h.post || '?')} ranked #${x.rank}</span>` : ''; })() + (() => { const v = reversalInfo(r.rs); return v ? `<span class="vb-ticket dis-t dis-open">\u21c4 reversal: plain #1 is #${escHtml(v.plain.post || '?')}</span>` : ''; })() + (() => { const d = disagreeCategory(r.rs); return d ? `<span class="vb-ticket dis-t dis-${d.cat}">\u2696 ${escHtml(d.cat === 'two' ? 'two-horse race' : d.cat === 'wide' ? 'wide open' : d.cat === 'split' ? 'small field, split' : 'split')}</span>` : ''; })() + (() => { const t = winTier(r.rs); return t ? `<span class="vb-ticket tier-t tier-${t.t}">Tier ${t.t} \u00b7 #${escHtml(t.h.post || '?')} \u00b7 won ${t.pct}% \u00b7 ${t.t <= 3 ? 'WIN BET' : t.t === 4 ? 'win bet at 2-1+' : (r.pl && r.pl.play && !r.pl.win) ? 'no win bet' : t.t === 5 ? 'no win edge' : 'PASS'}</span>` : ''; })() + (() => { const pr = racePriority(r.rs); if (pr.level === 'FOCUS') return ''; const c = challengers(r.rs); return c.length ? `<span class="vb-ticket close-w">\u2696 close call: ${c.map(x => '#' + (x.h.post || '?') + ' ' + escHtml(x.h.horse) + ' (' + escHtml(x.why[0]) + ')').join(', ')}</span>` : ''; })() + (() => { const dw = debutWatch(r.rs); return dw.length ? `<span class="vb-ticket debut-w">\u26a0 debut runner to watch: ${dw.map(h => '#' + (h.post || '?') + ' ' + escHtml(h.horse) + ' (' + escHtml(h.mlOddsStr || '') + ')').join(', ')}</span>` : ''; })() + (() => { const f = paceFlag(r.rs); return f ? `<span class="vb-ticket pace-${f.kind}">\u26a1 ${escHtml(f.kind === 'contested' ? 'contested pace possible: ' + f.speed.map(h => '#' + (h.post || '?')).join(', ') + (f.stalk.length ? ' \u00b7 sitting behind: ' + f.stalk.map(h => '#' + (h.post || '?')).join(', ') : '') : 'lone speed: #' + (f.speed[0].post || '?') + ' ' + f.speed[0].horse)}</span>` : ''; })() + '</div>');
+  const line0 = line; const lineP = r => line0(r).replace('<span class="vb-tier">', (() => { const pr = racePriority(r.rs); return `<span class="prio-chip prio-${pr.level.toLowerCase()}">${pr.level}</span><span class="vb-tier">`; })()).replace(/<\/div>$/, (() => { const L = extraBets(r.rs); return L.map(x => `<span class="vb-ticket xb-t">BET ${x.type === 'FIGURE' ? 'figure leader' : 'value dropper'} #${escHtml(x.h.post || '?')}</span>`).join(''); })() + (() => { const x = speedFavourite(r.rs); return x ? `<span class="vb-ticket dis-t dis-split">\u26a1 speed favourite #${escHtml(x.h.post || '?')} ranked #${x.rank}</span>` : ''; })() + (() => { const v = reversalInfo(r.rs); return v ? `<span class="vb-ticket dis-t dis-open">\u21c4 reversal: plain #1 is #${escHtml(v.plain.post || '?')}</span>` : ''; })() + (() => { const d = disagreeCategory(r.rs); return d ? `<span class="vb-ticket dis-t dis-${d.cat}">\u2696 ${escHtml(d.cat === 'two' ? 'two-horse race' : d.cat === 'wide' ? 'wide open' : d.cat === 'split' ? 'small field, split' : 'split')}</span>` : ''; })() + (() => { const t = winTier(r.rs); return t ? `<span class="vb-ticket tier-t tier-${t.t}">Tier ${t.t} \u00b7 #${escHtml(t.h.post || '?')} \u00b7 won ${t.pct}% \u00b7 ${extraBets(r.rs).some(x => x.h === t.h) ? 'WIN BET (' + (extraBets(r.rs).find(x => x.h === t.h).type === 'FIGURE' ? 'figure leader' : 'value dropper') + ')' : t.t <= 3 ? 'WIN BET' : t.t === 4 ? 'win bet at 2-1+' : (r.pl && r.pl.play && !r.pl.win) ? 'no win bet' : t.t === 5 ? 'no win edge' : 'PASS'}</span>` : ''; })() + (() => { const pr = racePriority(r.rs); if (pr.level === 'FOCUS') return ''; const c = challengers(r.rs); return c.length ? `<span class="vb-ticket close-w">\u2696 close call: ${c.map(x => '#' + (x.h.post || '?') + ' ' + escHtml(x.h.horse) + ' (' + escHtml(x.why[0]) + ')').join(', ')}</span>` : ''; })() + (() => { const dw = debutWatch(r.rs); return dw.length ? `<span class="vb-ticket debut-w">\u26a0 debut runner to watch: ${dw.map(h => '#' + (h.post || '?') + ' ' + escHtml(h.horse) + ' (' + escHtml(h.mlOddsStr || '') + ')').join(', ')}</span>` : ''; })() + (() => { const f = paceFlag(r.rs); return f ? `<span class="vb-ticket pace-${f.kind}">\u26a1 ${escHtml(f.kind === 'contested' ? 'contested pace possible: ' + f.speed.map(h => '#' + (h.post || '?')).join(', ') + (f.stalk.length ? ' \u00b7 sitting behind: ' + f.stalk.map(h => '#' + (h.post || '?')).join(', ') : '') : 'lone speed: #' + (f.speed[0].post || '?') + ' ' + f.speed[0].horse)}</span>` : ''; })() + '</div>');
   const prs = rows.map(r => ({r, pr: racePriority(r.rs)}));
   const focus = prs.filter(x => x.pr.level === 'FOCUS'), low = prs.filter(x => x.pr.level === 'LOW');
   const focusHTML = `<div class="prio-sum"><div><b>Spend your time on:</b> ${focus.length ? focus.map(x => `<a class="race-jump" data-goto-pick="${escAttr(x.r.rs.race)}" href="#">R${escHtml(x.r.rs.race)}</a> (consider ${raceGroup(x.r.rs).rf.slice(0, raceGroup(x.r.rs).k).map(r => '#' + (r.h.post || '?')).join(', ')})`).join(' \u00b7 ') : 'no race passes 5 of the 6 checks today'}</div>`
@@ -9688,7 +9692,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.11 · released 25 October 2026 · build 2026-10-25-k</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.12 · released 26 October 2026 · build 2026-10-26-a</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
