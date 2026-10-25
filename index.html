@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.09 — Race Card Reader</title>
+<title>Overlay Board v4.11 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1257,7 +1257,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.09</span> · released 25 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.11</span> · released 25 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -1437,7 +1437,7 @@
         <h3>Figure leader and value dropper</h3>
         <p>Two further win bets, independent of the tiers. <b>FIGURE LEADER</b>: a horse with the best 3-race figure average and a case of +3 or better in a field of 8 or fewer. <b>VALUE DROPPER</b>: in a dirt or all-weather race, a horse dropping in class whose data fair odds are shorter than its morning line — a long-price bet that wins about one time in five. Both stand even in races otherwise marked SKIP; exactas in those races stay off.</p>
         <h3>Downgraded bets</h3>
-        <p>A SOLID PICK or CONDITIONAL horse with two or more Against items drops one tier: a SOLID PICK becomes a win bet only at 2-1 or higher, and a CONDITIONAL becomes no win bet. The tier line says it was downgraded and why. DEFINITIVE bets (Tiers 1-2) are not downgraded; a vulnerable one is flagged instead.</p>
+        <p>A SOLID PICK or CONDITIONAL horse with two or more Against items drops one tier: a SOLID PICK becomes a win bet only at 2-1 or higher, and a CONDITIONAL becomes no win bet. A CONDITIONAL bet also needs a morning line of 2-1 or longer: it never relies on a horse drifting up to 2-1. The tier line says it was downgraded and why. DEFINITIVE bets (Tiers 1-2) are not downgraded; a vulnerable one is flagged instead.</p>
         <h3>Strong challengers</h3>
         <p>The tier line names any strong challenger: a contender that beats the top-ranked horse on two or more of Prime Power, last figure and early speed. Their edges are in Race Facts under EDGES OVER #1.</p>
         <h3>Ability and fair odds</h3>
@@ -2072,7 +2072,7 @@ function parseBrisnetSingleFile(text){
       const finTxt = get(616+i);
       const rawMargin = num(736+i);
       const wonIt = String(finTxt).trim() === '1';
-      ppRaces.push({date: d, track: get(276+i), raceNum: get(296+i), distYds: num(316+i), surf: get(326+i), fin: finTxt, margin: rawMargin, won: wonIt, lenBehind: (rawMargin == null ? null : (wonIt ? -rawMargin : rawMargin)), comment: get(396+i), extComment: get(1383+i), comment2: get(1383+i), pastPost: num(356+i), pastField: num(346+i), winner: get(406+i), second: get(416+i), third: get(426+i), rtype: get(1086+i), claim: num(546+i), classTxt: get(536+i), spd: num(846+i), pace2: num(766+i), pace4: num(776+i), pace6: num(786+i), pace8: num(796+i), latePace: num(816+i), c1pos: num(576+i), c1bl: num(656+i), c2pos: num(586+i), c2bl: num(676+i), strpos: num(606+i), strbl: num(716+i), purse: num(556+i), brisPar: num(1167+i), classPar: classLevelBlend(num(1167+i), classPar(get(276+i), get(1086+i), get(536+i), num(556+i))), classFit: classPar(get(276+i), get(1086+i), get(536+i), num(556+i)), trackCond: get(306+i),
+      ppRaces.push({date: d, track: get(276+i), raceNum: get(296+i), distYds: num(316+i), surf: get(326+i), fin: finTxt, margin: rawMargin, won: wonIt, lenBehind: (rawMargin == null ? null : (wonIt ? -rawMargin : rawMargin)), comment: get(396+i), extComment: get(1383+i), strPos: num(606+i), strBtn: num(716+i), finPos: num(616+i), finBtn: num(736+i), comment2: get(1383+i), pastPost: num(356+i), pastField: num(346+i), winner: get(406+i), second: get(416+i), third: get(426+i), rtype: get(1086+i), claim: num(546+i), classTxt: get(536+i), spd: num(846+i), pace2: num(766+i), pace4: num(776+i), pace6: num(786+i), pace8: num(796+i), latePace: num(816+i), c1pos: num(576+i), c1bl: num(656+i), c2pos: num(586+i), c2bl: num(676+i), strpos: num(606+i), strbl: num(716+i), purse: num(556+i), brisPar: num(1167+i), classPar: classLevelBlend(num(1167+i), classPar(get(276+i), get(1086+i), get(536+i), num(556+i))), classFit: classPar(get(276+i), get(1086+i), get(536+i), num(556+i)), trackCond: get(306+i),
         // WHO RODE THAT DAY. Fields 1066-1075 carry the rider of each past
         // race and 1056-1065 the trainer, so a line can be read against the
         // rider who was on it — verified on this file against today's rider
@@ -8046,6 +8046,12 @@ function verdictOf(rs){
       }
     } catch(e){} finally { __downGuard = false; }
   }
+  // v4.11 (Robert, GP 10/24 R8 Role Play, ML 7-5): a "2-1 or higher" bet should never depend on the horse
+  // drifting - a top pick drifting well above its morning line has won about 1 in 7. So a CONDITIONAL bet
+  // needs a morning line of 2-1 or longer; under that it is no win bet.
+  if (v && v.h && v.tier === 'BET' && v.h.decimalOdds != null && v.h.decimalOdds - 1 < 2){
+    v = {tier: 'PASS', h: null, downFrom: 4, downH: v.h, downMsg: 'no win bet: morning line ' + (v.h.mlOddsStr || '') + ' is under 2-1, so a 2-1 price would need the horse to drift', why: v.why};
+  }
   return v;
 }
 let __downGuard = false;
@@ -8150,6 +8156,16 @@ const FAIR_W = {a3: 0.0127, last: 0.0089, best: 0.0036, pp: 0.0601, q: 0.0481, i
 // beaten 3 lengths or less.
 // v3.80: trip comments in the last 4 that say the horse did not finish its race
 const NOFINISH_RX = /outfin|out-fin|outfnsh|no kick|no punch|lacked|weaken|wknd|tired|faded|gave way|empty|flatten|hung|no rally|no response|no threat|no factor|failed to|steadily dropped/i;
+// v4.10 (GP 10/24 R8 Role Play: led at the stretch, 4th by 5 lengths). Ground lost from the stretch call to
+// the finish. Pool: favourites that lost 2+ lengths late in 2 or more of their last 4 won 44 times against 57
+// expected (both halves under), returning 57-60 cents; those with 0-1 such races won 109 against 92.5.
+function lateFade(h){
+  const L = (h.ppRaces || []).slice(0, 4); let n = 0, worst = 0, seen = 0;
+  L.forEach(q => { if (q.strPos == null || q.finPos == null || q.strBtn == null || q.finBtn == null) return; seen++;
+    const sb = q.strPos === 1 ? -q.strBtn : q.strBtn, fb = q.finPos === 1 ? -q.finBtn : q.finBtn; const lost = fb - sb;
+    if (lost >= 2){ n++; worst = Math.max(worst, lost); } });
+  return {n, seen, worst};
+}
 function noFinishCount(h){
   const L = (h.ppRaces || []).slice(0, 4); const hits = [];
   L.forEach(q => { const t = String(q.comment || '') + ' ' + String(q.extComment || ''); const m = t.match(NOFINISH_RX); if (m) hits.push(m[0].toLowerCase()); });
@@ -8234,8 +8250,9 @@ function fragileFavHTML(rs){
   const live = (rs.horses || []).filter(h => !isScratchedNow(rs, h) && h.decimalOdds != null); if (!live.length) return '';
   const ml = Math.min(...live.map(h => h.decimalOdds)); const favs = live.filter(h => h.decimalOdds === ml); if (favs.length !== 1 || ml - 1 > 2) return '';
   const f = favs[0]; const tal = (rscsMap(rs).get(f) || {}).tally || 0; const nf = noFinishCount(f).n;
-  if (tal > 0 && nf < 2) return '';
-  const why = []; if (tal <= 0) why.push('case ' + (tal > 0 ? '+' : '') + tal); if (nf >= 2) why.push('no finish in ' + nf + ' of last 4');
+  const lf = lateFade(f); const tires = lf.seen >= 3 && lf.n >= 2;
+  if (tal > 0 && nf < 2 && !tires) return '';
+  const why = []; if (tal <= 0) why.push('case ' + (tal > 0 ? '+' : '') + tal); if (nf >= 2) why.push('no finish in ' + nf + ' of last 4'); if (tires) why.push('lost ground late in ' + lf.n + ' of last ' + lf.seen);
   return `<div class="dis dis-wide">\u26a0 <b>FRAGILE FAVOURITE</b> \u2014 #${escHtml(f.post || '?')} ${escHtml(f.horse)} (${escHtml(f.mlOddsStr || '')}) has ${escHtml(why.join(' and '))}. Short-priced favourites like this have finished out of the money about one time in three.</div>`;
 }
 function speedFavHTML(rs){
@@ -8323,7 +8340,7 @@ function winTier(rs){
   if (v && v.h && v.tier === 'STRONG') return pr.level === 'FOCUS' && gap >= 4 ? {t: 1, pct: tierPct(1).pct, h: v.h, what: 'DEFINITIVE in a FOCUS race with a clear #1'} : {t: 2, pct: tierPct(2).pct, h: v.h, what: 'DEFINITIVE'};
   if (v && v.h && v.tier === 'SOLID') return {t: 3, pct: tierPct(3).pct, h: v.h, what: 'SOLID PICK'};
   if (v && v.downFrom === 3) return {t: 4, pct: tierPct(4).pct, h: v.h, what: 'downgraded from Tier 3 (SOLID PICK): ' + v.downN + ' against \u2014 ' + v.downWhy, down: true};
-  if (v && v.downFrom === 4) return {t: 5, pct: tierPct(5).pct, h: v.downH, what: 'downgraded from Tier 4 (CONDITIONAL): ' + v.downN + ' against \u2014 ' + v.downWhy, down: true};
+  if (v && v.downFrom === 4) return {t: 5, pct: tierPct(5).pct, h: v.downH, what: 'downgraded from Tier 4 (CONDITIONAL): ' + (v.downMsg || (v.downN + ' against \u2014 ' + v.downWhy)), down: true};
   if (v && v.h && v.tier === 'BET') return {t: 4, pct: tierPct(4).pct, h: v.h, what: 'CONDITIONAL, when 2-1 or higher at post'};
   if (pr.level === 'FOCUS') return {t: 5, pct: tierPct(5).pct, h: top, what: 'top pick in a FOCUS race'};
   if (pr.level === 'CONSIDER') return {t: 6, pct: tierPct(6).pct, h: top, what: 'top pick in a CONSIDER race'};
@@ -8411,6 +8428,7 @@ function forAgainst(rs, h){
     if (L0 && parseInt(L0.fin, 10) === 1 && cond(L0.classTxt) && !cond(h.raceClassTxt)) A.push('won a non-winners race last time; today is open company');
   }
   { const nf = noFinishCount(h); if (nf.n >= 2) A.push(`no finish in ${nf.n} of last ${nf.of} (${nf.words.join(', ')})`); }
+  { const lf = lateFade(h); if (lf.seen >= 3 && lf.n >= 2) A.push(`tires late: lost 2+ lengths from the stretch call to the finish in ${lf.n} of last ${lf.seen} (worst ${Math.round(lf.worst * 4) / 4})`); }
   { const cl = competitiveAtLevel(h);
     if (cl.lv >= 1 && cl.c >= 1){ const q = cl.closest; F.push(`competitive at today's level or higher in ${cl.c} of last ${cl.n}` + (q ? ` (${ordinal(q.f)}${q.f > 1 && q.lb != null ? ', beaten ' + lengthsTxt(q.lb) : ''})` : '')); }
     else if (cl.lv >= 2 && cl.c === 0){ const q = cl.closest; A.push(`not competitive at today's level in last ${cl.n}` + (q ? ` (closest: ${ordinal(q.f)}${q.lb != null ? ', beaten ' + lengthsTxt(q.lb) : ''})` : '')); } }
@@ -9670,7 +9688,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.09 · released 25 October 2026 · build 2026-10-25-i</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.11 · released 25 October 2026 · build 2026-10-25-k</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
