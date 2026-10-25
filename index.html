@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.05 — Race Card Reader</title>
+<title>Overlay Board v4.09 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -869,6 +869,8 @@
   .vd-tier, .vb-tier{white-space:normal;}
   .race-hd{font-family:var(--mono); font-size:19px; font-weight:800; letter-spacing:.04em; color:#1b2a22; margin:0 0 6px;} .race-hd-sub{font-size:13px; font-weight:600; letter-spacing:0; color:var(--ink-soft);}
   .tier-vul{margin-top:5px; font-size:12.5px; font-weight:400; background:rgba(255,255,255,.14); padding:3px 6px; border-radius:3px;}
+  .xbet{margin-top:6px; padding:5px 8px; border-radius:4px; font-size:13px; background:#2F6B3F; color:#fff;} .xb-val{background:#7a5a12;}
+  .vb-ticket.xb-t{background:#2F6B3F; color:#fff; font-weight:700; padding:1px 5px; border-radius:3px;}
   .pp-lvl{font-family:var(--mono); font-size:10px; opacity:.7; margin-left:3px;}
   .pp-works{font-family:var(--mono); font-size:11.5px; line-height:1.7;}
   .pp-record{
@@ -1255,7 +1257,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.05</span> · released 25 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.09</span> · released 25 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -1432,6 +1434,8 @@
         <p>Each race shows a tier for its named horse and the share of such horses that won on the cards in the pack: <b>Tier 1</b> DEFINITIVE in a FOCUS race with a clear #1 (75%) · <b>Tier 2</b> DEFINITIVE (64%) · <b>Tier 3</b> SOLID PICK (58%) · <b>Tier 4</b> CONDITIONAL, when 2-1 or higher at post (53%) · <b>Tier 5</b> top pick in a FOCUS race (39%) · <b>Tier 6</b> top pick in a CONSIDER race (23%) · <b>Tier 7</b> top pick in a LOW race (22%). Tiers 1-3 are bets, Tier 4 only at 2-1 or higher; Tiers 5-7 carry no win-bet edge and say so. These are past results on the pack's cards, which the rules were built from; on new cards expect them to run a few points lower. When you record winners on the race cards, the percentages blend in your own results, and the scorecard at the top of the board shows how each tier, bet type and confidence level is doing.</p>
         <h3>BET — SOLID PICK</h3>
         <p>A win bet on the top-ranked horse when neither DEFINITIVE nor CONDITIONAL applies, and either (A) its morning line is 8-5 or shorter, it has the best Prime Power in the field, at most one no-finish trip comment in its last four, and the race is not low priority; or (B) its morning line is 2-1 or shorter, the field has 8 or fewer runners, it has the best last figure in the field, and its case tally is +4 or better.</p>
+        <h3>Figure leader and value dropper</h3>
+        <p>Two further win bets, independent of the tiers. <b>FIGURE LEADER</b>: a horse with the best 3-race figure average and a case of +3 or better in a field of 8 or fewer. <b>VALUE DROPPER</b>: in a dirt or all-weather race, a horse dropping in class whose data fair odds are shorter than its morning line — a long-price bet that wins about one time in five. Both stand even in races otherwise marked SKIP; exactas in those races stay off.</p>
         <h3>Downgraded bets</h3>
         <p>A SOLID PICK or CONDITIONAL horse with two or more Against items drops one tier: a SOLID PICK becomes a win bet only at 2-1 or higher, and a CONDITIONAL becomes no win bet. The tier line says it was downgraded and why. DEFINITIVE bets (Tiers 1-2) are not downgraded; a vulnerable one is flagged instead.</p>
         <h3>Strong challengers</h3>
@@ -7908,7 +7912,59 @@ function raceIsFlagged(rs){
 //   PLAY  : 8 or fewer runners, or a figure favourite in a bigger field; race not red
 //   SKIP  : red (too thin to read), or 9+ runners with no figure favourite
 // KEY = top-ranked horse; USE = next three (next four in a field of 9+).
+// v4.08 (Robert, 25 Oct: "don't bet this race as it's impossible to predict"). Pool, 583 races: any of these
+// marks a race as unreadable - 10+ runners; a maiden with 2+ first-time starters; the top pick's case 0 or
+// negative; no standout (morning-line favourite 3-1 or longer). Unreadable: #1 won 24%, winner outside our
+// top 4 or 8-1+ in 35%. Readable: #1 won 42%, winner in our top 2 65%. Tier bets still stand in either.
+// v4.09 (Robert: "build a better mousetrap"). Two more win bets, found by searching every horse outside the
+// tier bets on 583 races and checked in all three thirds of the season:
+//  FIGURE LEADER - case +3 or better, the best 3-race average, 8 or fewer runners (142 bets, 37% won, $1.14)
+//  VALUE DROPPER - a dirt/all-weather race, dropping in class, data fair odds shorter than its morning line
+//                  (106 bets, 18% won at a median 7-1, $1.44)
+let __xbGuard = false;
+function extraBets(rs){
+  if (__xbGuard) return []; __xbGuard = true;
+  try {
+    const live = (rs.horses || []).filter(h => !isScratchedNow(rs, h)); const out = [];
+    let tierH = null; try { const t = winTier(rs); if (t && t.t <= 4) tierH = t.h; } catch(e){}
+    const m = rscsMap(rs); const turf = h => /^t/i.test(String(h.surface || '')) || h.offTurf;
+    live.forEach(h => {
+      if (h === tierH) return;
+      let fa; try { fa = forAgainst(rs, h); } catch(e){ return; }
+      const F = (fa.F || []).join(' | '); const tal = (m.get(h) || {}).tally || 0;
+      if (tal >= 3 && /best 3-race figure average/.test(F) && live.length <= 8) out.push({type: 'FIGURE', h, tal});
+      else if (!turf(h) && /dropping/.test(F) && /shorter than its morning line/.test(F)) out.push({type: 'VALUE', h, tal});
+    });
+    return out;
+  } finally { __xbGuard = false; }
+}
+function extraBetsHTML(rs){
+  const L = extraBets(rs); if (!L.length) return '';
+  return L.map(x => x.type === 'FIGURE'
+    ? `<div class="xbet xb-fig"><b>BET \u2014 FIGURE LEADER: win #${escHtml(x.h.post || '?')} ${escHtml(x.h.horse)} at any price</b> <span class="conf-why">(best 3-race average, case ${x.tal > 0 ? '+' : ''}${x.tal}, small field) \u00b7 picks like this won 37%</span></div>`
+    : `<div class="xbet xb-val"><b>BET \u2014 VALUE DROPPER: win #${escHtml(x.h.post || '?')} ${escHtml(x.h.horse)} at any price</b> <span class="conf-why">(dropping in class, fair odds shorter than its morning line) \u00b7 a long-price bet: wins about 1 in 5, but has paid well</span></div>`).join('');
+}
+
+function raceUnreadable(rs){
+  const live = (rs.horses || []).filter(h => !isScratchedNow(rs, h)); const n = live.length;
+  const t = String((live[0] || {}).ai3RaceType || '').toUpperCase(); const mdn = t === 'S' || t === 'M' || t === 'MO';
+  const deb = live.filter(h => !(h.ppRaces || []).length).length;
+  const rf = rankedField(rs, []); const top = rf.length ? rf[0].h : null;
+  const tal = top ? ((rscsMap(rs).get(top) || {}).tally || 0) : 0;
+  const mls = live.map(h => h.decimalOdds).filter(x => x != null); const fav = mls.length ? Math.min(...mls) - 1 : null;
+  const why = [];
+  if (n >= 10) why.push(n + ' runners');
+  if (mdn && deb >= 2) why.push('a maiden with ' + deb + ' first-time starters');
+  if (top && tal <= 0) why.push('the top pick\'s case is ' + (tal > 0 ? '+' : '') + tal);
+  if (fav != null && fav >= 3) why.push('no standout (favourite ' + (h => h.mlOddsStr || '')(live.find(h => h.decimalOdds - 1 === fav) || {}) + ')');
+  return {unreadable: why.length > 0, why};
+}
 function racePlan(rs){
+  const pl = racePlan0(rs);
+  if (pl && pl.play && !pl.win && !pl.winOnly){ const r = raceUnreadable(rs); if (r.unreadable) return Object.assign({}, pl, {play: false, unreadable: true, why: 'UNREADABLE \u2014 ' + r.why.join('; ') + '. Races like this are too hard to call from the data or the odds; no exactas.'}); }
+  return pl;
+}
+function racePlan0(rs){
   const v = verdictOf(rs);
   const rf = rankedField(rs, []);
   const n = (rs.horses || []).filter(h => !isScratchedNow(rs, h)).length;
@@ -8159,6 +8215,32 @@ function reversalInfo(rs){
 function reversalHTML(rs){
   const r = reversalInfo(rs); if (!r) return '';
   return `<div class="dis dis-open">\u21c4 <b>SELECTION REVERSAL</b> \u2014 the adjusted ranking differs from the plain ranking (figures + Prime Power + morning line): plain #1 is <b>#${escHtml(r.plain.post || '?')} ${escHtml(r.plain.horse)}</b>, adjusted #1 is <b>#${escHtml(r.top.post || '?')} ${escHtml(r.top.horse)}</b>. Compare both contenders' surface, pace, class and recent form. A reversal alone does not justify a wager.<div class="dis-note">${escHtml(r.why)}</div></div>`;
+}
+
+// v4.07 (GP 10/24: Absolute Honor, Golden Palm, O Captain): the morning-line favourite that also has the
+// field's most early speed, when the board's ranking has it below #1. Pool: such horses won 29 of 67 races
+// against 19 for our #1 (17 vs 6 in the later cards). Display only - promoting them did not improve both halves.
+function speedFavourite(rs){
+  const rf = rankedField(rs, []); if (rf.length < 2) return null;
+  const live = (rs.horses || []).filter(h => !isScratchedNow(rs, h) && h.decimalOdds != null);
+  if (!live.length) return null;
+  const ml = Math.min(...live.map(h => h.decimalOdds)); const favs = live.filter(h => h.decimalOdds === ml);
+  if (favs.length !== 1) return null;
+  const q = Math.max(...live.map(h => h.quirin || 0)); const fast = live.filter(h => (h.quirin || 0) === q);
+  const f = favs[0]; if (!fast.includes(f) || q < 4 || rf[0].h === f) return null;   // ties for most speed allowed, as in the For list
+  return {h: f, rank: rf.findIndex(r => r.h === f) + 1, q};
+}
+function fragileFavHTML(rs){
+  const live = (rs.horses || []).filter(h => !isScratchedNow(rs, h) && h.decimalOdds != null); if (!live.length) return '';
+  const ml = Math.min(...live.map(h => h.decimalOdds)); const favs = live.filter(h => h.decimalOdds === ml); if (favs.length !== 1 || ml - 1 > 2) return '';
+  const f = favs[0]; const tal = (rscsMap(rs).get(f) || {}).tally || 0; const nf = noFinishCount(f).n;
+  if (tal > 0 && nf < 2) return '';
+  const why = []; if (tal <= 0) why.push('case ' + (tal > 0 ? '+' : '') + tal); if (nf >= 2) why.push('no finish in ' + nf + ' of last 4');
+  return `<div class="dis dis-wide">\u26a0 <b>FRAGILE FAVOURITE</b> \u2014 #${escHtml(f.post || '?')} ${escHtml(f.horse)} (${escHtml(f.mlOddsStr || '')}) has ${escHtml(why.join(' and '))}. Short-priced favourites like this have finished out of the money about one time in three.</div>`;
+}
+function speedFavHTML(rs){
+  const x = speedFavourite(rs); if (!x) return '';
+  return `<div class="dis dis-split">\u26a1 <b>SPEED FAVOURITE</b> \u2014 #${escHtml(x.h.post || '?')} ${escHtml(x.h.horse)} is the morning-line favourite and has the most early speed (${x.q} points), but the board ranks it #${x.rank}. Horses like this have won more often than the board's #1 in recent cards; check it before betting against it. A display note only \u2014 the ranking and tier are unchanged.</div>`;
 }
 
 function disagreeCategory(rs){
@@ -8421,7 +8503,7 @@ function sortedForDecisions(raceSummaries){
   // v3.96 (Robert: "the best races to focus come first"): win bets first (Tier 1 to 4), then FOCUS,
   // CONSIDER and LOW races, each in race order
   const w = {FOCUS: 0, CONSIDER: 1, LOW: 2};
-  return L.map((rs, i) => { let t = 9; try { const x = winTier(rs); t = x ? x.t : 9; } catch(e){} return {rs, i, t, pr: racePriority(rs)}; })
+  return L.map((rs, i) => { let t = 9; try { const x = winTier(rs); t = x ? x.t : 9; if (t > 4 && extraBets(rs).length) t = 4.5; } catch(e){} return {rs, i, t, pr: racePriority(rs)}; })
     .sort((a, b) => (Math.min(a.t, 5) - Math.min(b.t, 5)) || (w[a.pr.level] - w[b.pr.level]) || (a.t - b.t) || (a.i - b.i)).map(x => x.rs);
 }
 
@@ -8479,7 +8561,7 @@ function racePriority(rs){
     ['no debut runner to watch', !debutWatch(rs).length],
     ['not a maiden with 2 or more first-time starters', !(mdn && nDebut >= 2)],
     ['a figure favourite is present', fig],
-    ['a clear #1 (rank score 2 or more points ahead)', (() => { const G = raceGroup(rs); return G.gap >= 2; })()],
+    ['the top pick\'s case is +6 or better (six more facts for than against)', ((rscsMap(rs).get(top) || {}).tally || 0) >= 6] /* v4.06: replaces the rank-score gap check (tested on the pool, both halves) */,
     ['not a maiden special weight', rtype !== 'S']];
   const score = checks.filter(c => c[1]).length;
   // v3.80: FOCUS needs the race conditions (small field or allowance race) and 6 of the 8 checks
@@ -8555,16 +8637,16 @@ function raceHeadHTML(rs){
   let cls = ''; try { cls = todayClassCode(rs) || ''; } catch(e){}
   return `<div class="race-hd">RACE ${escHtml(String(rs.race).trim())}<span class="race-hd-sub"> \u00b7 ${escHtml(bits)}${cls ? ' \u00b7 ' + escHtml(cls) : ''} \u00b7 ${live.length} runners</span></div>`;
 }
-function verdictBanner(rs){ return raceHeadHTML(rs) + priorityHTML(rs) + verdictBanner0(rs).replace(/<\/div>$/, resultPickerHTML(rs) + tierHTML(rs) + reversalHTML(rs) + disagreeHTML(rs) + challengersHTML(rs) + debutWatchHTML(rs) + paceFlagHTML(rs) + '</div>'); }
+function verdictBanner(rs){ return raceHeadHTML(rs) + priorityHTML(rs) + verdictBanner0(rs).replace(/<\/div>$/, resultPickerHTML(rs) + tierHTML(rs) + extraBetsHTML(rs) + fragileFavHTML(rs) + speedFavHTML(rs) + reversalHTML(rs) + disagreeHTML(rs) + challengersHTML(rs) + debutWatchHTML(rs) + paceFlagHTML(rs) + '</div>'); }
 function verdictBanner0(rs){
   const pl = racePlan(rs);
-  if (!pl.play) return `<div class="vd vd-pass"><div class="vd-tier">SKIP \u2014 NO BET</div><div class="vd-why">${escHtml(pl.why)}</div>${pl.top ? `<div class="vd-horse" style="font-size:14px">Top pick ${horseLabel(pl.top)}${rscsChip(rs, pl.top)}</div>` + forAgainstHTML(rs, pl.top) : ''}</div>`;
+  if (!pl.play) return `<div class="vd vd-pass"><div class="vd-tier">${extraBets(rs).length ? 'NO EXACTAS \u2014 WIN BET BELOW' : 'SKIP \u2014 NO BET'}</div><div class="vd-why">${escHtml(pl.why)}</div>${pl.top ? `<div class="vd-horse" style="font-size:14px">Top pick ${horseLabel(pl.top)}${rscsChip(rs, pl.top)}</div>` + forAgainstHTML(rs, pl.top) : ''}</div>`;
   if (pl.winOnly) return `<div class="vd vd-play"><div class="vd-tier">PLAY \u2014 WIN BET ONLY</div><div class="vd-why">${escHtml(pl.why)}</div>`
     + `<div class="vd-win"><b>${escHtml(pl.win.label)}</b> \u00b7 ${escHtml(pl.win.text)} \u00b7 ${horseLabel(pl.v.h)}${rscsChip(rs, pl.v.h)}</div>`
     + (pl.nextBest ? `<div class="vd-use">Next best ${horseLabel(pl.nextBest)}${rscsChip(rs, pl.nextBest)}</div>` : '')
     + rivalsNote(rs, pl.v.h) + forAgainstHTML(rs, pl.v.h) + `</div>`;
   const t = planTickets(pl);
-  return `<div class="vd vd-play"><div class="vd-tier">${pl.win ? 'PLAY \u2014 WIN BET + EXACTAS' : 'EXACTAS ONLY \u2014 NO WIN BET'}${pl.wide ? ' \u00b7 WIDE FIELD' : ''}</div>`
+  return `<div class="vd vd-play"><div class="vd-tier">${pl.win ? 'PLAY \u2014 WIN BET + EXACTAS' : (extraBets(rs).length ? 'EXACTAS + WIN BET BELOW' : 'EXACTAS ONLY \u2014 NO WIN BET')}${pl.wide ? ' \u00b7 WIDE FIELD' : ''}</div>`
     + `<div class="vd-horse">Key ${horseLabel(pl.key)}${rscsChip(rs, pl.key)}</div>` + rivalsNote(rs, pl.key)
     + `<div class="vd-use">Use ${pl.use.map(h => horseLabel(h) + rscsChip(rs, h)).join(' \u00b7 ')}</div>`
     + `<div class="vd-ticket">${escHtml(t[0])}<br>${escHtml(t[1])}</div>`
@@ -8593,7 +8675,7 @@ function buildVerdictBoard(raceSummaries){
       + ''   /* v3.82: head-to-head only in Race Facts */
       + `</div>`;
   };
-  const line0 = line; const lineP = r => line0(r).replace('<span class="vb-tier">', (() => { const pr = racePriority(r.rs); return `<span class="prio-chip prio-${pr.level.toLowerCase()}">${pr.level}</span><span class="vb-tier">`; })()).replace(/<\/div>$/, (() => { const v = reversalInfo(r.rs); return v ? `<span class="vb-ticket dis-t dis-open">\u21c4 reversal: plain #1 is #${escHtml(v.plain.post || '?')}</span>` : ''; })() + (() => { const d = disagreeCategory(r.rs); return d ? `<span class="vb-ticket dis-t dis-${d.cat}">\u2696 ${escHtml(d.cat === 'two' ? 'two-horse race' : d.cat === 'wide' ? 'wide open' : d.cat === 'split' ? 'small field, split' : 'split')}</span>` : ''; })() + (() => { const t = winTier(r.rs); return t ? `<span class="vb-ticket tier-t tier-${t.t}">Tier ${t.t} \u00b7 #${escHtml(t.h.post || '?')} \u00b7 won ${t.pct}% \u00b7 ${t.t <= 3 ? 'WIN BET' : t.t === 4 ? 'win bet at 2-1+' : (r.pl && r.pl.play && !r.pl.win) ? 'no win bet' : t.t === 5 ? 'no win edge' : 'PASS'}</span>` : ''; })() + (() => { const pr = racePriority(r.rs); if (pr.level === 'FOCUS') return ''; const c = challengers(r.rs); return c.length ? `<span class="vb-ticket close-w">\u2696 close call: ${c.map(x => '#' + (x.h.post || '?') + ' ' + escHtml(x.h.horse) + ' (' + escHtml(x.why[0]) + ')').join(', ')}</span>` : ''; })() + (() => { const dw = debutWatch(r.rs); return dw.length ? `<span class="vb-ticket debut-w">\u26a0 debut runner to watch: ${dw.map(h => '#' + (h.post || '?') + ' ' + escHtml(h.horse) + ' (' + escHtml(h.mlOddsStr || '') + ')').join(', ')}</span>` : ''; })() + (() => { const f = paceFlag(r.rs); return f ? `<span class="vb-ticket pace-${f.kind}">\u26a1 ${escHtml(f.kind === 'contested' ? 'contested pace possible: ' + f.speed.map(h => '#' + (h.post || '?')).join(', ') + (f.stalk.length ? ' \u00b7 sitting behind: ' + f.stalk.map(h => '#' + (h.post || '?')).join(', ') : '') : 'lone speed: #' + (f.speed[0].post || '?') + ' ' + f.speed[0].horse)}</span>` : ''; })() + '</div>');
+  const line0 = line; const lineP = r => line0(r).replace('<span class="vb-tier">', (() => { const pr = racePriority(r.rs); return `<span class="prio-chip prio-${pr.level.toLowerCase()}">${pr.level}</span><span class="vb-tier">`; })()).replace(/<\/div>$/, (() => { const L = extraBets(r.rs); return L.map(x => `<span class="vb-ticket xb-t">BET ${x.type === 'FIGURE' ? 'figure leader' : 'value dropper'} #${escHtml(x.h.post || '?')}</span>`).join(''); })() + (() => { const x = speedFavourite(r.rs); return x ? `<span class="vb-ticket dis-t dis-split">\u26a1 speed favourite #${escHtml(x.h.post || '?')} ranked #${x.rank}</span>` : ''; })() + (() => { const v = reversalInfo(r.rs); return v ? `<span class="vb-ticket dis-t dis-open">\u21c4 reversal: plain #1 is #${escHtml(v.plain.post || '?')}</span>` : ''; })() + (() => { const d = disagreeCategory(r.rs); return d ? `<span class="vb-ticket dis-t dis-${d.cat}">\u2696 ${escHtml(d.cat === 'two' ? 'two-horse race' : d.cat === 'wide' ? 'wide open' : d.cat === 'split' ? 'small field, split' : 'split')}</span>` : ''; })() + (() => { const t = winTier(r.rs); return t ? `<span class="vb-ticket tier-t tier-${t.t}">Tier ${t.t} \u00b7 #${escHtml(t.h.post || '?')} \u00b7 won ${t.pct}% \u00b7 ${t.t <= 3 ? 'WIN BET' : t.t === 4 ? 'win bet at 2-1+' : (r.pl && r.pl.play && !r.pl.win) ? 'no win bet' : t.t === 5 ? 'no win edge' : 'PASS'}</span>` : ''; })() + (() => { const pr = racePriority(r.rs); if (pr.level === 'FOCUS') return ''; const c = challengers(r.rs); return c.length ? `<span class="vb-ticket close-w">\u2696 close call: ${c.map(x => '#' + (x.h.post || '?') + ' ' + escHtml(x.h.horse) + ' (' + escHtml(x.why[0]) + ')').join(', ')}</span>` : ''; })() + (() => { const dw = debutWatch(r.rs); return dw.length ? `<span class="vb-ticket debut-w">\u26a0 debut runner to watch: ${dw.map(h => '#' + (h.post || '?') + ' ' + escHtml(h.horse) + ' (' + escHtml(h.mlOddsStr || '') + ')').join(', ')}</span>` : ''; })() + (() => { const f = paceFlag(r.rs); return f ? `<span class="vb-ticket pace-${f.kind}">\u26a1 ${escHtml(f.kind === 'contested' ? 'contested pace possible: ' + f.speed.map(h => '#' + (h.post || '?')).join(', ') + (f.stalk.length ? ' \u00b7 sitting behind: ' + f.stalk.map(h => '#' + (h.post || '?')).join(', ') : '') : 'lone speed: #' + (f.speed[0].post || '?') + ' ' + f.speed[0].horse)}</span>` : ''; })() + '</div>');
   const prs = rows.map(r => ({r, pr: racePriority(r.rs)}));
   const focus = prs.filter(x => x.pr.level === 'FOCUS'), low = prs.filter(x => x.pr.level === 'LOW');
   const focusHTML = `<div class="prio-sum"><div><b>Spend your time on:</b> ${focus.length ? focus.map(x => `<a class="race-jump" data-goto-pick="${escAttr(x.r.rs.race)}" href="#">R${escHtml(x.r.rs.race)}</a> (consider ${raceGroup(x.r.rs).rf.slice(0, raceGroup(x.r.rs).k).map(r => '#' + (r.h.post || '?')).join(', ')})`).join(' \u00b7 ') : 'no race passes 5 of the 6 checks today'}</div>`
@@ -9588,7 +9670,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.05 · released 25 October 2026 · build 2026-10-25-e</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.09 · released 25 October 2026 · build 2026-10-25-i</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
