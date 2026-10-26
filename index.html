@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.18 — Race Card Reader</title>
+<title>Overlay Board v4.20 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1260,7 +1260,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.18</span> · released 26 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.20</span> · released 26 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -8364,7 +8364,7 @@ function tierHTML(rs){
   let vul = '';
   if (t.t <= 2){ try { const A = forAgainst(rs, t.h).A || []; if (A.length >= 2) vul = `<div class="tier-vul">\u26a0 <b>Vulnerable bet</b> \u2014 ${A.length} against (${escHtml(A.slice(0, 3).join('; '))}${A.length > 3 ? '; \u2026' : ''}). At Tiers 1-2 bets like this have still won and paid on past cards; the tier is unchanged.</div>`; } catch(e){} }
   const tierBox = `<div class="tier tier-${t.t}"><b>Tier ${t.t} \u00b7 #${escHtml(t.h.post || '?')} ${escHtml(t.h.horse)} \u00b7 picks like this won ${t.pct}%${tierPct(t.t).myN ? ' (incl. your ' + tierPct(t.t).myN + ' recorded)' : ''} \u00b7 ${act}</b> <span class="conf-why">(${escHtml(t.what + sc)})</span></div>`;
-  let tierBox2 = xb ? tierBox.replace(/<b>Tier \d+ \u00b7 /, '<b>' + (xb.type === 'FIGURE' ? 'FIGURE LEADER' : 'VALUE DROPPER') + ' \u00b7 ').replace(/ \(see below\)/, '').replace(/<span class="conf-why">\([^)]*\)<\/span>/, '') : tierBox;
+  let tierBox2 = xb ? tierBox.replace(/<b>Tier (\d+) \u00b7 /, (m0, n0) => '<b>' + (xb.type === 'FIGURE' ? 'FIGURE LEADER' : 'VALUE DROPPER') + ' (Tier ' + n0 + ' race) \u00b7 ').replace(/ \(see below\)/, '').replace(/<span class="conf-why">\([^)]*\)<\/span>/, '') : tierBox;
   const vp = valuePriceHTML(rs, t);
   if (vp) tierBox2 = tierBox2.replace(/<\/div>$/, vp + '</div>');
   return vul ? tierBox2.replace(/<\/div>$/, vul + '</div>') : tierBox2;
@@ -8446,8 +8446,11 @@ function forAgainst(rs, h){
     else if (cl.lv >= 2 && cl.c === 0){ const q = cl.closest; A.push(`not competitive at today's level in last ${cl.n}` + (q ? ` (closest: ${ordinal(q.f)}${q.lb != null ? ', beaten ' + lengthsTxt(q.lb) : ''})` : '')); } }
   { const ft = fairOddsTable(rs), f = ft.get(h); if (f){
       if (ml && ml.rank === 1 && f.rank >= 4) A.push(`morning-line favourite, but #${f.rank} on ability (record alone)`);
-      const c = fairVsMl(f, h); if (c === 'ML much shorter' || c === 'ML shorter') A.push(`data fair odds ${oddsFrac(f.odds)} against morning line ${h.mlOddsStr || ''}`);
-      else if (c === 'ML much longer' || c === 'ML longer') F.push(`data fair odds ${oddsFrac(f.odds)}, shorter than its morning line ${h.mlOddsStr || ''}`);
+      // v4.20: say plainly which way the record points (bigger odds = less likely), with each as a percentage
+      const mlO = h.decimalOdds != null ? h.decimalOdds - 1 : null; const pc = o => Math.round(100 / (o + 1));
+      const mlTxt = mlO != null ? oddsFrac(mlO) : (h.mlOddsStr || '');
+      const c = fairVsMl(f, h); if (c === 'ML much shorter' || c === 'ML shorter') A.push(`data fair odds ${oddsFrac(f.odds)} against morning line ${mlTxt}: the record makes it LESS likely than the morning line says (${pc(f.odds)}% vs ${mlO != null ? pc(mlO) : '?'}%)`);
+      else if (c === 'ML much longer' || c === 'ML longer') F.push(`data fair odds ${oddsFrac(f.odds)}, shorter than its morning line ${mlTxt}: the record makes it MORE likely than the morning line says (${pc(f.odds)}% vs ${mlO != null ? pc(mlO) : '?'}%)`);
       if (f.rank === 1) F.push('#1 on ability (record alone)'); } }
   // v3.25: shown, not scored - the ranking test came out neutral
   { const lj = String(h.lastJockey || '').toUpperCase().replace(/[^A-Z]/g, ''), tj = String(h.jockey || '').toUpperCase().replace(/[^A-Z]/g, '');
@@ -8743,6 +8746,9 @@ function selectionSummaryHTML(rs){
     const edges = eo && eo.top === sel && eo.e.length ? ' \u00b7 beats the selection on ' + eo.e.slice(0, 2).join('; ') : '';
     const dq = doubtfulFigureHorse(rs, h);
     return `<li><b>#${escHtml(h.post || '?')} ${escHtml(h.horse)}</b> (${escHtml(h.mlOddsStr || '')}) \u2014 <b>${pct(h)}%</b>${dq ? ' <span class="ss-warn">\u26a0 doubtful: strong figures but ' + escHtml(dq.join(', ')) + ' \u2014 horses like this have won far less than their figures suggest</span>' : ''} \u00b7 RS ${w.rs} \u00b7 CS ${w.cs} (${w.tally > 0 ? '+' : ''}${w.tally}) \u00b7 ${escHtml((f.F || []).slice(0, 2).join('; ') || 'no strong facts')}${escHtml(edges)}</li>`; }).join('');
+  const prL = racePriority(rs); const share = prL.level === 'FOCUS' ? 'about 5 or 6 times in 10' : 'about 7 times in 10';
+  const others = (prL.top3 || []).filter(h => h !== sel);
+  const ifLose = others.length ? `<div class="ss-l"><b>If #${escHtml(sel.post || '?')} loses:</b> in races like this the winner has been one of the other contenders (${others.map(h => '#' + (h.post || '?')).join(', ')}) ${share}.</div>` : '';
   const rest = Math.max(0, Math.round(100 * (1 - (ch.get(sel) || 0) - threats.reduce((a, h) => a + (ch.get(h) || 0), 0))));
   const isBet = (pl && pl.win) || xb.length;
   const best = [...ch.entries()].sort((a, b) => b[1] - a[1])[0];
@@ -8752,7 +8758,7 @@ function selectionSummaryHTML(rs){
   return `<div class="selsum"><div class="ss-h">${isBet ? 'BET SELECTION' : 'TOP PICK (no bet)'}: #${escHtml(sel.post || '?')} ${escHtml(sel.horse)} (${escHtml(sel.mlOddsStr || '')}) \u2014 chance ${pct(sel)}%</div>` + (selDq ? `<div class="ss-l ss-warn">\u26a0 Doubtful: strong figures but ${escHtml(selDq.join(', '))} \u2014 horses like this have won far less than their figures suggest; read the chance as much lower.</div>` : '') + bestNote
     + `<div class="ss-l"><b>Why:</b> ${escHtml(how)}.</div>`
     + `<div class="ss-l"><b>Rank score:</b> ${escHtml(rsLine)} (lower is better; figures + Prime Power + morning line + adjustments) \u00b7 <b>Case:</b> CS ${v.cs} (${v.tally > 0 ? '+' : ''}${v.tally}: ${(fa.F || []).length} for, ${(fa.A || []).length} against)</div>`
-    + `<div class="ss-l"><b>Threats:</b><ul class="ss-t">${thr}</ul>All other runners together: ${rest}%.</div>`
+    + `<div class="ss-l"><b>Threats:</b><ul class="ss-t">${thr}</ul>All other runners together: ${rest}%.</div>` + ifLose
     + `<div class="ss-n">Chances: RS and CS, then reviewed for doubtful figure horses (cut sharply), speed favourites (raised) and fragile favourites \u2014 a model checked on past races it had not seen. They are not the odds.</div></div>`;
 }
 function raceHeadHTML(rs){
@@ -8764,7 +8770,7 @@ function raceHeadHTML(rs){
 function verdictBanner(rs){ return raceHeadHTML(rs) + selectionSummaryHTML(rs) + priorityHTML(rs) + verdictBanner0(rs).replace(/<\/div>$/, resultPickerHTML(rs) + tierHTML(rs) + extraBetsHTML(rs) + fragileFavHTML(rs) + speedFavHTML(rs) + reversalHTML(rs) + disagreeHTML(rs) + challengersHTML(rs) + debutWatchHTML(rs) + paceFlagHTML(rs) + '</div>'); }
 function verdictBanner0(rs){
   const pl = racePlan(rs);
-  if (!pl.play) return `<div class="vd ${extraBets(rs).length ? 'vd-play' : 'vd-pass'}"><div class="vd-tier">${extraBets(rs).length ? 'PLAY \u2014 WIN BET (see below)' : 'SKIP \u2014 NO BET'}</div><div class="vd-why">${escHtml(pl.why)}</div>${pl.top ? `<div class="vd-horse" style="font-size:14px">Top pick ${horseLabel(pl.top)}${rscsChip(rs, pl.top)}</div>` + forAgainstHTML(rs, pl.top) : ''}</div>`;
+  if (!pl.play) return `<div class="vd ${extraBets(rs).length ? 'vd-play' : 'vd-pass'}"><div class="vd-tier">${extraBets(rs).length ? 'PLAY \u2014 WIN BET (see below)' : 'SKIP \u2014 NO BET'}</div><div class="vd-why">${escHtml(extraBets(rs).length ? 'Hard to call for a top pick (' + String(pl.why || '').replace(/^UNREADABLE \u2014 /, '').replace(/\. Races like this.*$/, '') + '). The bet below stands on its own tested rule, which has still paid in races like this.' : pl.why)}</div>${pl.top ? `<div class="vd-horse" style="font-size:14px">Top pick ${horseLabel(pl.top)}${rscsChip(rs, pl.top)}</div>` + forAgainstHTML(rs, pl.top) : ''}</div>`;
   if (pl.winOnly) return `<div class="vd vd-play"><div class="vd-tier">PLAY \u2014 WIN BET ONLY</div><div class="vd-why">${escHtml(pl.why)}</div>`
     + `<div class="vd-win"><b>${escHtml(pl.win.label)}</b> \u00b7 ${escHtml(pl.win.text)} \u00b7 ${horseLabel(pl.v.h)}${rscsChip(rs, pl.v.h)}</div>`
     + (pl.nextBest ? `<div class="vd-use">Next best ${horseLabel(pl.nextBest)}${rscsChip(rs, pl.nextBest)}</div>` : '')
@@ -9792,7 +9798,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.18 · released 26 October 2026 · build 2026-10-26-g</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.20 · released 26 October 2026 · build 2026-10-26-i</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
