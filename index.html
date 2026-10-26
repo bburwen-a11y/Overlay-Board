@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.17 — Race Card Reader</title>
+<title>Overlay Board v4.18 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -873,6 +873,7 @@
   .vb-ticket.xb-t{background:#2F6B3F; color:#fff; font-weight:700; padding:1px 5px; border-radius:3px;}
   .selsum{border:2px solid #173f26; border-radius:6px; padding:8px 10px; margin:4px 0 10px; background:#f4f8f2; font-size:13.5px;}
   .ss-h{font-weight:800; font-size:15px; margin-bottom:4px;} .ss-l{margin-top:4px;} .ss-t{margin:4px 0 2px 18px; padding:0;} .ss-t li{margin:2px 0;} .ss-warn{color:#7a2a1c;} .ss-n{margin-top:5px; font-size:11.5px; opacity:.8;}
+  .vprice{margin-top:5px; font-size:13px; background:rgba(255,255,255,.18); padding:3px 6px; border-radius:3px;}
   .pp-lvl{font-family:var(--mono); font-size:10px; opacity:.7; margin-left:3px;}
   .pp-works{font-family:var(--mono); font-size:11.5px; line-height:1.7;}
   .pp-record{
@@ -1259,7 +1260,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.17</span> · released 26 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.18</span> · released 26 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -1438,6 +1439,8 @@
         <p>A win bet on the top-ranked horse when neither DEFINITIVE nor CONDITIONAL applies, and either (A) its morning line is 8-5 or shorter, it has the best Prime Power in the field, at most one no-finish trip comment in its last four, and the race is not low priority; or (B) its morning line is 2-1 or shorter, the field has 8 or fewer runners, it has the best last figure in the field, and its case tally is +4 or better.</p>
         <h3>Figure leader and value dropper</h3>
         <p>Two further win bets, independent of the tiers. <b>FIGURE LEADER</b>: a horse with the best 3-race figure average and a case of +3 or better in a field of 8 or fewer. <b>VALUE DROPPER</b>: in a dirt or all-weather race, a horse dropping in class whose data fair odds are shorter than its morning line — a long-price bet that wins about one time in five. Both stand even in races otherwise marked SKIP; exactas in those races stay off.</p>
+        <h3>Value price (stake guide)</h3>
+        <p>Every Tier 1–4 win bet shows a value price worked out from the board's own chance for the horse. At that price or longer the board suggests a double stake; below it a single stake. On past cards this kept every bet and returned more than flat staking, because the well-priced bets have paid best. The board never names dollar amounts.</p>
         <h3>Downgraded bets</h3>
         <p>A SOLID PICK or CONDITIONAL horse with two or more Against items drops one tier: a SOLID PICK becomes a win bet only at 2-1 or higher, and a CONDITIONAL becomes no win bet. A CONDITIONAL bet also needs a morning line of 2-1 or longer: it never relies on a horse drifting up to 2-1. The tier line says it was downgraded and why. DEFINITIVE bets (Tiers 1-2) are not downgraded; a vulnerable one is flagged instead.</p>
         <h3>Strong challengers</h3>
@@ -8361,7 +8364,9 @@ function tierHTML(rs){
   let vul = '';
   if (t.t <= 2){ try { const A = forAgainst(rs, t.h).A || []; if (A.length >= 2) vul = `<div class="tier-vul">\u26a0 <b>Vulnerable bet</b> \u2014 ${A.length} against (${escHtml(A.slice(0, 3).join('; '))}${A.length > 3 ? '; \u2026' : ''}). At Tiers 1-2 bets like this have still won and paid on past cards; the tier is unchanged.</div>`; } catch(e){} }
   const tierBox = `<div class="tier tier-${t.t}"><b>Tier ${t.t} \u00b7 #${escHtml(t.h.post || '?')} ${escHtml(t.h.horse)} \u00b7 picks like this won ${t.pct}%${tierPct(t.t).myN ? ' (incl. your ' + tierPct(t.t).myN + ' recorded)' : ''} \u00b7 ${act}</b> <span class="conf-why">(${escHtml(t.what + sc)})</span></div>`;
-  const tierBox2 = xb ? tierBox.replace(/<b>Tier \d+ \u00b7 /, '<b>' + (xb.type === 'FIGURE' ? 'FIGURE LEADER' : 'VALUE DROPPER') + ' \u00b7 ').replace(/ \(see below\)/, '').replace(/<span class="conf-why">\([^)]*\)<\/span>/, '') : tierBox;
+  let tierBox2 = xb ? tierBox.replace(/<b>Tier \d+ \u00b7 /, '<b>' + (xb.type === 'FIGURE' ? 'FIGURE LEADER' : 'VALUE DROPPER') + ' \u00b7 ').replace(/ \(see below\)/, '').replace(/<span class="conf-why">\([^)]*\)<\/span>/, '') : tierBox;
+  const vp = valuePriceHTML(rs, t);
+  if (vp) tierBox2 = tierBox2.replace(/<\/div>$/, vp + '</div>');
   return vul ? tierBox2.replace(/<\/div>$/, vul + '</div>') : tierBox2;
 }
 function confidenceHTML(rs){
@@ -8662,6 +8667,29 @@ function paceFlagHTML(rs){ const f = paceFlag(rs); return f ? `<div class="pace-
 // rank-score gap to the best, RS #1, CS rank and the case tally; on races it had not seen, horses it gave
 // 10-20% won 14%, 20-30% won 22%, 45-60% won 52% (the 30-45% band ran a little high: said 37, won 28).
 const RSCS_W = {gap: -0.03, rs1: 0.084, cs1: -0.181, cs2: -0.188, cs3: -0.164, tal: 0.092, doubt: -1.291, fragile: 0.082, speedfav: 0.763};   // v4.16: reviewed model (warnings weighed)
+// v4.18 (Robert: "double on the value price"). The value price uses the RS + CS chance exactly as tested
+// (583 races): double stake when the final odds clear 0.82 / (chance - 0.08) - 1, single stake below.
+// Pool, Tier 1-4 bets: flat staking +55% ROI; double at the value price +65% (both halves), profit +90 vs +51 units.
+const RSCS_BASE_W = {gap: -0.0305, rs1: 0.0927, cs1: -0.2759, cs2: -0.2977, cs3: -0.2775, tal: 0.1108};
+function baseChance(rs, h){
+  const m = rscsMap(rs); const live = (rs.horses || []).filter(x => !isScratchedNow(rs, x) && m.get(x) && m.get(x).rs != null);
+  if (!live.length || !m.get(h)) return null;
+  const mn = Math.min(...live.map(x => m.get(x).rs)); const W = RSCS_BASE_W;
+  const sc = x => { const v = m.get(x); const gap = Math.min(v.rs - mn, 25), tal = Math.max(-8, Math.min(10, v.tally || 0));
+    return Math.exp(W.gap * gap + W.rs1 * (v.rs === mn ? 1 : 0) + W.cs1 * (v.cs === 1 ? 1 : 0) + W.cs2 * (v.cs === 2 ? 1 : 0) + W.cs3 * (v.cs === 3 ? 1 : 0) + W.tal * tal); };
+  const tot = live.reduce((a, x) => a + sc(x), 0); return sc(h) / tot;
+}
+function valuePrice(rs, h, floor){
+  const c = baseChance(rs, h); if (c == null || c <= 0.09) return null;
+  let o = 0.82 / (c - 0.08) - 1; if (floor != null) o = Math.max(o, floor);
+  return o;
+}
+function valuePriceHTML(rs, t){
+  if (!t || t.t > 4 || t.down) return '';
+  const o = valuePrice(rs, t.h, t.t === 4 ? 2 : null); if (o == null) return '';
+  const frac = (() => { try { return oddsFrac(o); } catch(e){ return o.toFixed(2) + '-1'; } })();
+  return `<div class="vprice">\u2191 <b>Double stake at ${escHtml(frac)} or longer; single stake below.</b> <span class="conf-why">(value price from the board's chance of ${Math.round(100 * baseChance(rs, t.h))}%)</span></div>`;
+}
 let __chGuard = false;
 function rscsChances(rs){
   const m = rscsMap(rs); const live = (rs.horses || []).filter(h => !isScratchedNow(rs, h) && m.get(h) && m.get(h).rs != null);
@@ -9764,7 +9792,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.17 · released 26 October 2026 · build 2026-10-26-f</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.18 · released 26 October 2026 · build 2026-10-26-g</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
