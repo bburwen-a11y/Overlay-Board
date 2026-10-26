@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.16 — Race Card Reader</title>
+<title>Overlay Board v4.17 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1259,7 +1259,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.16</span> · released 26 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.17</span> · released 26 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -9075,7 +9075,8 @@ function renderPicks(raceSummaries){
   const __sortBar = `<div class="sort-bar">Sort: <button type="button" class="sort-btn${decisionSortMode() !== 'focus' ? ' on' : ''}" onclick="setDecisionSort('race')">Race number</button><button type="button" class="sort-btn${decisionSortMode() === 'focus' ? ' on' : ''}" onclick="setDecisionSort('focus')">Best first</button></div>`;
   // v2.91: the verdicts lead the board on every card, plays or not.
   const __blocks = decisionSortMode() === 'focus' ? __ordered.map(rs => blocks[raceSummaries.indexOf(rs)]) : blocks;
-  list.innerHTML = __sortBar + scorecardHTML() + verdicts + __blocks.join('');   // v3.50: the old summary lists and the old per-race index are retired - the race plans are the one call
+  // v4.17 (Robert, 26 Oct): the race-plans list is removed; the Decision board goes straight to each race's decision
+  list.innerHTML = __sortBar + scorecardHTML() + __blocks.join('');   // v3.50: the old summary lists and the old per-race index are retired - the race plans are the one call
   document.getElementById('pickCount').textContent = raceSummaries.filter(rs => racePlan(rs).play).length;
   bindTapHandlers(list);
   // The race-number block carries its own handler: bindTapHandlers keys off
@@ -9763,7 +9764,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.16 · released 26 October 2026 · build 2026-10-26-e</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.17 · released 26 October 2026 · build 2026-10-26-f</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
