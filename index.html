@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.23 — Race Card Reader</title>
+<title>Overlay Board v4.24 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1262,7 +1262,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.23</span> · released 27 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.24</span> · released 27 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -7946,6 +7946,7 @@ function extraBets(rs){
       if (tal >= 3 && /best 3-race figure average/.test(F) && live.length <= 8) out.push({type: 'FIGURE', h, tal});
       else if (!turf(h) && /dropping/.test(F) && /shorter than its morning line/.test(F)) out.push({type: 'VALUE', h, tal});
     });
+    try { const chm = rscsChances(rs); out.sort((a, b) => ((a.type === 'FIGURE') ? 0 : 1) - ((b.type === 'FIGURE') ? 0 : 1) || ((chm.get(b.h) || -1) - (chm.get(a.h) || -1))); } catch(e){}
     return out;
   } finally { __xbGuard = false; }
 }
@@ -8516,7 +8517,7 @@ function paceFlag(rs){
   const st = h => String(h.runStyle || '').toUpperCase().trim();
   // v3.89 (GP 9/26 R2: Relentless Lady called 'lone speed' while two other E-style horses with 3 speed points dueled with her):
   // an early type is E or E/P with 5+ speed points, or a pure E with 3+.
-  const speed = live.filter(h => ((st(h) === 'E' || st(h) === 'E/P') && (h.quirin || 0) >= 5) || (st(h) === 'E' && (h.quirin || 0) >= 3));
+  const speed = live.filter(h => ((st(h) === 'E' || st(h) === 'E/P') && (h.quirin || 0) >= 5) || (st(h) === 'E' && (h.quirin || 0) >= 3) || ((!st(h) || st(h) === 'NA') && (h.quirin || 0) >= 5));   // v4.24: no style code (e.g. Mission Integrity, BEL 9/30 R1) - use the speed points
   const rf = rankedField(rs, []);
   // v3.89: stalkers (P, E/P) and closers (S) among the top 5 ranked, stalkers first
   const stalk = rf.slice(0, 5).map(r => r.h).filter(h => !speed.includes(h) && (st(h) === 'P' || st(h) === 'E/P' || st(h) === 'S')).sort((a, b) => (st(a) === 'S') - (st(b) === 'S'));
@@ -8770,7 +8771,9 @@ function selectionSummaryHTML(rs){
   const bestDq = best ? doubtfulFigureHorse(rs, best[0]) : null;
   const bestNote = best && best[0] !== sel && pct(best[0]) > pct(sel) ? `<div class="ss-l ss-warn">\u26a0 By RS and CS together, <b>#${escHtml(best[0].post || '?')} ${escHtml(best[0].horse)}</b> has the best chance (${pct(best[0])}%) \u2014 the bet stands on its own rules, but this horse rates higher after weighing every warning.</div>` : '';
   const selCh = ch.has(sel) ? 'chance ' + pct(sel) + '%' : 'chance not rated (not in the ranked field)';
-  return `<div class="selsum"><div class="ss-h">${isBet ? 'BET SELECTION' : 'TOP PICK (no bet)'}: #${escHtml(sel.post || '?')} ${escHtml(sel.horse)} (${escHtml(sel.mlOddsStr || '')}) \u2014 ${selCh}</div>` + (selDq ? `<div class="ss-l ss-warn">\u26a0 Doubtful: strong figures but ${escHtml(selDq.join(', '))} \u2014 horses like this have won far less than their figures suggest; read the chance as much lower.</div>` : '') + bestNote
+  const alsoBets = xb.filter(x => x.h !== sel);
+  const alsoHTML = alsoBets.length ? `<div class="ss-l"><b>Also a bet:</b> ${alsoBets.map(x => '#' + escHtml(x.h.post || '?') + ' ' + escHtml(x.h.horse) + ' (' + (x.type === 'FIGURE' ? 'figure leader' : 'value dropper') + ', ' + (ch.has(x.h) ? pct(x.h) + '%' : 'not rated') + ')').join(' \u00b7 ')}</div>` : '';
+  return `<div class="selsum"><div class="ss-h">${isBet ? 'BET SELECTION' : 'TOP PICK (no bet)'}: #${escHtml(sel.post || '?')} ${escHtml(sel.horse)} (${escHtml(sel.mlOddsStr || '')}) \u2014 ${selCh}</div>` + alsoHTML + (selDq ? `<div class="ss-l ss-warn">\u26a0 Doubtful: strong figures but ${escHtml(selDq.join(', '))} \u2014 horses like this have won far less than their figures suggest; read the chance as much lower.</div>` : '') + bestNote
     + `<div class="ss-l"><b>Why:</b> ${escHtml(how)}.</div>`
     + `<div class="ss-l"><b>Rank score:</b> ${rsLine ? escHtml(rsLine) + ' (lower is better; figures + Prime Power + morning line + adjustments)' : 'not ranked (too little form to score)'} \u00b7 <b>Case:</b> CS ${v.cs} (${v.tally > 0 ? '+' : ''}${v.tally}: ${(fa.F || []).length} for, ${(fa.A || []).length} against)</div>`
     + `<div class="ss-l"><b>Threats:</b><ul class="ss-t">${thr}</ul>All other runners together: ${rest}%.</div>` + ifLose
@@ -9817,7 +9820,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.23 · released 27 October 2026 · build 2026-10-27-c</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.24 · released 27 October 2026 · build 2026-10-27-d</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
