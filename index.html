@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.24 — Race Card Reader</title>
+<title>Overlay Board v4.25 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1262,7 +1262,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.24</span> · released 27 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.25</span> · released 27 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -8769,7 +8769,9 @@ function selectionSummaryHTML(rs){
   const best = [...ch.entries()].sort((a, b) => b[1] - a[1])[0];
   const selDq = doubtfulFigureHorse(rs, sel);
   const bestDq = best ? doubtfulFigureHorse(rs, best[0]) : null;
-  const bestNote = best && best[0] !== sel && pct(best[0]) > pct(sel) ? `<div class="ss-l ss-warn">\u26a0 By RS and CS together, <b>#${escHtml(best[0].post || '?')} ${escHtml(best[0].horse)}</b> has the best chance (${pct(best[0])}%) \u2014 the bet stands on its own rules, but this horse rates higher after weighing every warning.</div>` : '';
+  const bestNote = best && best[0] !== sel && pct(best[0]) > pct(sel) ? (isBet
+      ? `<div class="ss-l ss-warn">\u26a0 <b>Most likely winner is not the bet horse:</b> #${escHtml(best[0].post || '?')} ${escHtml(best[0].horse)} has the best chance (${pct(best[0])}%), against ${pct(sel)}% for the bet, #${escHtml(sel.post || '?')} ${escHtml(sel.horse)}. The bet on #${escHtml(sel.post || '?')} stands on its own tested rule${xb.some(x => x.h === sel && x.type === 'VALUE') ? ' \u2014 a value bet is about the price, not about being the most likely winner' : ''}.</div>`
+      : `<div class="ss-l ss-warn">\u26a0 #${escHtml(best[0].post || '?')} ${escHtml(best[0].horse)} has a better chance (${pct(best[0])}%) than #${escHtml(sel.post || '?')} ${escHtml(sel.horse)} (${pct(sel)}%).</div>`) : '';
   const selCh = ch.has(sel) ? 'chance ' + pct(sel) + '%' : 'chance not rated (not in the ranked field)';
   const alsoBets = xb.filter(x => x.h !== sel);
   const alsoHTML = alsoBets.length ? `<div class="ss-l"><b>Also a bet:</b> ${alsoBets.map(x => '#' + escHtml(x.h.post || '?') + ' ' + escHtml(x.h.horse) + ' (' + (x.type === 'FIGURE' ? 'figure leader' : 'value dropper') + ', ' + (ch.has(x.h) ? pct(x.h) + '%' : 'not rated') + ')').join(' \u00b7 ')}</div>` : '';
@@ -9820,7 +9822,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.24 · released 27 October 2026 · build 2026-10-27-d</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.25 · released 27 October 2026 · build 2026-10-27-e</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
