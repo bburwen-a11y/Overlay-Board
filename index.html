@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.22 — Race Card Reader</title>
+<title>Overlay Board v4.23 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -875,6 +875,7 @@
   .ss-h{font-weight:800; font-size:15px; margin-bottom:4px;} .ss-l{margin-top:4px;} .ss-t{margin:4px 0 2px 18px; padding:0;} .ss-t li{margin:2px 0;} .ss-warn{color:#7a2a1c;} .ss-n{margin-top:5px; font-size:11.5px; opacity:.8;}
   .vprice{margin-top:5px; font-size:13px; background:rgba(255,255,255,.18); padding:3px 6px; border-radius:3px;}
   .race-ord{display:inline-block; background:#173f26; color:#fff; font-size:12px; padding:1px 6px; border-radius:3px; margin-right:6px; vertical-align:middle;}
+  .race-side{display:inline-block; background:#7a5a12; color:#fff; font-size:11px; padding:1px 6px; border-radius:3px; vertical-align:middle; letter-spacing:0;}
   .pp-lvl{font-family:var(--mono); font-size:10px; opacity:.7; margin-left:3px;}
   .pp-works{font-family:var(--mono); font-size:11.5px; line-height:1.7;}
   .pp-record{
@@ -1261,7 +1262,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.22</span> · released 27 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.23</span> · released 27 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -8547,7 +8548,7 @@ function sortedForDecisions(raceSummaries){
   const out = L.map((rs, i) => { let t = 9, c = 0;
     try { const x = winTier(rs); t = x ? x.t : 9; const xb = extraBets(rs); if (t > 4 && xb.length) t = xb.some(b => b.type === 'FIGURE') ? 4.5 : 4.8; } catch(e){}
     try { const ch = rscsChances(rs); c = Math.max(0, ...ch.values()); } catch(e){}
-    return {rs, i, t, c, bet: t <= 4.8}; })
+    return {rs, i, t, c, bet: t <= 4.5}; })   // v4.23: a value-dropper-only race is a long-shot side bet, ordered by the race itself
     .sort((a, b) => (b.bet - a.bet) || (a.bet ? a.t - b.t : 0) || (b.c - a.c) || (a.i - b.i));
   out.forEach((x, k) => { x.rs.__bestOrder = k + 1; x.rs.__bestLabel = (k === 0 && x.t <= 4.5); });
   return out.map(x => x.rs);
@@ -8771,7 +8772,7 @@ function selectionSummaryHTML(rs){
   const selCh = ch.has(sel) ? 'chance ' + pct(sel) + '%' : 'chance not rated (not in the ranked field)';
   return `<div class="selsum"><div class="ss-h">${isBet ? 'BET SELECTION' : 'TOP PICK (no bet)'}: #${escHtml(sel.post || '?')} ${escHtml(sel.horse)} (${escHtml(sel.mlOddsStr || '')}) \u2014 ${selCh}</div>` + (selDq ? `<div class="ss-l ss-warn">\u26a0 Doubtful: strong figures but ${escHtml(selDq.join(', '))} \u2014 horses like this have won far less than their figures suggest; read the chance as much lower.</div>` : '') + bestNote
     + `<div class="ss-l"><b>Why:</b> ${escHtml(how)}.</div>`
-    + `<div class="ss-l"><b>Rank score:</b> ${escHtml(rsLine)} (lower is better; figures + Prime Power + morning line + adjustments) \u00b7 <b>Case:</b> CS ${v.cs} (${v.tally > 0 ? '+' : ''}${v.tally}: ${(fa.F || []).length} for, ${(fa.A || []).length} against)</div>`
+    + `<div class="ss-l"><b>Rank score:</b> ${rsLine ? escHtml(rsLine) + ' (lower is better; figures + Prime Power + morning line + adjustments)' : 'not ranked (too little form to score)'} \u00b7 <b>Case:</b> CS ${v.cs} (${v.tally > 0 ? '+' : ''}${v.tally}: ${(fa.F || []).length} for, ${(fa.A || []).length} against)</div>`
     + `<div class="ss-l"><b>Threats:</b><ul class="ss-t">${thr}</ul>All other runners together: ${rest}%.</div>` + ifLose
     + `<div class="ss-n">Chances: RS and CS, then reviewed for doubtful figure horses (cut sharply), speed favourites (raised) and fragile favourites \u2014 a model checked on past races it had not seen. They are not the odds.</div></div>`;
 }
@@ -8780,7 +8781,8 @@ function raceHeadHTML(rs){
   const bits = [fmtDistY(h.raceDistYds), surfWord(h.surface || '')].filter(Boolean).join(' ');
   let cls = ''; try { cls = todayClassCode(rs) || ''; } catch(e){}
   const ord = decisionSortMode() === 'focus' && rs.__bestOrder ? `<span class="race-ord">${rs.__bestLabel ? 'BEST' : '#' + rs.__bestOrder}</span> ` : '';
-  return `<div class="race-hd">${ord}RACE ${escHtml(String(rs.race).trim())}<span class="race-hd-sub"> \u00b7 ${escHtml(bits)}${cls ? ' \u00b7 ' + escHtml(cls) : ''} \u00b7 ${live.length} runners</span></div>`;
+  let side = ''; try { const xb0 = extraBets(rs); const t0 = winTier(rs); if (xb0.length && xb0.every(b => b.type === 'VALUE') && !(t0 && t0.t <= 4)) side = ' <span class="race-side">LONG-SHOT SIDE BET</span>'; } catch(e){}
+  return `<div class="race-hd">${ord}RACE ${escHtml(String(rs.race).trim())}${side}<span class="race-hd-sub"> \u00b7 ${escHtml(bits)}${cls ? ' \u00b7 ' + escHtml(cls) : ''} \u00b7 ${live.length} runners</span></div>`;
 }
 function verdictBanner(rs){ return raceHeadHTML(rs) + selectionSummaryHTML(rs) + priorityHTML(rs) + verdictBanner0(rs).replace(/<\/div>$/, resultPickerHTML(rs) + tierHTML(rs) + extraBetsHTML(rs) + fragileFavHTML(rs) + speedFavHTML(rs) + reversalHTML(rs) + disagreeHTML(rs) + challengersHTML(rs) + debutWatchHTML(rs) + paceFlagHTML(rs) + '</div>'); }
 function verdictBanner0(rs){
@@ -9815,7 +9817,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.22 · released 27 October 2026 · build 2026-10-27-b</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.23 · released 27 October 2026 · build 2026-10-27-c</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
