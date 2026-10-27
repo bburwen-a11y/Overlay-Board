@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.20 — Race Card Reader</title>
+<title>Overlay Board v4.21 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -874,6 +874,7 @@
   .selsum{border:2px solid #173f26; border-radius:6px; padding:8px 10px; margin:4px 0 10px; background:#f4f8f2; font-size:13.5px;}
   .ss-h{font-weight:800; font-size:15px; margin-bottom:4px;} .ss-l{margin-top:4px;} .ss-t{margin:4px 0 2px 18px; padding:0;} .ss-t li{margin:2px 0;} .ss-warn{color:#7a2a1c;} .ss-n{margin-top:5px; font-size:11.5px; opacity:.8;}
   .vprice{margin-top:5px; font-size:13px; background:rgba(255,255,255,.18); padding:3px 6px; border-radius:3px;}
+  .race-ord{display:inline-block; background:#173f26; color:#fff; font-size:12px; padding:1px 6px; border-radius:3px; margin-right:6px; vertical-align:middle;}
   .pp-lvl{font-family:var(--mono); font-size:10px; opacity:.7; margin-left:3px;}
   .pp-works{font-family:var(--mono); font-size:11.5px; line-height:1.7;}
   .pp-record{
@@ -1260,7 +1261,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.20</span> · released 26 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.21</span> · released 27 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -8529,15 +8530,22 @@ function paceFlag(rs){
 // 2+ first-time starters; a figure favourite is present.
 // v3.72 (Robert, 12 Oct: "add a sort order to decisions by race number or focus").
 function decisionSortMode(){ try { return window.__sortMode || localStorage.getItem('ob_sort') || 'race'; } catch(e){ return window.__sortMode || 'race'; } }
-function setDecisionSort(m){ window.__sortMode = m; try { localStorage.setItem('ob_sort', m); } catch(e){} try { if (window.__ccRaceSummaries) renderPicks(window.__ccRaceSummaries); } catch(e){} }
+function setDecisionSort(m){ window.__sortMode = m; try { localStorage.setItem('ob_sort', m); } catch(e){} try { if (window.__ccRaceSummaries) renderPicks(window.__ccRaceSummaries); } catch(e){ console.error(e); }
+  // v4.21: jump back to the top of the list so the new order is visible straight away
+  try { const L = document.getElementById('pickList'); if (L) L.scrollIntoView({block: 'start'}); } catch(e){} }
 function sortedForDecisions(raceSummaries){
   const L = raceSummaries.slice();
   if (decisionSortMode() !== 'focus') return L;
   // v3.96 (Robert: "the best races to focus come first"): win bets first (Tier 1 to 4), then FOCUS,
   // CONSIDER and LOW races, each in race order
-  const w = {FOCUS: 0, CONSIDER: 1, LOW: 2};
-  return L.map((rs, i) => { let t = 9; try { const x = winTier(rs); t = x ? x.t : 9; if (t > 4 && extraBets(rs).length) t = 4.5; } catch(e){} return {rs, i, t, pr: racePriority(rs)}; })
-    .sort((a, b) => (Math.min(a.t, 5) - Math.min(b.t, 5)) || (w[a.pr.level] - w[b.pr.level]) || (a.t - b.t) || (a.i - b.i)).map(x => x.rs);
+  // v4.21: races with a win bet first (best tier first), then the others by their top pick's chance
+  const out = L.map((rs, i) => { let t = 9, c = 0;
+    try { const x = winTier(rs); t = x ? x.t : 9; if (t > 4 && extraBets(rs).length) t = 4.5; } catch(e){}
+    try { const ch = rscsChances(rs); c = Math.max(0, ...ch.values()); } catch(e){}
+    return {rs, i, t, c, bet: t <= 4.5}; })
+    .sort((a, b) => (b.bet - a.bet) || (a.bet ? a.t - b.t : 0) || (b.c - a.c) || (a.i - b.i));
+  out.forEach((x, k) => { x.rs.__bestOrder = k + 1; });
+  return out.map(x => x.rs);
 }
 
 // v3.80 (Robert, 13 Oct: "open the field to additional contenders ... smaller fields
@@ -8765,7 +8773,8 @@ function raceHeadHTML(rs){
   const live = (rs.horses || []).filter(h => !isScratchedNow(rs, h)); const h = live[0] || {};
   const bits = [fmtDistY(h.raceDistYds), surfWord(h.surface || '')].filter(Boolean).join(' ');
   let cls = ''; try { cls = todayClassCode(rs) || ''; } catch(e){}
-  return `<div class="race-hd">RACE ${escHtml(String(rs.race).trim())}<span class="race-hd-sub"> \u00b7 ${escHtml(bits)}${cls ? ' \u00b7 ' + escHtml(cls) : ''} \u00b7 ${live.length} runners</span></div>`;
+  const ord = decisionSortMode() === 'focus' && rs.__bestOrder ? `<span class="race-ord">${rs.__bestOrder === 1 ? 'BEST' : '#' + rs.__bestOrder}</span> ` : '';
+  return `<div class="race-hd">${ord}RACE ${escHtml(String(rs.race).trim())}<span class="race-hd-sub"> \u00b7 ${escHtml(bits)}${cls ? ' \u00b7 ' + escHtml(cls) : ''} \u00b7 ${live.length} runners</span></div>`;
 }
 function verdictBanner(rs){ return raceHeadHTML(rs) + selectionSummaryHTML(rs) + priorityHTML(rs) + verdictBanner0(rs).replace(/<\/div>$/, resultPickerHTML(rs) + tierHTML(rs) + extraBetsHTML(rs) + fragileFavHTML(rs) + speedFavHTML(rs) + reversalHTML(rs) + disagreeHTML(rs) + challengersHTML(rs) + debutWatchHTML(rs) + paceFlagHTML(rs) + '</div>'); }
 function verdictBanner0(rs){
@@ -9092,11 +9101,6 @@ function renderContenders(raceSummaries){
 function renderPicks(raceSummaries){
   const list = document.getElementById('pickList');
   renderRaceNav(document.getElementById('picksNav'), raceSummaries, 'pick-r');
-  const blocks = raceSummaries.map(rs => buildPick(rs));
-  const best = buildBestOfDay(raceSummaries);
-  const n = blocks.filter(b => b.indexOf('pick-card') !== -1).length;
-  document.getElementById('pickCount').textContent = n;
-  const index = buildBoardIndex(raceSummaries);
   // v3.71: pick at most five FOCUS races for the day
   try {
     window.__focusSet = null;
@@ -9104,6 +9108,13 @@ function renderPicks(raceSummaries){
     cand.sort((a, b) => b.pr.score - a.pr.score || a.G.g.localeCompare(b.G.g) || (b.G.alw - a.G.alw) || a.n - b.n);
     window.__focusSet = new Set(cand.slice(0, 5).map(x => String(x.rs.race).trim()));
   } catch(e){ window.__focusSet = null; }
+  // v4.21: set the Best-first order (and its labels) before the race cards are built
+  try { raceSummaries.forEach(r => { r.__bestOrder = null; }); if (decisionSortMode() === 'focus') sortedForDecisions(raceSummaries); } catch(e){}
+  const blocks = raceSummaries.map(rs => buildPick(rs));
+  const best = buildBestOfDay(raceSummaries);
+  const n = blocks.filter(b => b.indexOf('pick-card') !== -1).length;
+  document.getElementById('pickCount').textContent = n;
+  const index = buildBoardIndex(raceSummaries);
   const __ordered = sortedForDecisions(raceSummaries);
   const verdicts = buildVerdictBoard(__ordered);
   const __sortBar = `<div class="sort-bar">Sort: <button type="button" class="sort-btn${decisionSortMode() !== 'focus' ? ' on' : ''}" onclick="setDecisionSort('race')">Race number</button><button type="button" class="sort-btn${decisionSortMode() === 'focus' ? ' on' : ''}" onclick="setDecisionSort('focus')">Best first</button></div>`;
@@ -9798,7 +9809,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.20 · released 26 October 2026 · build 2026-10-26-i</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.21 · released 27 October 2026 · build 2026-10-27-a</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
