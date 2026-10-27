@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.21 — Race Card Reader</title>
+<title>Overlay Board v4.22 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1261,7 +1261,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.21</span> · released 27 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.22</span> · released 27 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -7940,6 +7940,8 @@ function extraBets(rs){
       const F = (fa.F || []).join(' | '); const Ag = (fa.A || []).join(' | '); const tal = (m.get(h) || {}).tally || 0;
       // v4.12 (GP 10/24 R2 Kinetic Stone): not when the data rates the horse overbet, or it tires late
       if (/data fair odds .* against morning line/.test(Ag) || /tires late/.test(Ag)) return;
+      // v4.22 (BEL 9/30 R1 Foolin): not when its top figure came on another surface - such figure leaders won 3 of 13 (23%), returning 60 cents, both halves under $1
+      if (/earned on/.test(Ag)) return;
       if (tal >= 3 && /best 3-race figure average/.test(F) && live.length <= 8) out.push({type: 'FIGURE', h, tal});
       else if (!turf(h) && /dropping/.test(F) && /shorter than its morning line/.test(F)) out.push({type: 'VALUE', h, tal});
     });
@@ -8357,10 +8359,13 @@ function winTier(rs){
 function tierHTML(rs){
   let t = winTier(rs); if (!t) return '';
   const pl0 = racePlan(rs); const exOnly = pl0 && pl0.play && !pl0.winOnly && !pl0.win;
-  const xb = extraBets(rs).find(x => x.h === t.h);
+  let xb = extraBets(rs).find(x => x.h === t.h);
+  if (!xb && t.t >= 5){ const any = extraBets(rs)[0]; if (any){ xb = any; t = Object.assign({}, t, {h: any.h}); } }
   if (xb){ t = Object.assign({}, t, {pct: xb.type === 'FIGURE' ? 37 : 18, what: xb.type === 'FIGURE' ? 'FIGURE LEADER' : 'VALUE DROPPER (long price)'}); }
+  // v4.22: with no win bet, the tier line names the same top pick as the summary (the reviewed #1)
+  else if (t.t >= 5){ try { const chm = rscsChances(rs); const rv = [...chm.entries()].sort((a, b) => b[1] - a[1])[0]; if (rv && rv[0] !== t.h) t = Object.assign({}, t, {h: rv[0], what: t.what + ' \u00b7 reviewed top pick'}); } catch(e){} }
   const act = xb ? 'WIN BET \u2014 ' + (xb.type === 'FIGURE' ? 'FIGURE LEADER' : 'VALUE DROPPER') + ' (see below)' : t.t <= 3 ? 'WIN BET' : t.t === 4 ? 'WIN BET ONLY AT 2-1 OR HIGHER' : exOnly ? 'NO WIN BET' : t.t === 5 ? 'NO WIN-BET EDGE \u2014 exotics or a small bet at most' : 'NO EDGE \u2014 PASS';
-  const c = topConfidence(rs); const sc = c && c.strong.length ? ' \u00b7 strong challengers: ' + c.strong.map(h => '#' + (h.post || '?') + ' ' + h.horse).join(', ') : '';
+  const c = topConfidence(rs); const strongL = c ? c.strong.filter(h => h !== t.h) : []; const sc = strongL.length ? ' \u00b7 strong challengers: ' + strongL.map(h => '#' + (h.post || '?') + ' ' + h.horse).join(', ') : '';
   // v4.04 (ChatGPT review / audit): a win bet on a horse with 2+ Against items is more vulnerable - flag it, keep the bet
   let vul = '';
   if (t.t <= 2){ try { const A = forAgainst(rs, t.h).A || []; if (A.length >= 2) vul = `<div class="tier-vul">\u26a0 <b>Vulnerable bet</b> \u2014 ${A.length} against (${escHtml(A.slice(0, 3).join('; '))}${A.length > 3 ? '; \u2026' : ''}). At Tiers 1-2 bets like this have still won and paid on past cards; the tier is unchanged.</div>`; } catch(e){} }
@@ -8540,11 +8545,11 @@ function sortedForDecisions(raceSummaries){
   // CONSIDER and LOW races, each in race order
   // v4.21: races with a win bet first (best tier first), then the others by their top pick's chance
   const out = L.map((rs, i) => { let t = 9, c = 0;
-    try { const x = winTier(rs); t = x ? x.t : 9; if (t > 4 && extraBets(rs).length) t = 4.5; } catch(e){}
+    try { const x = winTier(rs); t = x ? x.t : 9; const xb = extraBets(rs); if (t > 4 && xb.length) t = xb.some(b => b.type === 'FIGURE') ? 4.5 : 4.8; } catch(e){}
     try { const ch = rscsChances(rs); c = Math.max(0, ...ch.values()); } catch(e){}
-    return {rs, i, t, c, bet: t <= 4.5}; })
+    return {rs, i, t, c, bet: t <= 4.8}; })
     .sort((a, b) => (b.bet - a.bet) || (a.bet ? a.t - b.t : 0) || (b.c - a.c) || (a.i - b.i));
-  out.forEach((x, k) => { x.rs.__bestOrder = k + 1; });
+  out.forEach((x, k) => { x.rs.__bestOrder = k + 1; x.rs.__bestLabel = (k === 0 && x.t <= 4.5); });
   return out.map(x => x.rs);
 }
 
@@ -8763,7 +8768,8 @@ function selectionSummaryHTML(rs){
   const selDq = doubtfulFigureHorse(rs, sel);
   const bestDq = best ? doubtfulFigureHorse(rs, best[0]) : null;
   const bestNote = best && best[0] !== sel && pct(best[0]) > pct(sel) ? `<div class="ss-l ss-warn">\u26a0 By RS and CS together, <b>#${escHtml(best[0].post || '?')} ${escHtml(best[0].horse)}</b> has the best chance (${pct(best[0])}%) \u2014 the bet stands on its own rules, but this horse rates higher after weighing every warning.</div>` : '';
-  return `<div class="selsum"><div class="ss-h">${isBet ? 'BET SELECTION' : 'TOP PICK (no bet)'}: #${escHtml(sel.post || '?')} ${escHtml(sel.horse)} (${escHtml(sel.mlOddsStr || '')}) \u2014 chance ${pct(sel)}%</div>` + (selDq ? `<div class="ss-l ss-warn">\u26a0 Doubtful: strong figures but ${escHtml(selDq.join(', '))} \u2014 horses like this have won far less than their figures suggest; read the chance as much lower.</div>` : '') + bestNote
+  const selCh = ch.has(sel) ? 'chance ' + pct(sel) + '%' : 'chance not rated (not in the ranked field)';
+  return `<div class="selsum"><div class="ss-h">${isBet ? 'BET SELECTION' : 'TOP PICK (no bet)'}: #${escHtml(sel.post || '?')} ${escHtml(sel.horse)} (${escHtml(sel.mlOddsStr || '')}) \u2014 ${selCh}</div>` + (selDq ? `<div class="ss-l ss-warn">\u26a0 Doubtful: strong figures but ${escHtml(selDq.join(', '))} \u2014 horses like this have won far less than their figures suggest; read the chance as much lower.</div>` : '') + bestNote
     + `<div class="ss-l"><b>Why:</b> ${escHtml(how)}.</div>`
     + `<div class="ss-l"><b>Rank score:</b> ${escHtml(rsLine)} (lower is better; figures + Prime Power + morning line + adjustments) \u00b7 <b>Case:</b> CS ${v.cs} (${v.tally > 0 ? '+' : ''}${v.tally}: ${(fa.F || []).length} for, ${(fa.A || []).length} against)</div>`
     + `<div class="ss-l"><b>Threats:</b><ul class="ss-t">${thr}</ul>All other runners together: ${rest}%.</div>` + ifLose
@@ -8773,7 +8779,7 @@ function raceHeadHTML(rs){
   const live = (rs.horses || []).filter(h => !isScratchedNow(rs, h)); const h = live[0] || {};
   const bits = [fmtDistY(h.raceDistYds), surfWord(h.surface || '')].filter(Boolean).join(' ');
   let cls = ''; try { cls = todayClassCode(rs) || ''; } catch(e){}
-  const ord = decisionSortMode() === 'focus' && rs.__bestOrder ? `<span class="race-ord">${rs.__bestOrder === 1 ? 'BEST' : '#' + rs.__bestOrder}</span> ` : '';
+  const ord = decisionSortMode() === 'focus' && rs.__bestOrder ? `<span class="race-ord">${rs.__bestLabel ? 'BEST' : '#' + rs.__bestOrder}</span> ` : '';
   return `<div class="race-hd">${ord}RACE ${escHtml(String(rs.race).trim())}<span class="race-hd-sub"> \u00b7 ${escHtml(bits)}${cls ? ' \u00b7 ' + escHtml(cls) : ''} \u00b7 ${live.length} runners</span></div>`;
 }
 function verdictBanner(rs){ return raceHeadHTML(rs) + selectionSummaryHTML(rs) + priorityHTML(rs) + verdictBanner0(rs).replace(/<\/div>$/, resultPickerHTML(rs) + tierHTML(rs) + extraBetsHTML(rs) + fragileFavHTML(rs) + speedFavHTML(rs) + reversalHTML(rs) + disagreeHTML(rs) + challengersHTML(rs) + debutWatchHTML(rs) + paceFlagHTML(rs) + '</div>'); }
@@ -9809,7 +9815,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.21 · released 27 October 2026 · build 2026-10-27-a</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.22 · released 27 October 2026 · build 2026-10-27-b</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
