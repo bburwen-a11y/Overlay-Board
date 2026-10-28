@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.30 — Race Card Reader</title>
+<title>Overlay Board v4.31 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -878,6 +878,7 @@
   .race-side{display:inline-block; background:#7a5a12; color:#fff; font-size:11px; padding:1px 6px; border-radius:3px; vertical-align:middle; letter-spacing:0;}
   .imp-btn{display:inline-block; cursor:pointer; margin:6px 6px 0 0;}
   .lsw{color:#5a4410; background:#f7efd6; padding:3px 6px; border-radius:3px;}
+  .rf-weak{font-size:11.5px; color:var(--ink-soft); margin-top:3px;}
   .pp-lvl{font-family:var(--mono); font-size:10px; opacity:.7; margin-left:3px;}
   .pp-works{font-family:var(--mono); font-size:11.5px; line-height:1.7;}
   .pp-record{
@@ -1264,7 +1265,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.30</span> · released 28 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.31</span> · released 28 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -7006,7 +7007,7 @@ function raceFactsTable(rs, extra, label){
       + `<td>${escHtml(sd)}</td>`
       + `<td class="rf-cls${cmWarn ? ' rf-bold' : ''}">${pastClassCode(l) ? `${escHtml(pastClassCode(l))} \u2192 ${escHtml(todayClassCode(rs, true))}<br>` : ''}${h.todayClassPar != null && h.lastClassPar != null ? `level ${Math.round(h.lastClassPar)} \u2192 ${Math.round(h.todayClassPar)} (${h.todayClassPar - h.lastClassPar > 0 ? '+' : ''}${(h.todayClassPar - h.lastClassPar).toFixed(1)}) \u00b7 ` : ''}${escHtml(cm)} vs last race${f.cd ? ` \u00b7 today's tag is ${f.cd.pct}% of its highest in the last 4` : ''}</td>`
       + `<td>${lastTxt}</td>`
-      + `<td class="rf-h2h">${escHtml(h2hCell(h, rows.map(x => x.h)))}${(() => { const ra = rivalsAhead(rs, h); return ra.length ? `<div class="rf-warn"><b>\u26a0 Rated ahead of ${escHtml(h.horse)}: ${ra.map(x => '#' + (x.h.post || '?') + ' ' + escHtml(x.h.horse) + ' (' + escHtml(x.why) + ')').join(', ')}</b></div>` : ''; })()}</td>`
+      + `<td class="rf-h2h">${escHtml(h2hCell(h, rows.map(x => x.h)))}${(() => { const ra = rivalsAhead(rs, h); return ra.length ? `<div class="rf-weak">Head-to-head, a weak indicator (it repeats about 1 time in 3): ${ra.map(x => '#' + (x.h.post || '?') + ' ' + escHtml(x.h.horse) + ' (' + escHtml(x.why) + ')').join(', ')}</div>` : ''; })()}</td>`
       + `<td${cls(f.er && f.er.rank === 1 ? 'best' : '')}>${f.eps != null ? money(Math.round(f.eps)) + ' ' + rk(f.er) : '—'}</td>`
       + `<td>${escHtml(style || '—')}</td>`
       + `<td>${h.layoffDays != null ? h.layoffDays + 'd' : '—'}</td>`
@@ -9879,7 +9880,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.30 · released 28 October 2026 · build 2026-10-28-c</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.31 · released 28 October 2026 · build 2026-10-28-d</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
