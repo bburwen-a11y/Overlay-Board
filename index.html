@@ -6008,7 +6008,7 @@ function crossCheckBlockHTML(rs){
   if (P && other && mine){
     agree = other === mine
       ? `<div class="cc-agree cc-all"><b>CONCURRENT</b> \u2014 both rank <b>${escHtml(mine.horse)}</b> first.</div>`
-      : `<div class="cc-agree cc-none"><b>DIFFERENT</b> \u2014 AI(1) ranks ${escHtml(mine.horse)} first, AI(2) ranks ${escHtml(other.horse)} first.</div>` + disagreeHTML(rs);
+      : `<div class="cc-agree cc-none"><b>DIFFERENT</b> \u2014 AI(1) ranks ${escHtml(mine.horse)} first, AI(2) ranks ${escHtml(other.horse)} first.</div>`;   // v4.36: the WIDE OPEN / TWO-HORSE note is already shown on the card
   }
   return `<div class="cc-block" data-race="${escAttr(race)}">
     <div class="cc-head">Concurrence \u2014 two ranking methods on this field</div>
@@ -7032,23 +7032,7 @@ function raceFactsTable(rs, extra, label){
 // v2.53 CLEAN DECISION CARD. Same content as before, laid out as one card:
 // what the rule says and whether to play it on top; lists, facts and the
 // long notes folded underneath.
-// v4.36 (Robert, 29 Oct: "clean up redundant and contradictory information"): the older figure-favourite boxes repeat the decision and
-// the threats, so they now sit in one closed section.
-function tidyCard(html){
-  try {
-    const t = document.createElement('template'); t.innerHTML = html;
-    const root = t.content.firstElementChild; if (!root) return html;
-    const olds = [...root.children].filter(e => e.classList && (e.classList.contains('dc-box') || e.classList.contains('sep-box')));
-    if (olds.length){
-      const d = document.createElement('details'); d.className = 'dc-old';
-      const sm = document.createElement('summary'); sm.textContent = 'Figure-favourite check'; d.appendChild(sm);
-      olds[0].before(d); olds.forEach(e => d.appendChild(e));
-    }
-    return t.innerHTML;
-  } catch(e){ return html; }
-}
-function buildPick(rs){ return tidyCard(buildPick0(rs)); }
-function buildPick0(rs){
+function buildPick(rs){
   const p = pickFor(rs);
   const live = (rs.horses || []).filter(x => !x.scratched && x.decimalOdds != null);
   const surf = (() => { const st = surfaceTag(rs.horses || []); return st ? st.label : ''; })();
@@ -7086,7 +7070,7 @@ function buildPick0(rs){
       + `<div class="dc-type">${raceTypeTag(rs)}</div>`
       + `<div class="dc-box b-none">${why}</div>`
       + nextRankedBlock(rs)
-      + fold(`Ranked contenders (${rankedField(rs, []).length})`, noPickContenders(rs))
+      + fold(`All ranked horses, in rank-score order (${rankedField(rs, []).length})`, noPickContenders(rs))
       + fold('Concurrence \u2014 AI(1) / AI(2)', crossCheckBlockHTML(rs))   // v2.70: moved here from the race card
       + raceFactsTable(rs)
       + fold('Race notes: pace and near ties', `${nearTieCallout(rs)}${paceLineFor(rs, null)}${paceContenderNote(rs)}`)
@@ -7103,7 +7087,7 @@ function buildPick0(rs){
       + `<div class="dc-type">${raceTypeTag(rs)}</div>`
       + `<div class="dc-box b-flag"><b>Not named:</b> ${escHtml(pickPassReasons(h).join(', and '))}.</div>`
       + (h2hThreat(rs, h) ? `<div class="dc-box b-flag">${h2hThreatLine(rs, h)}</div>` : '')
-      + fold(`Ranked contenders (${rankedField(rs, [h]).length})`, noPickContenders(rs, h))
+      + fold(`All ranked horses, in rank-score order (${rankedField(rs, [h]).length})`, noPickContenders(rs, h))
       + fold('Concurrence \u2014 AI(1) / AI(2)', crossCheckBlockHTML(rs))   // v2.70: moved here from the race card
       + raceFactsTable(rs, [h])
       + fold('Race notes: pace', paceLineFor(rs, null))
@@ -7135,14 +7119,14 @@ function buildPick0(rs){
     + `<div class="dc-type">${raceTypeTag(rs)}</div>`
     + decision
     + (p.line === 'primary' ? pickSeparationBlock(rs, h) : (h2hThreat(rs, h) ? `<div class="dc-box b-flag">${h2hThreatLine(rs, h)}</div>` : ''))
-    + fold(`Ranked contenders (${rankedField(rs, [h]).length})`, pickContenders(rs, h))
+    + fold(`All ranked horses, in rank-score order (${rankedField(rs, [h]).length})`, pickContenders(rs, h))
     + fold('Concurrence \u2014 AI(1) / AI(2)', crossCheckBlockHTML(rs))   // v2.70: moved here from the race card
     + raceFactsTable(rs, [h])
     + (() => {
         // v3.51 (Robert: "Top pick Eddie the Great. But more on Mythical Man"): the
         // 'More on' fold is about the horse the race plan names - the bet horse, else
         // the Key or top pick - not the older headline horse.
-        let nh = h; try { const pl = racePlan(rs); nh = (pl.win && pl.v && pl.v.h) || pl.key || pl.top || h; } catch(e){}
+        let nh = h; try { const pl = racePlan(rs); nh = finalSelection(rs) || (pl.win && pl.v && pl.v.h) || pl.key || pl.top || h; } catch(e){}   // v4.36: the board's pick, not the rank-score #1
         const body = nh === h ? more
           : `${surfaceEarningsLine(nh)}${thinDataNote(rs)}${coreConfirmLine(rs, nh)}${paceLineFor(rs, nh)}${pickContext(rs, nh)}${buildEvidenceBlock(rs, nh)}${pickFigLine(rs, nh)}`
             + `${nh.jockey || nh.trainer ? `<div class="pick-jky">${nh.jockey ? 'Jockey ' + jockeyLine(nh) : ''}${nh.jockey && nh.trainer ? ' &nbsp;\u00b7&nbsp; ' : ''}${nh.trainer ? 'Trainer ' + trainerLine(nh) : ''}</div>` : ''}`;
@@ -9921,7 +9905,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.36 · released 29 October 2026 · build 2026-10-29-e</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.36 · released 29 October 2026 · build 2026-10-29-g</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
