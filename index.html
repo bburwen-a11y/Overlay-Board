@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.32 — Race Card Reader</title>
+<title>Overlay Board v4.33 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1265,7 +1265,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.32</span> · released 28 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.33</span> · released 28 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -6008,7 +6008,8 @@ function crossCheckBlockHTML(rs){
   }
   return `<div class="cc-block" data-race="${escAttr(race)}">
     <div class="cc-head">Concurrence \u2014 two ranking methods on this field</div>
-    <div class="cc-row"><label>AI(1): ${mine ? `<b>#${escHtml(mine.post || '?')} ${escHtml(mine.horse)}</b>${rscsChip(rs, mine)} (top of the board's ranking)` : 'no ranking'}</label></div>
+    <div class="cc-row"><label>AI(1): ${mine ? `<b>#${escHtml(mine.post || '?')} ${escHtml(mine.horse)}</b>${rscsChip(rs, mine)} (top of the rank score)` : 'no ranking'}</label></div>
+    ${(() => { let fs = null; try { fs = finalSelection(rs); } catch(e){} return (mine && fs && fs !== mine) ? `<div class="cc-row" style="font-size:13px">After the board weighs its warnings, its top pick is <b>#${escHtml(fs.post || '?')} ${escHtml(fs.horse)}</b>${other && other === fs ? ' \u2014 the same horse AI(2) ranks first.' : '.'}</div>` : ''; })()}
     <div class="cc-row"><label>AI(2): ${ai2Line}</label></div>
     <div class="cc-result" id="cc-result-${escAttr(race)}">${agree}</div>
     <div class="cc-row" style="font-size:12px;opacity:.75">AI(2) ${PEER_NAMES.ai2} \u2014 run on this same file and scratches.</div>
@@ -9898,7 +9899,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.32 · released 29 October 2026 · build 2026-10-29-a</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.33 · released 29 October 2026 · build 2026-10-29-b</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
