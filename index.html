@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.31 — Race Card Reader</title>
+<title>Overlay Board v4.32 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1265,7 +1265,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.31</span> · released 28 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.32</span> · released 28 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -6997,7 +6997,7 @@ function raceFactsTable(rs, extra, label){
     const style = [String(h.runStyle || '').trim(), h.quirin != null && h.quirin !== '' ? `Q${h.quirin}` : ''].filter(Boolean).join(' ');
     const __f = __fair.get(h);
     return `<tr><td>${i + 1}</td><td>${horseTap(h)}<div class="rf-rscs">${rscsChip(rs, h)}</div></td><td>${escHtml(h.mlOddsStr || '')}</td>`
-      + `<td class="rf-fair">${__f ? escHtml(oddsFrac(__f.odds)) + '<br><span class="rf-fvm">' + escHtml(fairVsMlShown(__f, h)) + '</span>' : '\u2014'}</td><td>${__f ? '#' + __f.rank : '\u2014'}</td>`
+      + `<td class="rf-fair">${(__f && (h.ppRaces || []).length) ? escHtml(oddsFrac(__f.odds)) + '<br><span class="rf-fvm">' + escHtml(fairVsMlShown(__f, h)) + '</span>' : ((h.ppRaces || []).length ? '\u2014' : '\u2014<br><span class="rf-fvm">first start: no record to price</span>')}</td><td>${(__f && (h.ppRaces || []).length) ? '#' + __f.rank : '\u2014'}</td>`
       + (() => { const cl = competitiveAtLevel(h); const bad = cl.lv >= 2 && cl.c === 0; return `<td${bad ? ' class="rf-warncell"' : ''}>${cl.lv ? cl.c + ' of ' + cl.lv + ' at level' : (cl.n ? 'none at level' : '\u2014')}</td>`; })()
       + (() => { const eo = edgesOverTop(rs, h); return `<td class="rf-edges">${!eo ? '<i>top-ranked</i>' : eo.e.length ? eo.e.map(x => '\u25b2 ' + escHtml(x)).join('<br>') : '\u2014'}</td>`; })()
       + `<td${cls(f.a3 && f.a3.rank === 1 ? 'best' : '')}>${avg3Of(h) != null ? avg3Of(h).toFixed(1) + ' ' + rk(f.a3) : '—'}</td>`
@@ -8234,7 +8234,7 @@ function topConfidence(rs){
 function reversalInfo(rs){
   const rf = rankedField(rs, []); if (rf.length < 2) return null;
   const plain = rf.slice().sort((a, b) => a.base - b.base || a.ml - b.ml)[0];
-  const top = rf[0]; if (!plain || plain.h === top.h) return null;
+  const finH = finalSelection(rs); const top = (finH && rf.find(x => x.h === finH)) || rf[0]; if (!plain || plain.h === top.h) return null;
   // v4.01 (review of v4.00): explain from the score as actually calculated - the adjustment terms
   // are read from the score line itself, so configurable penalties and boosts are always right
   const adj = x => { const m = String(x.why || '').match(/^\s*-?\d+\s*=\s*\S+\s*\+\s*\S+\s*\+\s*\S+(.*)$/); const t = m ? m[1].trim() : '';
@@ -8246,7 +8246,7 @@ function reversalInfo(rs){
 }
 function reversalHTML(rs){
   const r = reversalInfo(rs); if (!r) return '';
-  return `<div class="dis dis-open">\u21c4 <b>SELECTION REVERSAL</b> \u2014 the adjusted ranking differs from the plain ranking (figures + Prime Power + morning line): plain #1 is <b>#${escHtml(r.plain.post || '?')} ${escHtml(r.plain.horse)}</b>, adjusted #1 is <b>#${escHtml(r.top.post || '?')} ${escHtml(r.top.horse)}</b>. Compare both contenders' surface, pace, class and recent form. A reversal alone does not justify a wager.<div class="dis-note">${escHtml(r.why)}</div></div>`;
+  return `<div class="dis dis-open">\u21c4 <b>SELECTION REVERSAL</b> \u2014 the board's top pick differs from the plain ranking (figures + Prime Power + morning line): plain #1 is <b>#${escHtml(r.plain.post || '?')} ${escHtml(r.plain.horse)}</b>, the board's top pick is <b>#${escHtml(r.top.post || '?')} ${escHtml(r.top.horse)}</b>. Compare both contenders' surface, pace, class and recent form. A reversal alone does not justify a wager.<div class="dis-note">${escHtml(r.why)}</div></div>`;
 }
 
 // v4.07 (GP 10/24: Absolute Honor, Golden Palm, O Captain): the morning-line favourite that also has the
@@ -8493,9 +8493,13 @@ function forAgainst(rs, h){
       // v4.20: say plainly which way the record points (bigger odds = less likely), with each as a percentage
       const mlO = h.decimalOdds != null ? h.decimalOdds - 1 : null; const pc = o => Math.round(100 / (o + 1));
       const mlTxt = mlO != null ? oddsFrac(mlO) : (h.mlOddsStr || '');
-      const c = fairVsMl(f, h); if (c === 'ML much shorter' || c === 'ML shorter') A.push(`data fair odds ${oddsFrac(f.odds)} against morning line ${mlTxt}: the record makes it LESS likely than the morning line says (${pc(f.odds)}% vs ${mlO != null ? pc(mlO) : '?'}%)`);
+      // v4.32 (BEL 10/30 R7 Bubble Market): a first-time starter has no record to price, so its "fair odds" are only the
+      // model's standard debut price. Pool: 289 debut runners given this Against item won 13.8% against 13.3% implied by the
+      // morning line - the item carried no information, so it is not shown for them.
+      const __debut = !(h.ppRaces || []).length;
+      const c = __debut ? '' : fairVsMl(f, h); if (c === 'ML much shorter' || c === 'ML shorter') A.push(`data fair odds ${oddsFrac(f.odds)} against morning line ${mlTxt}: the record makes it LESS likely than the morning line says (${pc(f.odds)}% vs ${mlO != null ? pc(mlO) : '?'}%)`);
       else if (c === 'ML much longer' || c === 'ML longer') F.push(`data fair odds ${oddsFrac(f.odds)}, shorter than its morning line ${mlTxt}: the record makes it MORE likely than the morning line says (${pc(f.odds)}% vs ${mlO != null ? pc(mlO) : '?'}%)`);
-      if (f.rank === 1) F.push('#1 on ability (record alone)'); } }
+      if (f.rank === 1 && !__debut) F.push('#1 on ability (record alone)'); } }
   // v3.25: shown, not scored - the ranking test came out neutral
   { const lj = String(h.lastJockey || '').toUpperCase().replace(/[^A-Z]/g, ''), tj = String(h.jockey || '').toUpperCase().replace(/[^A-Z]/g, '');
     if (lj && tj && lj !== tj && h.jkyStarts >= 20 && h.jkyWins != null && h.jkyWins / h.jkyStarts >= 0.20) A.push(`jockey switch to ${h.jockey} (${Math.round(100 * h.jkyWins / h.jkyStarts)}% this meet)`); }
@@ -8848,16 +8852,30 @@ function raceHeadHTML(rs){
   return `<div class="race-hd">${ord}RACE ${escHtml(String(rs.race).trim())}${side}<span class="race-hd-sub"> \u00b7 ${escHtml(bits)}${cls ? ' \u00b7 ' + escHtml(cls) : ''} \u00b7 ${live.length} runners</span></div>`;
 }
 function verdictBanner(rs){ return raceHeadHTML(rs) + selectionSummaryHTML(rs) + priorityHTML(rs) + verdictBanner0(rs).replace(/<\/div>$/, resultPickerHTML(rs) + tierHTML(rs) + extraBetsHTML(rs) + fragileFavHTML(rs) + speedFavHTML(rs) + reversalHTML(rs) + disagreeHTML(rs) + challengersHTML(rs) + debutWatchHTML(rs) + paceFlagHTML(rs) + '</div>'); }
+// v4.32 (Robert, BEL 10/30 R7): the card named #3 Bubble Market, the tier line #7 Donegal Luster and a reversal note both.
+// One helper now gives the board's pick - the bet horse, else the figure-leader bet, else the reviewed top pick.
+let __fsGuard = false;
+function finalSelection(rs){
+  if (__fsGuard) return null; __fsGuard = true;
+  try {
+    const pl = racePlan(rs), xb = extraBets(rs);
+    if (pl && pl.win && pl.v && pl.v.h) return pl.v.h;
+    if (xb.length) return xb[0].h;
+    const e = [...rscsChances(rs).entries()].sort((a, b) => b[1] - a[1])[0]; if (e) return e[0];
+    const rf = rankedField(rs, []); return rf.length ? rf[0].h : null;
+  } catch(e){ return null; } finally { __fsGuard = false; }
+}
 function verdictBanner0(rs){
   const pl = racePlan(rs);
-  if (!pl.play) return `<div class="vd ${extraBets(rs).length ? 'vd-play' : 'vd-pass'}"><div class="vd-tier">${extraBets(rs).length ? 'PLAY \u2014 WIN BET (see below)' : 'SKIP \u2014 NO BET'}</div><div class="vd-why">${escHtml(extraBets(rs).length ? 'Hard to call for a top pick (' + String(pl.why || '').replace(/^UNREADABLE \u2014 /, '').replace(/\. Races like this.*$/, '') + '). The bet below stands on its own tested rule, which has still paid in races like this.' : pl.why)}</div>${pl.top ? `<div class="vd-horse" style="font-size:14px">Top pick ${horseLabel(pl.top)}${rscsChip(rs, pl.top)}</div>` + forAgainstHTML(rs, pl.top) : ''}</div>`;
+  if (!pl.play) return `<div class="vd ${extraBets(rs).length ? 'vd-play' : 'vd-pass'}"><div class="vd-tier">${extraBets(rs).length ? 'PLAY \u2014 WIN BET (see below)' : 'SKIP \u2014 NO BET'}</div><div class="vd-why">${escHtml(extraBets(rs).length ? 'Hard to call for a top pick (' + String(pl.why || '').replace(/^UNREADABLE \u2014 /, '').replace(/\. Races like this.*$/, '') + '). The bet below stands on its own tested rule, which has still paid in races like this.' : pl.why)}</div>${(pl.top || finalSelection(rs)) ? (() => { const T = finalSelection(rs) || pl.top; return `<div class="vd-horse" style="font-size:14px">Top pick ${horseLabel(T)}${rscsChip(rs, T)}</div>` + forAgainstHTML(rs, T); })() : ''}</div>`;
   if (pl.winOnly) return `<div class="vd vd-play"><div class="vd-tier">PLAY \u2014 WIN BET ONLY</div><div class="vd-why">${escHtml(pl.why)}</div>`
     + `<div class="vd-win"><b>${escHtml(pl.win.label)}</b> \u00b7 ${escHtml(pl.win.text)} \u00b7 ${horseLabel(pl.v.h)}${rscsChip(rs, pl.v.h)}</div>`
     + (pl.nextBest ? `<div class="vd-use">Next best ${horseLabel(pl.nextBest)}${rscsChip(rs, pl.nextBest)}</div>` : '')
     + rivalsNote(rs, pl.v.h) + forAgainstHTML(rs, pl.v.h) + `</div>`;
   const t = planTickets(pl);
+  const topShown = pl.win ? pl.key : (finalSelection(rs) || pl.key);
   return `<div class="vd vd-play"><div class="vd-tier">${pl.win ? 'PLAY \u2014 WIN BET' : (extraBets(rs).length ? 'WIN BET BELOW' : 'NO WIN BET \u2014 contenders only')}${pl.wide ? ' \u00b7 WIDE FIELD' : ''}</div>`
-    + `<div class="vd-horse">Top pick ${horseLabel(pl.key)}${rscsChip(rs, pl.key)}</div>` + rivalsNote(rs, pl.key)
+    + `<div class="vd-horse">Top pick ${horseLabel(topShown)}${rscsChip(rs, topShown)}</div>` + rivalsNote(rs, topShown)
     + (pl.win ? `<div class="vd-win"><b>${escHtml(pl.win.label)}</b> \u00b7 ${escHtml(pl.win.text)}${pl.v.h !== pl.key ? ` <span class="vd-diff">\u2014 win bet is ${horseLabel(pl.v.h)}${rscsChip(rs, pl.v.h)}; the top pick ${horseLabel(pl.key)} is next best</span>` : ''}</div>` + forAgainstHTML(rs, pl.v.h) : `<div class="vd-why">No win bet in this race.</div>` + forAgainstHTML(rs, pl.key))
     + `</div>`;
 }
@@ -9880,7 +9898,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.31 · released 28 October 2026 · build 2026-10-28-d</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.32 · released 29 October 2026 · build 2026-10-29-a</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
