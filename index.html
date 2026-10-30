@@ -1401,6 +1401,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
     <div class="report-toolbar no-print" id="reportToolbar" style="display:none;">
         <button class="primary-btn" id="raceCardBtn">▤ Race card</button>
         <button class="ghost-btn" id="printBtn">🖨 Printable page</button>
+        <button class="ghost-btn" id="pdfBtn" type="button">⬇ Save as PDF</button>
         <label class="clean-toggle" id="diagToggleLabel"><input type="checkbox" id="diagToggle"> Show diagnostics</label>
         <label class="clean-toggle" id="shortToggleLabel" style="display:none" title="Cut the contender list by share of the pool instead of by market rank: work down the morning line until the listed horses hold 80% of the race, never fewer than three, never more than five."><input type="checkbox" id="shortToggle"> Short list</label>
       </div>
@@ -1423,8 +1424,8 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
 
     <section id="printSection" style="display:none;">
       <h2><span class="step-num">🖨</span> Printable page</h2>
-      <div class="rss-info" style="margin:0 0 14px;">The whole card on one page — Decision board, race cards and full field. Tap the button to print or save it as a PDF; your browser's own <b>Share</b> also works from here.</div>
-      <div class="no-print" style="margin:0 0 14px;"><button class="primary-btn" id="printNowBtn" type="button">🖨 Print / Save as PDF</button></div>
+      <div class="rss-info" style="margin:0 0 14px;">The whole card on one page. <b>Save as PDF</b> makes a clean decision sheet (every race's pick, bet line and full field) and opens your phone's share sheet, where you can Save to Files, AirDrop, email or print it. <b>Print</b> uses your browser's own print sheet, which some phones don't show.</div>
+      <div class="no-print" style="margin:0 0 14px;"><button class="primary-btn" id="pdfNowBtn" type="button">⬇ Save as PDF</button> <button class="ghost-btn" id="printNowBtn" type="button">🖨 Print</button></div>
       <div id="printView"></div>
     </section>
 
@@ -1432,21 +1433,18 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
       <h2><span class="step-num">?</span> How to read this</h2>
 
       <div class="help-block help-guide">
-        <h3>Using the board — what to bet, what to read</h3>
-        <p><b>Race plans.</b> Every race is <b>PLAY — WIN BET + EXACTAS</b>, <b>EXACTAS ONLY — NO WIN BET</b>, or <b>SKIP</b>. The tier line under each plan refers to the win bet only. <b>SKIP</b>: the field is too lightly raced to read, it has 9 or more runners and no figure favourite, or it is a maiden race with 2 or more first-time starters. <b>PLAY</b>: the <b>Key</b> is the top-ranked horse and <b>Use</b> lists the next three (next four in a field of 9 or more) — the horses to build exotics around, with two ready tickets: the Key on top of the Use horses, or a box of the four. A <b>win bet</b> is shown only where a BET verdict applies, with its condition.</p>
-        <p><b>Today’s verdicts.</b> Every race gets one verdict at the top of the Decision board and on its card. <b>BET — DEFINITIVE</b> (the figure favourite meets every definitive condition): win, plus an exacta with it on top of the next four ranked. <b>BET — CONDITIONAL</b> (a figure favourite with no flag that misses one definitive condition): a conditional win wager — only if the horse is 2-1 or higher at post. Enter it with that condition and the odds at the off decide. <b>EXOTICS</b> (top-ranked horse with no ⬇ flag or ⊖ fade, 8 or fewer runners, race not red): exacta with it on top of the next three ranked, no win bet. <b>PASS</b>: no bet, with the reason.</p>
-        <p>Every race lands in one of four situations. Work down the Decision board and treat each one this way.</p>
-        <p><b>1. BET — DEFINITIVE.</b> The figure favourite also has the top last figure on its own, has been in the money in most of its recent starts, and shows early speed (2 or more speed points), with no claiming drop or surface switch against it. Every condition points the same way: win, plus the exacta key.</p>
-        <p><b>2. BET — CONDITIONAL.</b> The favourite holds the top 3-race average on its own with no flag, but misses one definitive condition (the top last figure, recent form or early speed). Win as a conditional wager, only at 2-1 or higher at post. Check the <b>MAIN THREAT</b> line and the Top 4 for the horse most likely to beat it.</p>
-        <p><b>3. FIGURE FAV, PASS-flagged — look hard at the Main Threat.</b> The favourite tops the figures but is entered well below its recent claiming level or switches surface from its last start. That flag names a real weakness today, so this is the situation where the <b>MAIN THREAT</b> deserves the most attention — read its figures, Prime Power and speed facts beside the favourite's before deciding.</p>
-        <p><b>4. NO FIGURE FAV — read the field.</b> The favourite does not hold the top 3-race average on its own (or there are no morning lines). The card shows the top-ranked horse and the <b>NEXT RANKED</b> line. Look for the horse that leads the field on the 3-race average while also high on Prime Power and near the top of the betting.</p>
-        <p><b>When the Main Threat matters least.</b> When the figure favourite is BET — DEFINITIVE, and above all a <b>CLEAR FIGURE FAV</b>, read the Main Threat as the horse to run second, not as a reason to change the call.</p>
-        <p><b>Top 4 — which of the four the record backs.</b> Each Top 4 horse shows the facts it leads the other three on (last figure, 3-race average, Prime Power, early speed, recent form). The more of the five it leads, the more the past performances support it; a horse that leads on none of them is the first one to cross off.</p>
-        <p><b>⬇ Demotion flags.</b> Two facts push a horse down the ranking: <b>FIGURE FROM OTHER SURFACE</b> — its top last figure was run on a different surface from today's — and <b>TROUBLE LAST OUT</b> — it finished 4th or worse last time with a trouble comment (steadied, bumped, checked, stumbled). The horses behind it move up; pretenders stay out of the ranking.</p>
-        <p><b>⊖ Fade signals.</b> Five facts that mark a horse down: back within 14 days; stretching out from a sprint to a route; first blinkers on a horse with 4 or fewer starts; a trainer winning under 10% in this horse's situation (from the file's trainer statistics), unless the horse finished ahead of a rival in today's field within the last 90 days; the best closer in a dirt sprint. Each one is noted on the horse and adds 5 to its rank score. One signal: use the horse underneath, not on top. Two or more: strike it.</p>
-        <p><b>Below the Top 4.</b> The 5th-ranked horse is a reasonable extra name for exotics. Horses ranked 7th or lower can be passed over.</p>
-        <p><b>PRICE PLAY and the Concurrence fold — information only.</b> The Price Play names the favourite from the earnings line in races with no figure favourite; read it, don't bet it. The Concurrence fold shows whether two other selection methods agree; agreement alone does not make a stronger bet.</p>
-        <p><b>In one line:</b> follow the verdicts — BET — DEFINITIVE and BET — CONDITIONAL to win, EXOTICS as exactas only, check the Main Threat when the favourite is flagged, and use the Top 4 leads to decide who belongs in your exotics.</p>
+      <h3>The tabs</h3>
+      <p><b>Decisions</b> — one card per race: the decision and nothing else. <b>Race card</b> — the full field, race by race, with <i>Full field</i> and <i>True contenders only</i> buttons. <b>Race facts</b> — one fold per race: the warnings and the reason for the pick, every horse side by side, contenders vs pretenders, form detail, previous meetings, and where you record the winner. Tap any horse name for its full past performances. <b>Printable page</b> — the card laid out for printing, with a <b>Save as PDF</b> button that makes a clean decision sheet and opens your phone's share sheet.</p>
+      <h3>Reading a decision card</h3>
+      <p><b>Top row:</b> race number, distance and surface, class, number of runners, and the board's <b>chance</b> for its pick — that horse's share of the field's chance, worked out from the rank score and case score and then adjusted for the warnings (not a win probability or a price). The pick is the board's final selection after the warnings are weighed.</p>
+      <p><b>Confidence level:</b> the pick's blended chance — the morning-line price and the board's own chance weighed together, about 2 to 1. HIGH is 45% or more, MODERATE 35% to 45%, LOW under 35%. A race with a win bet reads BET RACE. Confidence says how likely the pick is to win; it is not a price check, which is what the bet tiers do.</p>
+      <p><b>The plan:</b> PLAY — WIN BET ONLY (the win bet stands, exotics stay off), PLAY, or SKIP, with the reason printed under it. Then the tier line and its tested win percentage (see Tiers and percentages), the value-price line on win bets, the AI(1)/AI(2) line (do the two other methods agree with the pick), a one-line pace note, a race-type chip (how often the board's picks win in that type of race), and warning chips. A chip opens that race's facts.</p>
+      <h3>Warning chips</h3>
+      <p><b>Selection reversal</b> — the board's pick differs from the plain ranking (figures, Prime Power and morning line). Reversals are the weaker races; a reversal alone does not justify a wager. <b>Wide open</b> and <b>Two-horse</b> — see When the two methods disagree. <b>Fragile favourite</b> — a short-priced favourite with signs it can finish out of the money. <b>Debut runner to watch</b> — a first-time starter the odds-maker rates as live. <b>Lone speed</b> / <b>Contested pace</b> — how the early speed sets up. Each chip's full text is in that race's Race facts fold.</p>
+      <h3>Rank score and case score</h3>
+      <p><b>RS</b> (rank score) adds the horse's rank on the figures, Prime Power and morning line; lower is better. Penalties are then added: ⊖ fade signals add 5 each, ⬇ trouble or surface flags add 10, and "not competitive at level" adds 3. <b>CS</b> (case score) ranks horses by their favourable minus unfavourable race facts — the For and Against lists; the case tally is that difference.</p>
+      <h3>Saving a PDF</h3>
+      <p>On the Printable page tab, <b>Save as PDF</b> writes a decision sheet — every race's pick, chance, confidence, bet line, warnings and a full-field table — and opens the share sheet so you can Save to Files, AirDrop, email or print it. If your browser has no share sheet, the PDF downloads or opens in a new tab.</p>
       </div>
 
       <div class="help-block">
@@ -1467,7 +1465,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
 
       <div class="help-block">
         <h3>Top 4 probable</h3>
-        <p>The four highest-ranked Contenders by figure, shown per race and in their own tab for a quick scan across the whole card. Tap any name to open its full past performances; tap the name again inside that view to come straight back to Top 4.</p>
+        <p>The four highest-ranked Contenders by figure, shown per race under Race facts ("Top 4 probable, with form detail"). Tap any name to open its full past performances; tap the name again inside that view to come straight back.</p>
       </div>
 
       <div class="help-block">
@@ -1519,7 +1517,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
       </div>
 
       <div class="help-block">
-        <h3>Full Field columns</h3>
+        <h3>Race card columns</h3>
         <p><b>Form arrow</b> — beaten-lengths trend across the last few starts, oldest to newest: green ▲ closing (finishing closer than before), red ▼ widening (falling further behind), dash flat. Tap the arrow to reveal the actual sequence. A display fact, same as pace.</p>
         <p><b>Speed column with LONE tag</b> — Quirin speed points, BRIS's own 0–8 scale for early-speed tendency, not a speed figure. LONE means the top horse is at least 5 on that scale and at least 2 points clear of the next — likely gets an uncontested early lead. The 8-point scale has nothing to do with field size.</p>
         <p><b>The numeric speed column</b> (e.g. "94 (88)") — the actual BRIS speed figure: last race, best figure in parentheses if different. This is the number the figure favourite rule is built on.</p>
@@ -1527,7 +1525,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
 
       <div class="help-block">
         <h3>Tapping around</h3>
-        <p>Any horse name with a dotted underline opens its full past performances. Inside that view, tap the horse's own name again to return to wherever you came from — Top 4, Full Field, a race card. Closing normally (the ✕ or tapping outside) does the same.</p>
+        <p>Any horse name with a dotted underline opens its full past performances. Inside that view, tap the horse's own name again to return to wherever you came from — a decision card, the Race card or Race facts. Closing normally (the ✕ or tapping outside) does the same.</p>
       </div>
 
     </section>
@@ -10140,6 +10138,70 @@ document.getElementById('printBtn').addEventListener('click', () => {
   openPrintSheet();
 });
 document.getElementById('printNowBtn').addEventListener('click', () => { renderPrintView(); openPrintSheet(); });
+// ===== v4.39: Save as PDF - a plain-text decision sheet written straight to a PDF file (no printer or library needed)
+function pdfClean(t, keep){ t = String(t == null ? '' : t); t = t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[\u2014\u2013]/g, '-').replace(/[\u2018\u2019]/g, "'").replace(/[\u201c\u201d]/g, '"').replace(/\u00b7/g, '|').replace(/[\u25b8\u25b6\u25c2]/g, '>').replace(/\u26a0/g, '!').replace(/\u2191/g, '^').replace(/\u2264/g, '<=').replace(/[^\x20-\x7e]/g, ''); return keep ? t : t.replace(/\s+/g, ' ').trim(); }
+function pdfEsc(t){ return t.replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)'); }
+function buildCardPdf(){
+  const W = 612, H = 792, M = 40, BOT = 46; const pages = []; let ops = [], y = H - M;
+  const widthOf = (font, size) => size * (font === 'F3' ? 0.6 : font === 'F2' ? 0.56 : 0.52);
+  const newPage = () => { if (ops.length) pages.push(ops.join('\n')); ops = []; y = H - M; };
+  const text = (t, size, font, indent) => { t = pdfClean(t, font === 'F3'); if (!t.trim()) return; if (font === 'F3'){ if (y - size < BOT) newPage(); ops.push(`BT /${font} ${size} Tf ${M + (indent || 0)} ${y - size} Td (${pdfEsc(t)}) Tj ET`); y -= size * 1.28; return; } const maxC = Math.floor((W - 2 * M - (indent || 0)) / widthOf(font, size)); const words = t.split(' '); let line = ''; const out = [];
+    words.forEach(w => { if ((line + ' ' + w).trim().length > maxC && line){ out.push(line); line = w; } else line = (line + ' ' + w).trim(); }); if (line) out.push(line);
+    out.forEach(l => { if (y - size < BOT) newPage(); ops.push(`BT /${font} ${size} Tf ${M + (indent || 0)} ${y - size} Td (${pdfEsc(l)}) Tj ET`); y -= size * 1.28; }); };
+  const gap = n => { y -= n; };
+  const rule = () => { if (y < BOT + 4) newPage(); ops.push(`0.6 w ${M} ${y} m ${W - M} ${y} l S`); y -= 5; };
+  const rsAll = window.__ccRaceSummaries || [];
+  const title = [cardTrack(), cardDateLong()].filter(Boolean).join(' - ');
+  text('Overlay Board ' + (document.querySelector('.ver') ? document.querySelector('.ver').textContent : ''), 9, 'F1'); text('Race card' + (title ? ' - ' + title : ''), 17, 'F2'); text('Generated ' + new Date().toLocaleString() + '. Decisions as shown on the board; every runner listed under each race.', 8, 'F1'); gap(4); rule();
+  rsAll.forEach(rs => {
+    const race = String(rs.race).trim(); const card = document.getElementById('pick-r' + race); const q = s => { const e = card && card.querySelector(s); return e ? e.textContent.replace(/\s+/g, ' ').trim() : ''; };
+    const live = (rs.horses || []).filter(h => !isScratchedNow(rs, h)); const need = 60 + 11 * (live.length + 6); if (y - need < BOT) newPage();
+    gap(4); text('RACE ' + race + '   ' + q('.hhd-sub'), 11, 'F2');
+    if (card && card.classList.contains('hhd')){
+      text('#' + q('.hhd-no').replace('#', '') + ' ' + q('.hhd-name') + '   ML ' + q('.hhd-ml') + '   chance ' + q('.hhd-share b'), 13, 'F2');
+      text(q('.hhd-lab'), 8.5, 'F1'); text(q('.hhd-act') + (q('.hhd-why') ? ' - ' + q('.hhd-why') : ''), 9.5, 'F2'); if (q('.hhd-bet')) text(q('.hhd-bet'), 9.5, 'F2');
+      const tr = card.querySelector('.tier'); if (tr){ const tt = tr.cloneNode(true); tt.querySelectorAll('div').forEach(d => d.remove()); text(tt.textContent, 9, 'F1'); const vp = tr.querySelector('div'); if (vp) text(vp.textContent, 8.5, 'F1', 8); }
+      if (q('.hhd-ai')) text(q('.hhd-ai'), 9, 'F1'); if (q('.hhd-pace')) text(q('.hhd-pace'), 9, 'F1');
+      const chips = [...card.querySelectorAll('.hhd-flag')].map(e => e.textContent.trim()).join('; '); if (chips) text('Flags: ' + chips + '  (details under Race facts)', 8.5, 'F1');
+      const rt = card.querySelector('.dc-type'); if (rt) text(rt.textContent, 8, 'F1');
+    } else { text(card ? card.textContent : 'No decision card', 9, 'F1'); }
+    gap(3);
+    try {
+      const m = rscsMap(rs), ch = rscsChances(rs); const ranked = [...m.entries()].filter(e => e[1] && Number.isFinite(e[1].rs)).sort((a, b) => a[1].rs - b[1].rs); const rank = new Map(ranked.map((e, i) => [e[0], i + 1]));
+      const order = live.slice().sort((a, b) => (rank.get(a) || 99) - (rank.get(b) || 99) || a.decimalOdds - b.decimalOdds);
+      const pad = (v, n, left) => { v = pdfClean(v); v = v.length > n ? v.slice(0, n) : v; return left ? v.padStart(n) : v.padEnd(n); };
+      text(pad('Rk', 3) + pad('Post', 5) + pad('Horse', 26) + pad('ML', 7, true) + pad('Chance', 8, true) + pad('RS', 5, true) + pad('CS', 4, true) + pad('For/Ag', 9, true), 8, 'F3');
+      order.forEach(h => { const v = m.get(h) || {}; let fa = ''; try { const f = forAgainst(rs, h); fa = (f.F || []).length + '/' + (f.A || []).length; } catch(e){}
+        const ml = Number(h.decimalOdds) > 1 ? (h.decimalOdds - 1).toFixed(1) : ''; const rk = rank.get(h);
+        text(pad(rk ? String(rk) : '-', 3) + pad(String(h.post), 5) + pad(h.horse, 26) + pad(ml, 7, true) + pad(rk ? Math.round(100 * (ch.get(h) || 0)) + '%' : '-', 8, true) + pad(Number.isFinite(v.rs) ? String(v.rs) : '-', 5, true) + pad(v.cs != null ? String(v.cs) : '-', 4, true) + pad(fa, 9, true), 8, 'F3'); });
+    } catch(e){ text('(field table unavailable)', 8, 'F1'); }
+    gap(4); rule();
+  });
+  text('Chance is the board\'s share of the field for each horse. RS is the rank score (lower is better); CS ranks the case facts; For/Ag counts favourable and unfavourable race facts. Past results do not guarantee future results.', 7.5, 'F1');
+  if (ops.length) pages.push(ops.join('\n'));
+  const objs = []; const add = o => { objs.push(o); return objs.length; };
+  add('<< /Type /Catalog /Pages 2 0 R >>'); add('PAGES'); add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>'); add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>'); add('<< /Type /Font /Subtype /Type1 /BaseFont /Courier /Encoding /WinAnsiEncoding >>');
+  const kids = []; pages.forEach((c, i) => { const pid = objs.length + 1; add(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents ${pid + 1} 0 R >>`); const foot = `BT /F1 7.5 Tf ${M} 24 Td (Overlay Board - page ${i + 1} of ${pages.length}) Tj ET`; const body = c + '\n' + foot; add(`<< /Length ${body.length} >>\nstream\n${body}\nendstream`); kids.push(pid + ' 0 R'); });
+  objs[1] = `<< /Type /Pages /Kids [${kids.join(' ')}] /Count ${pages.length} >>`;
+  let out = '%PDF-1.4\n'; const offs = []; objs.forEach((o, i) => { offs.push(out.length); out += `${i + 1} 0 obj\n${o}\nendobj\n`; });
+  const xr = out.length; out += `xref\n0 ${objs.length + 1}\n0000000000 65535 f \n` + offs.map(o => String(o).padStart(10, '0') + ' 00000 n \n').join('') + `trailer\n<< /Size ${objs.length + 1} /Root 1 0 R >>\nstartxref\n${xr}\n%%EOF`;
+  return out;
+}
+async function saveCardPdf(){
+  const st = document.getElementById('printStatus');
+  try {
+    if (!window.__ccRaceSummaries || !window.__ccRaceSummaries.length){ alert('Compute a card first.'); return; }
+    const pdf = buildCardPdf(); const nm = ('OverlayBoard_' + [cardTrack(), cardDateLong()].filter(Boolean).join('_')).replace(/[^A-Za-z0-9_-]+/g, '_') + '.pdf';
+    const blob = new Blob([pdf], {type: 'application/pdf'}); const file = new File([blob], nm, {type: 'application/pdf'});
+    if (navigator.canShare && navigator.canShare({files: [file]})){ try { await navigator.share({files: [file], title: nm}); return; } catch(e){ if (e && e.name === 'AbortError') return; } }
+    const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = nm; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => { try { window.open(url, '_blank'); } catch(e){} }, 500);
+    if (st){ st.textContent = 'PDF saved as ' + nm + '. If nothing downloaded, it opened in a new tab: use Share there.'; st.className = 'status ok'; }
+  } catch(e){ console.error(e); alert('Could not make the PDF: ' + (e && e.message)); }
+}
+document.getElementById('pdfBtn').addEventListener('click', saveCardPdf);
+document.getElementById('pdfNowBtn').addEventListener('click', saveCardPdf);
+
 
 // Print goes through a real rendered page: window.print() is a silent no-op
 // in some phone browsers.
@@ -10176,7 +10238,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.39 · released 30 October 2026 · build 2026-10-30-c</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.39 · released 30 October 2026 · build 2026-10-30-d</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
