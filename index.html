@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.38 — Race Card Reader</title>
+<title>Overlay Board v4.39 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -762,7 +762,7 @@
   .win-chip.win-unbeaten{background:#2F6B3F; color:#fff;}
   .race-chip.chip-flag{box-shadow:inset 0 0 0 2px #A33A2A;}
   .race-flag{display:inline-block; margin-left:6px; padding:1px 6px; border:1px solid #A33A2A; border-radius:3px; color:#A33A2A; font-family:var(--mono); font-size:10.5px; font-weight:800; vertical-align:middle;}
-  /* v2.76: the whole Decision board card takes its race's reading colour */
+  /* v2.76: the whole Decisions tab card takes its race's reading colour */
   .dc.dc-read-green{background:#EEF6EF;}
   .dc.dc-read-yellow{background:#FDF6D8;}
   .dc.dc-read-red{background:#FAE9E6;}
@@ -1261,7 +1261,36 @@
   });
 })();
 </script>
-<style id="v436">.prio-d>summary,.dc-old>summary,.ss-n>summary{cursor:pointer;font-size:12px;color:#6b6250;margin:2px 0}.ss-n{font-size:12px;color:#6b6250}</style><style id="v438">.conf-strip{background:#eef4ea;border:1px solid #1F5A33;border-radius:5px;padding:8px 10px;margin:0 0 10px;font-size:13.5px;line-height:1.5;color:#173f26}.conf-strip a{font-weight:700}</style><style id="v437">
+<style id="v436">.prio-d>summary,.dc-old>summary,.ss-n>summary{cursor:pointer;font-size:12px;color:#6b6250;margin:2px 0}.ss-n{font-size:12px;color:#6b6250}</style><style id="v439">
+.ft-scroll{overflow-x:auto;max-width:100%;-webkit-overflow-scrolling:touch}.ft-scroll .field-table th:nth-child(-n+2),.ft-scroll .field-table td:nth-child(-n+2){position:sticky;background:#f6f0e0;z-index:2}.ft-scroll .field-table th:nth-child(-n+2){background:#173f26}.ft-scroll .field-table th:nth-child(1),.ft-scroll .field-table td:nth-child(1){left:0;min-width:44px}.ft-scroll .field-table th:nth-child(2),.ft-scroll .field-table td:nth-child(2){left:44px;min-width:120px}
+.hh-note{margin:0 0 8px;color:#5b5240;font-size:13px}
+.hhd{border:2px solid #c9a24a;border-radius:12px;background:#fffdf6;padding:10px 12px;margin:0 0 12px}
+.hhd-bet{border-color:#1F5A33;background:#f1f7f2}.hhd-high{border-color:#4b8a5c;background:#f7fbf7}.hhd-mod{border-color:#c9a24a;background:#fffbf0}.hhd-low{border-color:#b98a80;background:#fdf5f3}
+.hhd-r1{display:flex;align-items:flex-start;gap:8px;justify-content:space-between}
+.hhd-chip{font-family:var(--mono);font-size:11px;font-weight:800;border:1px solid #8a8168;border-radius:999px;padding:2px 8px;background:#fff;white-space:nowrap}
+.hhd-sub{flex:1;font-size:11.5px;color:#6b6250;padding-top:3px}
+.hhd-share{text-align:right;line-height:1}.hhd-share b{font-family:var(--mono);font-size:26px;color:#173f26}.hhd-share small{display:block;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:#6b6250}
+.hhd-pick{display:flex;align-items:center;gap:8px;margin:6px 0 2px;flex-wrap:wrap}
+.hhd-no{background:#173f26;color:#fff;font-weight:800;border-radius:6px;padding:3px 8px;font-size:17px}
+.hhd-name{font-size:20px;font-weight:800;text-transform:uppercase;color:#10261a;text-decoration:underline;text-decoration-thickness:2px}
+.hhd-ml{font-family:var(--mono);font-size:12px;color:#6b6250}
+.hhd-lab{font-family:var(--mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#4a3f22;margin:2px 0 6px}
+.hhd-act{font-size:14px;margin:4px 0}.hhd-bet{font-size:13.5px;font-weight:700;color:#173f26;margin:4px 0}
+.hhd .tier{margin:6px 0;font-size:13px}.hhd-ai{font-size:12.5px;color:#4a3f22;margin:6px 0 2px;border-top:1px solid #e3dcc6;padding-top:6px}
+.hhd-pace{font-size:12.5px;margin:3px 0}.hhd-why{font-size:12px;color:#6b6250;margin:0 0 4px}
+.hhd-foot{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px}
+.hhd-flag{font-size:11.5px;background:#fbeee0;border:1px solid #e0b98a;border-radius:999px;padding:2px 8px;color:#6a3d12;text-decoration:none}
+.hhd-more{margin-left:auto;font-size:12px;font-weight:700}
+details.hhf{background:#fff;border:1px solid #d8d0b8;border-radius:12px;margin:0 0 10px;overflow:hidden}
+details.hhf>summary{list-style:none;cursor:pointer;display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:14px 12px;font-size:13px}
+details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::before{content:"\203A";font-size:20px;margin-right:2px;transition:transform .15s}details.hhf[open]>summary::before{transform:rotate(90deg)}
+.hhf-call{flex:1 1 100%;order:5;margin-left:26px;font-size:11.5px;color:#6b6250}.hhf-tap{font-size:12px;font-weight:700;margin-left:auto}
+.hhf-body{padding:4px 10px 12px;min-width:0}.hhf-head{font-family:var(--mono);font-size:12px;margin:2px 0 6px}.hhf-links{margin:6px 0;font-size:13px}.hhf-links a{margin-right:12px;font-weight:700}
+.hhf-dec>*,.hhf-card>*,.hhf-why>*{margin-bottom:8px}details.hhf-sub{border:1px solid #e0d9c2;border-radius:8px;margin:8px 0;background:#fffdf8}details.hhf-sub>summary{cursor:pointer;padding:9px 10px;font-weight:700;font-size:13px}details.hhf-sub>div{padding:0 8px 8px}.hhf-body details.rf{margin:10px 0}
+.race-nav{position:sticky;top:0;z-index:20;background:#f1ead8;border:1px solid #d8d0b8;border-radius:10px;padding:6px 8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.race-nav .nav-lbl{font-family:var(--mono);font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#4a3f22;margin-right:4px;display:inline;line-height:1}
+</style>
+<style id="v438">.conf-strip{background:#eef4ea;border:1px solid #1F5A33;border-radius:5px;padding:8px 10px;margin:0 0 10px;font-size:13.5px;line-height:1.5;color:#173f26}.conf-strip a{font-weight:700}</style><style id="v437">
 .ss-riv{font-size:13.5px}.cc-line{margin-top:4px;font-size:13px}
 .rf-wrap{background:#f6f0e2}
 .rf-t th{background:#f6f0e2;position:sticky;top:0}
@@ -1283,7 +1312,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.38</span> · released 30 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.39</span> · released 30 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -1378,17 +1407,16 @@
     <div class="status no-print" id="printStatus"></div>
 
     <div class="tabbar no-print" id="tabbar" style="display:none;">
-      <button data-tab="picks" id="tabPicks" class="on">Decision board<span class="tab-count" id="pickCount">0</span></button>
-      <button data-tab="cards">Race cards</button>
+      <button data-tab="picks" id="tabPicks" class="on">Decisions<span class="tab-count" id="pickCount">0</span></button>
+      <button data-tab="field">Race card</button>
       <button data-tab="facts">Race facts</button>
-      <button data-tab="field">Full field</button>
       <button data-tab="help">Help</button>
       <button data-tab="print">Printable page</button>
     </div>
 
     <section id="picksSection" style="display:none;">
-      <h2><span class="step-num">▦</span> Decision board</h2>
-      <div class="rss-info" style="margin:0 0 14px;">The whole card at a glance, then each race in full underneath. Two separate lines name a horse, and this is the only place the tool does so. <b>Figure favourite</b> &mdash; the market favourite also holds the field's single highest average of its last three speed figures. <b>Price play</b> &mdash; a separate line, used only where a figure favourite is not available: the morning-line favourite is <i>second</i> in the field on career earnings per start.</div>
+      <h2><span class="step-num">▦</span> Race decision board</h2>
+      <div class="small-note hh-note">The decision for each race and nothing else. Tap a horse for its past performances; every warning, contender and table is under Race facts.</div>
       <div class="race-nav no-print" id="picksNav"></div>
       <div id="pickList"></div>
     </section>
@@ -1516,7 +1544,8 @@
     </section>
 
     <section id="factsSection" style="display:none;">
-      <h2><span class="step-num">▤</span> Race facts — every race, ranked horses side by side</h2>
+      <h2><span class="step-num">▤</span> Race facts</h2>
+      <div class="small-note hh-note">Every active horse side by side · lower rank number is better · tap a horse for full past performances</div>
       <div class="race-nav no-print" id="factsNav"></div>
       <div id="factsList"></div>
     </section>
@@ -1529,10 +1558,11 @@
     </section>
 
     <section id="fieldSection" style="display:none;">
-      <h2><span class="step-num">4</span> Full field, race by race</h2>
+      <h2><span class="step-num">4</span> Race card — full field</h2>
+      <div class="small-note hh-note">Every runner, race by race · tap a horse for full past performances</div>
       <div class="sort-toggle no-print" role="group" aria-label="Sort order">
-        <button class="toggle-btn active" id="showAllBtn">Whole field</button>
-        <button class="toggle-btn" id="showLiveBtn">Hide pretenders</button>
+        <button class="toggle-btn active" id="showAllBtn">Full field</button>
+        <button class="toggle-btn" id="showLiveBtn">True contenders only</button>
         <span class="sort-note">always in post order</span>
       </div>
       <div class="race-nav no-print" id="fieldNav"></div>
@@ -7095,7 +7125,7 @@ function raceFactsTable0(rs, extra, label){
 // long notes folded underneath.
 function buildPick(rs){
   const __h = buildPick0(rs);
-  try { return compactCard(__h, rs); } catch(e){ return __h; }
+  try { return hhDecision(compactCard(__h, rs), rs); } catch(e){ return __h; }
 }
 // v4.37 (display only): the card keeps the pick, the reason, the bet instruction, the tier line, the warnings and one line each for the
 // main rivals and for AI(1) / AI(2). Rank score, the full rivals list and For / Against move into one fold.
@@ -7830,7 +7860,7 @@ function renderRaceNav(navEl, raceSummaries, targetPrefix){
   // same number on the Pick card itself — the jump bar is where a race gets
   // scanned before it gets opened, so a red race's actual thinness is worth
   // seeing right there rather than only after tapping in.
-  navEl.innerHTML = '<span class="nav-lbl">Jump to \u2014 green reads clean, yellow is thinner, red is too thin or an unusual distance to read \u00b7 \u2691 = figure favourite flagged</span>' + raceSummaries.map(rs => {
+  navEl.innerHTML = '<span class="nav-lbl" title="green reads clean, yellow is thinner, red is too thin or an unusual distance to read; flag = figure favourite flagged">Go to race</span>' + raceSummaries.map(rs => {
     const level = (readability(rs) || {}).level || '';
     let label = `R${escHtml(rs.race)}`;
     const flg = raceIsFlagged(rs);
@@ -7844,6 +7874,7 @@ function renderRaceNav(navEl, raceSummaries, targetPrefix){
   navEl.querySelectorAll('.race-chip').forEach(b => {
     b.addEventListener('click', () => {
       const el = document.getElementById(b.dataset.goto);
+      if (el && el.tagName === 'DETAILS') el.open = true;
       if (el) el.scrollIntoView({behavior:'smooth', block:'start'});
     });
   });
@@ -7938,13 +7969,113 @@ function readLevelFor(raceKey){
 const TABS = {
   picks: ['picksSection'],
   print: ['printSection'],
-  cards: ['resultsSection'],
+  src: ['resultsSection'],   // v4.39: still built, never shown - Race facts draws from it
   facts: ['factsSection'],
   contenders: ['contendersSection'],   // v2.55: tab removed (Robert: redundant with the Decision board); section kept, unreachable
   field: ['fieldSection'],
   help: ['helpSection']
 };
+
+// ===== v4.39 (Robert, 30 Oct: "I am favoring the horse handicap presentation ... the Decision is the decision without anything extra. The race facts tab
+// easily navigates to the rest of the past performances, shows the contenders, and can open race facts side by side. Race card is full field.")
+// Layout only: no pick, bet, tier, chance or confidence level changes.
+function hhLabel(t){
+  let s = String(t || '').replace(/\s+/g, ' ').trim();
+  const m = s.match(/^(.{3,46}?)(?:\s+\u2014|:\s|\.\s|$)/); s = (m ? m[1] : s.slice(0, 40)).trim();
+  const letters = s.replace(/[^A-Za-z]/g, '');
+  if (letters && letters === letters.toUpperCase()){ const ic = s.match(/^[^A-Za-z]*/)[0]; const body = s.slice(ic.length).toLowerCase(); s = ic + body.charAt(0).toUpperCase() + body.slice(1); }
+  return s;
+}
+function hhRC(rc, h){
+  try {
+    const rs = (window.__ccRaceSummaries || []).find(r => String(r.race).trim() === String(rc.race).trim()); if (!rs) return '<td>\u2014</td><td>\u2014</td>';
+    const hh = (rs.horses || []).find(x => x === h) || (rs.horses || []).find(x => String(x.post) === String(h.post) && x.horse === h.horse);
+    const m = rscsMap(rs), ch = rscsChances(rs); const v = hh ? m.get(hh) : null; if (!v) return '<td>\u2014</td><td>\u2014</td>';
+    if (!Number.isFinite(v.rs)) return '<td>\u2014</td><td>\u2014</td>';
+    const ranked = [...m.entries()].filter(e => e[1] && Number.isFinite(e[1].rs)).sort((a, b) => a[1].rs - b[1].rs); const rk = ranked.findIndex(e => e[0] === hh) + 1; const c = Math.round(100 * (ch.get(hh) || 0));
+    return `<td>${rk || '\u2014'}</td><td>${c}%</td>`;
+  } catch(e){ return '<td>\u2014</td><td>\u2014</td>'; }
+}
+function hhDecision(html, rs){
+  const t = document.createElement('template'); t.innerHTML = html; const root = t.content.firstElementChild;
+  if (!root || !/^pick-r/.test(root.id || '')) return html;
+  const ssh = root.querySelector('.selsum .ss-h'); if (!ssh) return html;
+  const m = ssh.textContent.replace(/\s+/g, ' ').trim().match(/^(.*?):\s*#(\S+)\s+(.*?)\s*\(([^)]*)\)\s*\u2014\s*chance\s*(\d+)%/); if (!m) return html;
+  const race = String(rs.race).trim();
+  window.__hhOld = window.__hhOld || {}; window.__hhOld[race] = html;
+  const q = s => root.querySelector(s), tx = s => { const e = q(s); return e ? e.textContent.replace(/\s+/g, ' ').trim() : ''; };
+  const prio = q('.prio'); const prioTxt = prio ? (prio.querySelector('b') || prio).textContent.replace(/\s+/g, ' ').trim() : '';
+  const isBet = /^BET RACE/.test(prioTxt) || !!q('.vd-win');
+  const cls = isBet ? 'bet' : (prio && /prio-focus/.test(prio.className)) ? 'high' : (prio && /prio-consider/.test(prio.className)) ? 'mod' : 'low';
+  const flags = [...root.querySelectorAll('.pace-flag, .dis')]; let pace = ''; const chips = [];
+  flags.forEach(f => { const x = f.textContent.replace(/\s+/g, ' ').trim(); if (/^\u26a1/.test(x) && !pace){ pace = x.replace(/^\u26a1\s*/, ''); const k = pace.search(/\.\s/); if (k > 25) pace = pace.slice(0, k + 1); if (pace.length > 130) pace = pace.slice(0, 127).replace(/\s+\S*$/, '') + '\u2026'; } else chips.push(hhLabel(x)); });
+  const sub = tx('.race-hd-sub').replace(/^[\s\u00b7]+/, '');
+  const act = tx('.vd-tier'), why = tx('.vd-why'), win = tx('.vd-win'), ai = tx('.cc-line');
+  const tier = q('.tier'); const xb = [...root.querySelectorAll(':scope .xbet')].map(e => e.outerHTML).join('');
+  const type = q('.dc-type'); const nm = m[3];
+  return `<div class="hhd hhd-${cls} race-anchor-target" id="pick-r${escAttr(race)}">`
+    + `<div class="hhd-r1"><span class="hhd-chip">RACE ${escHtml(race)}</span><span class="hhd-sub">${escHtml(sub)}</span><div class="hhd-share"><b>${escHtml(m[5])}%</b><small>chance</small></div></div>`
+    + `<div class="hhd-pick"><span class="hhd-no">#${escHtml(m[2])}</span><a href="#" class="pp-link hhd-name" data-pp-race="${escAttr(race)}" data-pp-horse="${escAttr(nm)}">${escHtml(nm)}</a><span class="hhd-ml">${escHtml(m[4])}</span></div>`
+    + `<div class="hhd-lab">${escHtml(m[1])}${prioTxt ? ' \u00b7 ' + escHtml(prioTxt) : ''}</div>`
+    + (act ? `<div class="hhd-act"><b>${escHtml(act)}</b></div>` + (why ? `<div class="hhd-why">${escHtml(why)}</div>` : '') : '')
+    + (win ? `<div class="hhd-bet">${escHtml(win)}</div>` : '') + xb
+    + (tier ? tier.outerHTML : '')
+    + (ai ? `<div class="hhd-ai">${escHtml(ai)}</div>` : '')
+    + (pace ? `<div class="hhd-pace"><b>PACE</b> \u2014 ${escHtml(pace)}</div>` : '')
+    + `<div class="hhd-foot">${type ? type.outerHTML : ''}${chips.map(c => `<a href="#" class="hhd-flag race-jump" data-goto-facts="${escAttr(race)}">${escHtml(c)}</a>`).join('')}<a href="#" class="hhd-more race-jump" data-goto-facts="${escAttr(race)}">Race facts \u25b8</a></div>`
+    + `</div>`;
+}
+function hhStripIds(node){ node.querySelectorAll('[id]').forEach(e => e.removeAttribute('id')); return node; }
+function hhLayoutFacts(){
+  const list = document.getElementById('factsList'); if (!list) return;
+  const fresh = [...list.querySelectorAll(':scope > .dc')];
+  if (fresh.length) window.__hhFactsSrc = fresh.map(d => ({race: d.id.replace(/^facts-r/, ''), el: d}));
+  const src = window.__hhFactsSrc; if (!src || !src.length) return;
+  const old = window.__hhOld || {}, cardList = document.getElementById('raceCardList');
+  const openNow = new Set([...list.querySelectorAll(':scope > details.hhf[open]')].map(d => d.id));
+  const frag = document.createDocumentFragment();
+  src.forEach(({race, el}) => {
+    const d = document.createElement('details'); d.className = 'hhf race-anchor-target'; d.id = 'facts-r' + race; if (openNow.has(d.id)) d.open = true;
+    const rl = el.querySelector('.dc-race'), call = rl ? (rl.textContent.match(/Board pick.*$/) || [''])[0].replace(/^Board pick/, 'Pick') : '';
+    let body = `<div class="hhf-body"><div class="hhf-head">${rl ? escHtml(rl.textContent.replace(/\s+/g, ' ').replace(/\s*\u00b7?\s*Board pick.*$/, '')) : 'Race ' + escHtml(race)}</div>`
+      + (el.querySelector('.dc-type') ? el.querySelector('.dc-type').outerHTML : '')
+      + `<div class="hhf-links"><a href="#" class="race-jump" data-goto-pick="${escAttr(race)}">\u25c2 Decision</a> <a href="#" class="race-jump" data-goto-card="${escAttr(race)}">Full field \u25b8</a></div>`;
+    let oldRoot = null; if (old[race]){ const t = document.createElement('template'); t.innerHTML = old[race]; oldRoot = t.content.firstElementChild; }
+    if (oldRoot){
+      const keep = [];
+      oldRoot.querySelectorAll('.pace-flag, .dis, .dc-box, .dc-key').forEach(n => keep.push(n));
+      oldRoot.querySelectorAll(':scope > .selsum > .ss-l, :scope > .selsum > details.ss-n').forEach(n => keep.push(n));
+      body += `<div class="hhf-dec">${keep.map(n => hhStripIds(n.cloneNode(true)).outerHTML).join('')}</div>`;
+    }
+    const rf = el.querySelector('details.rf'); if (rf){ const c = rf.cloneNode(true); c.setAttribute('open', ''); body += c.outerHTML; }
+    const card = cardList ? cardList.querySelector('#card-race-' + CSS.escape(race)) : null;
+    if (card){
+      const kids = [...card.children].filter(c => !c.classList.contains('race-card-top'));
+      const cp = kids.filter(c => c.classList.contains('cp')), other = kids.filter(c => !c.classList.contains('cp'));
+      if (cp.length){
+        const tidy = c => { const k = c.cloneNode(true); const f = k.firstElementChild; if (f && /^Contenders vs pretenders/i.test(f.textContent.trim()) && f.textContent.length < 90) f.remove(); return k.outerHTML; };
+        body += `<details class="hhf-sub" open><summary>Contenders vs pretenders</summary><div class="hhf-card">${tidy(cp[0])}</div></details>`;
+        if (cp.length > 1) body += `<details class="hhf-sub"><summary>Top 4 probable, with form detail</summary><div class="hhf-card">${cp.slice(1).map(tidy).join('')}</div></details>`;
+      }
+      if (other.length) body += `<details class="hhf-sub"><summary>Conditions, how readable the race is, pace and previous meetings</summary><div class="hhf-card">${other.map(c => c.cloneNode(true).outerHTML).join('')}</div></details>`;
+    }
+    if (oldRoot){ const rp = oldRoot.querySelector('.res-pick'); const wh = [...oldRoot.querySelectorAll(':scope > details')]; body += `<div class="hhf-why">${wh.map(n => n.outerHTML).join('')}${rp ? rp.outerHTML : ''}</div>`; }
+    body += '</div>';
+    d.innerHTML = `<summary><b>RACE ${escHtml(race)} \u2014 RACE FACTS</b><span class="hhf-call">${escHtml(call)}</span><span class="hhf-tap">Tap to open</span></summary>` + body;
+    frag.appendChild(d);
+  });
+  list.innerHTML = ''; list.appendChild(frag);
+  // every horse name in the side-by-side tables opens its past performances
+  list.querySelectorAll('details.rf table tbody tr').forEach(tr => {
+    const c = tr.children[1]; if (!c || c.querySelector('a.pp-link')) return;
+    const det = tr.closest('details.hhf'); if (!det) return; const race = det.id.replace(/^facts-r/, ''); const nm = c.textContent.replace(/\s+/g, ' ').trim().replace(/^#?\d+\s*/, '');
+    const rs = (window.__ccRaceSummaries || []).find(r => String(r.race).trim() === race); const h = rs && (rs.horses || []).find(x => String(x.horse).toUpperCase() === nm.toUpperCase().split(' (')[0]);
+    if (h && ((h.ppRaces && h.ppRaces.length) || (h.ppWorks && h.ppWorks.length))) c.innerHTML = `<a href="#" class="pp-link" data-pp-race="${escAttr(race)}" data-pp-horse="${escAttr(h.horse)}">${c.innerHTML}</a>`;
+  });
+  bindTapHandlers(list);
+}
 function showTab(name){
+  if (name === 'cards') name = 'field';   // v4.39: the old Race cards tab is folded into Race facts; the Race card tab is the full field
   if (name === 'print') renderPrintView();
   Object.entries(TABS).forEach(([k, ids]) => {
     ids.forEach(id => {
@@ -9285,7 +9416,8 @@ function buildBoardIndex(raceSummaries){
 // to race card by race number or horse"). Every race's facts table, open,
 // with links to that race's card and its Decision card; each race card links
 // back here. Horse names open the past performances as everywhere else.
-function renderFactsTab(raceSummaries){
+function renderFactsTab(raceSummaries){ window.__hhFactsSrc = null; renderFactsTab0(raceSummaries); try { hhLayoutFacts(); } catch(e){ console.error(e); } }
+function renderFactsTab0(raceSummaries){
   const list = document.getElementById('factsList');
   if (!list) return;
   renderRaceNav(document.getElementById('factsNav'), raceSummaries, 'facts-r');
@@ -9328,7 +9460,8 @@ function renderContenders(raceSummaries){
   bindTapHandlers(list);
 }
 
-function renderPicks(raceSummaries){
+function renderPicks(raceSummaries){ renderPicks0(raceSummaries); try { if (window.__hhFactsSrc) hhLayoutFacts(); } catch(e){} }
+function renderPicks0(raceSummaries){
   const list = document.getElementById('pickList');
   renderRaceNav(document.getElementById('picksNav'), raceSummaries, 'pick-r');
   // v3.71: pick at most five FOCUS races for the day
@@ -9412,6 +9545,7 @@ function renderFullField(mode){
         <tr>
           <td><span class="field-badge">${escHtml(h.post || '–')}</span></td>
           <td class="name ${(h.ppRaces && h.ppRaces.length) || (h.ppWorks && h.ppWorks.length) ? 'has-pp' : 'no-pp'}">${nameCell}${adjMark}${(() => { const jl = jockeyLine(h); return jl ? `<div class="jky-cell">${jl}</div>` : ''; })()}</td>
+          ${hhRC(rc, h)}
           <td title="${escAttr(oddsTitle)}">${escHtml(h.oddsStr)}</td>
           <td>${fmtMove(h)}</td>
           <td>${formArrow(h)}</td>
@@ -9438,11 +9572,12 @@ function renderFullField(mode){
         ${raceCondsLine(horses)}
         ${sparseWarning}
         <table class="field-table">
-          <thead><tr><th>Post</th><th>Horse</th><th>Odds</th><th title="Final odds against the morning line">Move</th><th title="Beaten-lengths direction over recent comparable starts. Display only.">Form</th><th title="Early-speed points (Quirin, 0-8): how quickly the horse usually gets away. LONE = highest, at least 2 clear, and no other pure early type.">Early pts</th><th title="Recent works at today's track. Green = bullet.">Works</th><th title="BRIS speed figure: most recent race, with the horse's best in brackets.">Speed fig</th><th title="Odds-implied win probability, normalized across the field">Market %</th><th class="diag-col">Model %</th><th class="diag-col">Edge</th><th class="raw-col" title="Prime Power as supplied by the data file">Raw PP</th></tr></thead>
+          <thead><tr><th>Post</th><th>Horse</th><th>Rank</th><th>Chance</th><th>Odds</th><th title="Final odds against the morning line">Move</th><th title="Beaten-lengths direction over recent comparable starts. Display only.">Form</th><th title="Early-speed points (Quirin, 0-8): how quickly the horse usually gets away. LONE = highest, at least 2 clear, and no other pure early type.">Early pts</th><th title="Recent works at today's track. Green = bullet.">Works</th><th title="BRIS speed figure: most recent race, with the horse's best in brackets.">Speed fig</th><th title="Odds-implied win probability, normalized across the field">Market %</th><th class="diag-col">Model %</th><th class="diag-col">Edge</th><th class="raw-col" title="Prime Power as supplied by the data file">Raw PP</th></tr></thead>
           <tbody>${rowsHtml}</tbody>
         </table>
       </div>`;
   }).join('');
+  container.querySelectorAll('table.field-table').forEach(t => { if (!t.parentElement.classList.contains('ft-scroll')){ const w = document.createElement('div'); w.className = 'ft-scroll'; t.parentNode.insertBefore(w, t); w.appendChild(t); } });
   bindTapHandlers(container);
 }
 
@@ -9458,13 +9593,14 @@ document.addEventListener('click', e => {
     e.preventDefault();
     const toPick = a.dataset.gotoPick != null, toFacts = a.dataset.gotoFacts != null;
     const race = toPick ? a.dataset.gotoPick : toFacts ? a.dataset.gotoFacts : a.dataset.gotoCard;
-    showTab(toPick ? 'picks' : toFacts ? 'facts' : 'cards');
+    showTab(toPick ? 'picks' : toFacts ? 'facts' : 'field');
     requestAnimationFrame(() => {
       const el = toPick
         ? document.getElementById('pick-r' + race)
         : toFacts ? document.getElementById('facts-r' + race)
-        : document.getElementById('card-race-' + race);
+        : document.getElementById('field-race-' + race);
       if (!el) return;
+      if (el.tagName === 'DETAILS') el.open = true;
       el.scrollIntoView({behavior:'smooth', block:'start'});
       el.classList.remove('just-landed');
       void el.offsetWidth;
@@ -10039,7 +10175,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.38 · released 30 October 2026 · build 2026-10-30-a</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.39 · released 30 October 2026 · build 2026-10-30-b</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
