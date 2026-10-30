@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.37 — Race Card Reader</title>
+<title>Overlay Board v4.38 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1261,7 +1261,7 @@
   });
 })();
 </script>
-<style id="v436">.prio-d>summary,.dc-old>summary,.ss-n>summary{cursor:pointer;font-size:12px;color:#6b6250;margin:2px 0}.ss-n{font-size:12px;color:#6b6250}</style><style id="v437">
+<style id="v436">.prio-d>summary,.dc-old>summary,.ss-n>summary{cursor:pointer;font-size:12px;color:#6b6250;margin:2px 0}.ss-n{font-size:12px;color:#6b6250}</style><style id="v438">.conf-strip{background:#eef4ea;border:1px solid #1F5A33;border-radius:5px;padding:8px 10px;margin:0 0 10px;font-size:13.5px;line-height:1.5;color:#173f26}.conf-strip a{font-weight:700}</style><style id="v437">
 .ss-riv{font-size:13.5px}.cc-line{margin-top:4px;font-size:13px}
 .rf-wrap{background:#f6f0e2}
 .rf-t th{background:#f6f0e2;position:sticky;top:0}
@@ -1283,7 +1283,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.37</span> · released 29 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.38</span> · released 30 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -1457,7 +1457,7 @@
         <h3>When the two methods disagree</h3>
         <p>If AI(1) and AI(2) rank different horses first, the race is labelled: <b>TWO-HORSE RACE</b> (7 or fewer runners and AI(2)'s horse is AI(1)'s #2 — one of the two usually wins); <b>SMALL FIELD, SPLIT</b> (8 or fewer, not a maiden, AI(2)'s horse in AI(1)'s top 3 — use both on top, with the next horse); <b>WIDE OPEN</b> (9 or more runners, or a maiden race — a third horse usually wins); otherwise <b>SPLIT</b>.</p>
         <h3>Tiers and percentages</h3>
-        <p>Each race shows a tier for its named horse and the share of such horses that won on the cards in the pack: <b>Tier 1</b> DEFINITIVE in a FOCUS race with a clear #1 (73%) · <b>Tier 2</b> DEFINITIVE (66%) · <b>Tier 3</b> SOLID PICK (67%) · <b>Tier 4</b> CONDITIONAL, when 2-1 or higher at post (60%) · <b>Tier 5</b> top pick in a FOCUS race (41%) · <b>Tier 6</b> top pick in a CONSIDER race (27%) · <b>Tier 7</b> top pick in a LOW race (18%). Tiers 1-3 are bets, Tier 4 only at 2-1 or higher; Tiers 5-7 carry no win-bet edge and say so. These are past results on the pack's cards, which the rules were built from; on new cards expect them to run a few points lower. When you record winners on the race cards, the percentages blend in your own results, and the scorecard at the top of the board shows how each tier, bet type and confidence level is doing.</p>
+        <p>Each race shows a tier for its named horse and the share of such horses that won on the cards in the pack: <b>Tier 1</b> DEFINITIVE with a clear #1 in a race that passes the race screen (73%) · <b>Tier 2</b> DEFINITIVE (66%) · <b>Tier 3</b> SOLID PICK (67%) · <b>Tier 4</b> CONDITIONAL, when 2-1 or higher at post (50%) · <b>Tier 5</b> top pick with HIGH confidence, no win bet (55%) · <b>Tier 6</b> top pick with MODERATE confidence, no win bet (43%) · <b>Tier 7</b> top pick with LOW confidence, no win bet (22%). Confidence is the pick's blended chance, the morning-line price and the board's own chance weighed together: HIGH is 45% or more (such picks won 65% of the time), MODERATE 35% to 45% (47%), LOW under 35% (25%). Tiers 1-3 are bets, Tier 4 only at 2-1 or higher; Tiers 5-7 carry no win-bet edge and say so. These are past results on the pack's cards, which the rules were built from; on new cards expect them to run a few points lower. When you record winners on the race cards, the percentages blend in your own results, and the scorecard at the top of the board shows how each tier, bet type and confidence level is doing.</p>
         <h3>BET — SOLID PICK</h3>
         <p>A win bet on the top-ranked horse when neither DEFINITIVE nor CONDITIONAL applies, and either (A) its morning line is 8-5 or shorter, it has the best Prime Power in the field, at most one no-finish trip comment in its last four, and the race is not low priority; or (B) its morning line is 2-1 or shorter, the field has 8 or fewer runners, it has the best last figure in the field, and its case tally is +4 or better.</p>
         <h3>Figure leader and value dropper</h3>
@@ -8405,7 +8405,7 @@ function disagreeHTML(rs){
 
 // v3.90 (Robert, 20 Oct: "the program should be self learning"). Results you record are kept
 // in this browser; tier percentages blend the pack's record with yours.
-const TIER_POOL = {1: [11, 15], 2: [27, 41], 3: [12, 18], 4: [6, 10], 5: [45, 109], 6: [69, 255], 7: [23, 129]};   // v4.29: re-run of the full history with the corrected comparison   // v3.92: from the v3.91 audit of 556 races
+const TIER_POOL = {1: [11, 15], 2: [27, 41], 3: [12, 18], 4: [8, 16], 5: [21, 38], 6: [46, 107], 7: [78, 348]};   // v4.38: full history re-run (62 cards, 585 races) under the current rules; tiers 5-7 now follow the confidence level   // v4.29: re-run of the full history with the corrected comparison   // v3.92: from the v3.91 audit of 556 races
 function resultsStore(){ try { return JSON.parse(localStorage.getItem('ob_results') || '{}'); } catch(e){ return {}; } }
 function resultsSave(o){ try { localStorage.setItem('ob_results', JSON.stringify(o)); } catch(e){} }
 function raceKey(rs){ const h = (rs.horses || [])[0] || {}; return String(h.raceDateYmd || '') + '|' + String(h.trackCode || '') + '|' + String(rs.race).trim(); }
@@ -8413,6 +8413,30 @@ function myTierRecord(includePool){
   const R = resultsStore(), out = {};
   Object.values(R).forEach(r => { if (!r || !r.tier || (r.inPool && !includePool)) return;   /* v4.27: cards already in the history are not counted twice */ const t = out[r.tier] = out[r.tier] || {n: 0, w: 0}; t.n++; if (r.namedWon) t.w++; });
   return out;
+}
+// v4.38 (Robert, 30 Oct: "a ranking to predictably use as a horse's chance to win ... a clear view of high confidence bets"). The race level that was
+// FOCUS / CONSIDER / LOW is replaced on screen by a confidence level for the board's pick: its blended chance, the morning-line price and the board's own
+// chance weighed together (about 2 to 1), normalised across the field. HIGH starts at 45%, MODERATE at 35%. The bets themselves (Tiers 1-4) are unchanged.
+const CONF_W = {ml: 0.744, ch: 0.370}, CONF_CUT = {HIGH: 0.45, MODERATE: 0.35};
+function blendMap(rs){
+  const live = (rs.horses || []).filter(h => !isScratchedNow(rs, h)); const out = new Map(); if (!live.length) return out;
+  const ch = rscsChances(rs);
+  const pm = live.map(h => 1 / (Number(h.decimalOdds) > 1.05 ? Number(h.decimalOdds) : 31)); const sm = pm.reduce((a, b) => a + b, 0);
+  const pc = live.map(h => Math.max(0.004, ch.get(h) || 0)); const sc = pc.reduce((a, b) => a + b, 0);
+  const sv = live.map((h, i) => CONF_W.ml * Math.log(pm[i] / sm) + CONF_W.ch * Math.log(pc[i] / sc)); const mx = Math.max(...sv);
+  const e = sv.map(x => Math.exp(x - mx)); const se = e.reduce((a, b) => a + b, 0);
+  live.forEach((h, i) => out.set(h, e[i] / se)); return out;
+}
+function confidenceFor(rs, h){
+  if (!h) return null;
+  try { const p = blendMap(rs).get(h); if (p == null) return null; return {h, p, level: p >= CONF_CUT.HIGH ? 'HIGH' : p >= CONF_CUT.MODERATE ? 'MODERATE' : 'LOW'}; } catch(e){ return null; }
+}
+function confidenceOf(rs){ let h = null; try { h = finalSelection(rs); } catch(e){} return confidenceFor(rs, h); }
+// races with no win bet: the tier follows the confidence level (5 HIGH, 6 MODERATE, 7 LOW) - the tier numbers are kept so recorded results still line up
+function noBetTier(rs, h0, what, down){
+  let hh = h0; try { const x = extraBets(rs)[0]; if (x) hh = x.h; else { const e = [...rscsChances(rs).entries()].sort((a, b) => b[1] - a[1])[0]; if (e) hh = e[0]; } } catch(e){}
+  const c = confidenceFor(rs, hh || h0); const L = c ? c.level : 'LOW'; const t = L === 'HIGH' ? 5 : L === 'MODERATE' ? 6 : 7;
+  return {t, pct: tierPct(t).pct, h: h0, what: what || '', down: !!down, level: L};
 }
 function tierPct(t){
   const p = TIER_POOL[t] || [0, 0], m = myTierRecord()[t] || {n: 0, w: 0};
@@ -8426,7 +8450,7 @@ function makeResultEntry(rs, post){
   const ch = rscsChances(rs); const sel = betH || (xb.length ? xb[0].h : ([...ch.entries()].sort((a, b) => b[1] - a[1])[0] || [null])[0]);
   return {race: String(rs.race).trim(), winner: w ? w.horse : String(post), winnerPost: String(post), tier: t ? t.t : null, named: t ? t.h.horse : null,
     namedWon: !!(t && w && t.h === w), conf: c ? c.level : null, topWon: !!(c && w && c.top === w), cat: d ? d.cat : null,
-    prio: pr.level, bet: betH ? (pl.v.tier) : (xb.length ? (xb[0].type === 'FIGURE' ? 'FIGURE' : 'VALUE') : null),
+    prio: pr.level, cl: (() => { try { const cc = confidenceOf(rs); return cc ? cc.level : null; } catch(e){ return null; } })(), bet: betH ? (pl.v.tier) : (xb.length ? (xb[0].type === 'FIGURE' ? 'FIGURE' : 'VALUE') : null),
     betWon: !!(w && ((betH && betH === w) || (!betH && xb.length && xb[0].h === w))), selection: sel ? sel.horse : null, selectionWon: !!(sel && w && sel === w),
     winnerListedThreat: !!(w && sel !== w && [...ch.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4).some(e => e[0] === w)),
     inList: !!(w && (pr.top3 || []).includes(w)), at: Date.now()};
@@ -8478,14 +8502,12 @@ function winTier(rs){
   const pl = racePlan(rs); const v = pl && pl.v; const pr = racePriority(rs); const rf = rankedField(rs, []);
   if (!rf.length) return null;
   const top = rf[0].h; const gap = rf.length > 1 ? rf[1].score - rf[0].score : 99;
-  if (v && v.h && v.tier === 'STRONG') return pr.level === 'FOCUS' && gap >= 4 ? {t: 1, pct: tierPct(1).pct, h: v.h, what: 'DEFINITIVE in a FOCUS race with a clear #1'} : {t: 2, pct: tierPct(2).pct, h: v.h, what: 'DEFINITIVE'};
+  if (v && v.h && v.tier === 'STRONG') return pr.level === 'FOCUS' && gap >= 4 ? {t: 1, pct: tierPct(1).pct, h: v.h, what: 'DEFINITIVE with a clear #1 in a race that passes the race screen'} : {t: 2, pct: tierPct(2).pct, h: v.h, what: 'DEFINITIVE'};
   if (v && v.h && v.tier === 'SOLID') return {t: 3, pct: tierPct(3).pct, h: v.h, what: 'SOLID PICK'};
   if (v && v.downFrom === 3) return {t: 4, pct: tierPct(4).pct, h: v.h, what: 'downgraded from Tier 3 (SOLID PICK): ' + v.downN + ' against \u2014 ' + v.downWhy, down: true};
-  if (v && v.downFrom === 4) return {t: 5, pct: tierPct(5).pct, h: v.downH, what: 'downgraded from Tier 4 (CONDITIONAL): ' + (v.downMsg || (v.downN + ' against \u2014 ' + v.downWhy)), down: true};
+  if (v && v.downFrom === 4) return noBetTier(rs, v.downH, 'downgraded from Tier 4 (CONDITIONAL): ' + (v.downMsg || (v.downN + ' against \u2014 ' + v.downWhy)), true);
   if (v && v.h && v.tier === 'BET') return {t: 4, pct: tierPct(4).pct, h: v.h, what: 'CONDITIONAL, when 2-1 or higher at post'};
-  if (pr.level === 'FOCUS') return {t: 5, pct: tierPct(5).pct, h: top, what: 'top pick in a FOCUS race'};
-  if (pr.level === 'CONSIDER') return {t: 6, pct: tierPct(6).pct, h: top, what: 'top pick in a CONSIDER race'};
-  return {t: 7, pct: tierPct(7).pct, h: top, what: 'top pick in a LOW race'};
+  return noBetTier(rs, top, '', false);
 }
 function tierHTML(rs){
   let t = winTier(rs); if (!t) return '';
@@ -8494,7 +8516,7 @@ function tierHTML(rs){
   if (!xb && t.t >= 5){ const any = extraBets(rs)[0]; if (any){ xb = any; t = Object.assign({}, t, {h: any.h}); } }
   if (xb){ t = Object.assign({}, t, {pct: xb.type === 'FIGURE' ? 43 : 18, what: xb.type === 'FIGURE' ? 'FIGURE LEADER' : 'VALUE DROPPER (long price)'}); }
   // v4.22: with no win bet, the tier line names the same top pick as the summary (the reviewed #1)
-  else if (t.t >= 5){ try { const chm = rscsChances(rs); const rv = [...chm.entries()].sort((a, b) => b[1] - a[1])[0]; if (rv && rv[0] !== t.h) t = Object.assign({}, t, {h: rv[0], what: t.what + ' \u00b7 reviewed top pick'}); } catch(e){} }
+  else if (t.t >= 5){ try { const chm = rscsChances(rs); const rv = [...chm.entries()].sort((a, b) => b[1] - a[1])[0]; if (rv && rv[0] !== t.h) t = Object.assign({}, t, {h: rv[0], what: t.what ? t.what + ' \u00b7 reviewed top pick' : ''}); } catch(e){} }
   const act = xb ? 'WIN BET \u2014 ' + (xb.type === 'FIGURE' ? 'FIGURE LEADER' : 'VALUE DROPPER') + ' (see below)' : t.t <= 3 ? 'WIN BET' : t.t === 4 ? 'WIN BET ONLY AT 2-1 OR HIGHER' : exOnly ? 'NO WIN BET' : t.t === 5 ? 'NO WIN-BET EDGE \u2014 exotics or a small bet at most' : 'NO EDGE \u2014 PASS';
   const c = topConfidence(rs); const strongL = c ? c.strong.filter(h => h !== t.h) : []; const sc = strongL.length ? ' \u00b7 strong challengers: ' + strongL.map(h => '#' + (h.post || '?') + ' ' + h.horse).join(', ') : '';
   // v4.04 (ChatGPT review / audit): a win bet on a horse with 2+ Against items is more vulnerable - flag it, keep the bet
@@ -8504,7 +8526,7 @@ function tierHTML(rs){
   // For / Against fold, so the tier line carries only what is new - the tier, how those picks have done, and the action.
   let __fsT = null; try { __fsT = finalSelection(rs); } catch(e){}
   const whatS = String(t.what || '').replace(/, when 2-1 or higher at post/, '').replace(/^(downgraded from Tier \d+ \([^)]*\): \d+ against)\s.*$/, '$1');
-  const tierBox = `<div class="tier tier-${t.t}"><b>Tier ${t.t} \u00b7 ${t.h === __fsT ? '' : '#' + escHtml(t.h.post || '?') + ' ' + escHtml(t.h.horse) + ' \u00b7 '}picks like this won ${t.pct}%${tierPct(t.t).myN ? ' (incl. your ' + tierPct(t.t).myN + ' recorded)' : ''} \u00b7 ${act}</b> <span class="conf-why">(${escHtml(whatS + sc)})</span></div>`;
+  const tierBox = `<div class="tier tier-${t.t}"><b>Tier ${t.t} \u00b7 ${t.h === __fsT ? '' : '#' + escHtml(t.h.post || '?') + ' ' + escHtml(t.h.horse) + ' \u00b7 '}picks like this won ${t.pct}%${tierPct(t.t).myN ? ' (incl. your ' + tierPct(t.t).myN + ' recorded)' : ''} \u00b7 ${act}</b> ${(whatS + sc).replace(/^[\s\u00b7]+/, '') ? '<span class="conf-why">(' + escHtml((whatS + sc).replace(/^[\s\u00b7]+/, '')) + ')</span>' : ''}</div>`;
   let tierBox2 = xb ? tierBox.replace(/<b>Tier (\d+) \u00b7 /, (m0, n0) => '<b>' + (xb.type === 'FIGURE' ? 'FIGURE LEADER' : 'VALUE DROPPER') + ' (Tier ' + n0 + ' race) \u00b7 ').replace(/ \(see below\)/, '').replace(/<span class="conf-why">\([^)]*\)<\/span>/, '') : tierBox;
   const vp = valuePriceHTML(rs, t);
   if (vp) tierBox2 = tierBox2.replace(/<\/div>$/, vp + '</div>');
@@ -8694,7 +8716,7 @@ function sortedForDecisions(raceSummaries){
   // v4.21: races with a win bet first (best tier first), then the others by their top pick's chance
   const out = L.map((rs, i) => { let t = 9, c = 0;
     try { const x = winTier(rs); t = x ? x.t : 9; const xb = extraBets(rs); if (t > 4 && xb.length) t = xb.some(b => b.type === 'FIGURE') ? 4.5 : 4.8; } catch(e){}
-    try { const ch = rscsChances(rs); c = Math.max(0, ...ch.values()); } catch(e){}
+    try { const ch = rscsChances(rs); c = Math.max(0, ...ch.values()); } catch(e){} try { const cf = confidenceOf(rs); if (cf) c = cf.p; } catch(e){}
     return {rs, i, t, c, bet: t <= 4.5}; })   // v4.23: a value-dropper-only race is a long-shot side bet, ordered by the race itself
     .sort((a, b) => (b.bet - a.bet) || (a.bet ? a.t - b.t : 0) || (b.c - a.c) || (a.i - b.i));
   out.forEach((x, k) => { x.rs.__bestOrder = k + 1; x.rs.__bestLabel = (k === 0 && x.t <= 4.5); });
@@ -8766,12 +8788,27 @@ function racePriority(rs){
   return {score, level, checks, k: G.k, top3: rf.slice(0, G.k).map(r => r.h)};
 }
 function priorityHTML(rs){
-  const pr = racePriority(rs);
-  const met = pr.checks.filter(c => c[1]).map(c => c[0]), miss = pr.checks.filter(c => !c[1]).map(c => c[0]);
-  const t3 = pr.top3.map(h => horseLabel(h) + rscsChip(rs, h)).join(' \u00b7 ');
+  const c = confidenceOf(rs); if (!c) return '';
   const plB = racePlan(rs); const isBet = (plB && plB.win) || extraBets(rs).length;
-  return `<div class="prio prio-${isBet ? 'focus' : pr.level.toLowerCase()}"><b>${isBet ? 'BET RACE' + (pr.level !== 'FOCUS' ? ' (race screen: ' + pr.level.toLowerCase() + ')' : ' (race screen: focus)') : pr.level === 'FOCUS' ? 'FOCUS RACE' : pr.level === 'CONSIDER' ? 'CONSIDER' : 'LOW CONFIDENCE \u2014 HIGH UNCERTAINTY'}</b> \u00b7 ${pr.score} of ${pr.checks.length} checks`
-    + `<details class="prio-d"><summary>which checks</summary><div class="prio-why">${met.length ? '\u2713 ' + escHtml(met.join(' \u00b7 ')) : ''}${miss.length ? '<br>\u2717 ' + escHtml(miss.join(' \u00b7 ')) : ''}</div></details></div>`;
+  const pctTxt = Math.round(100 * c.p), cls = c.level === 'HIGH' ? 'focus' : c.level === 'MODERATE' ? 'consider' : 'low';
+  // a win bet that rates LOW on the blend stays a bet (its tier record is what counts), so the banner just says BET RACE
+  const head = isBet ? (c.level === 'LOW' ? 'BET RACE' : 'BET RACE \u00b7 ' + c.level + ' CONFIDENCE') : c.level + ' CONFIDENCE';
+  const note = c.level === 'LOW' && isBet ? ' The bet rests on its tier record, not on this blend.' : '';
+  return `<div class="prio prio-${isBet ? (c.level === 'LOW' ? 'consider' : cls) : cls}"><b>${head}</b>`
+    + `<details class="prio-d"><summary>how this is worked out</summary><div class="prio-why">#${escHtml(c.h.post || '?')} ${escHtml(c.h.horse)}: blended chance ${pctTxt}% \u2014 the morning-line price and the board's own chance weighed together, about 2 to 1. HIGH starts at 45%, MODERATE at 35%.${note}</div></details></div>`;
+}
+function confStripHTML(raceSummaries){
+  try {
+    const hi = [], bets = [];
+    raceSummaries.forEach(rs => {
+      const link = '<a class="race-jump" data-goto-pick="' + escAttr(rs.race) + '" href="#">R' + escHtml(String(rs.race).trim()) + '</a>';
+      const c = confidenceOf(rs), pl = racePlan(rs), xb = extraBets(rs);
+      if (c && c.level === 'HIGH') hi.push(link + ' #' + escHtml(c.h.post || '?') + ' ' + escHtml(c.h.horse));
+      if (pl && pl.win && pl.v && pl.v.h) bets.push(link + ' #' + escHtml(pl.v.h.post || '?') + ' ' + escHtml(pl.v.h.horse));
+      xb.forEach(x => bets.push(link + ' #' + escHtml(x.h.post || '?') + ' ' + escHtml(x.h.horse) + ' (' + (x.type === 'FIGURE' ? 'figure leader' : 'value dropper') + ')'));
+    });
+    return '<div class="conf-strip"><div><b>High confidence:</b> ' + (hi.length ? hi.join(' \u00b7 ') : 'none on this card') + '</div><div><b>Win bets:</b> ' + (bets.length ? bets.join(' \u00b7 ') : 'none on this card') + '</div></div>';
+  } catch(e){ return ''; }
 }
 
 // v3.73 (Robert, 12 Oct): in races that are not FOCUS, name the strongest challengers
@@ -9314,7 +9351,7 @@ function renderPicks(raceSummaries){
   // v2.91: the verdicts lead the board on every card, plays or not.
   const __blocks = decisionSortMode() === 'focus' ? __ordered.map(rs => blocks[raceSummaries.indexOf(rs)]) : blocks;
   // v4.17 (Robert, 26 Oct): the race-plans list is removed; the Decision board goes straight to each race's decision
-  list.innerHTML = __sortBar + scorecardHTML() + __blocks.join('');   // v3.50: the old summary lists and the old per-race index are retired - the race plans are the one call
+  list.innerHTML = __sortBar + confStripHTML(raceSummaries) + scorecardHTML() + __blocks.join('');   // v3.50: the old summary lists and the old per-race index are retired - the race plans are the one call
   document.getElementById('pickCount').textContent = raceSummaries.filter(rs => racePlan(rs).play).length;
   bindTapHandlers(list);
   // The race-number block carries its own handler: bindTapHandlers keys off
@@ -10002,7 +10039,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.37 · released 29 October 2026 · build 2026-10-29-i</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.38 · released 30 October 2026 · build 2026-10-30-a</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
