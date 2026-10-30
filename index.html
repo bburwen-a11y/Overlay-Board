@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.39 — Race Card Reader</title>
+<title>Overlay Board v4.40 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1312,7 +1312,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.39</span> · released 30 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.40</span> · released 30 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -1437,10 +1437,10 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
       <p><b>Decisions</b> — one card per race: the decision and nothing else. <b>Race card</b> — the full field, race by race, with <i>Full field</i> and <i>True contenders only</i> buttons. <b>Race facts</b> — one fold per race: the warnings and the reason for the pick, every horse side by side, contenders vs pretenders, form detail, previous meetings, and where you record the winner. Tap any horse name for its full past performances. <b>Printable page</b> — the card laid out for printing, with a <b>Save as PDF</b> button that makes a clean decision sheet and opens your phone's share sheet.</p>
       <h3>Reading a decision card</h3>
       <p><b>Top row:</b> race number, distance and surface, class, number of runners, and the board's <b>chance</b> for its pick — that horse's share of the field's chance, worked out from the rank score and case score and then adjusted for the warnings (not a win probability or a price). The pick is the board's final selection after the warnings are weighed.</p>
-      <p><b>Confidence level:</b> the pick's blended chance — the morning-line price and the board's own chance weighed together, about 2 to 1. HIGH is 45% or more, MODERATE 35% to 45%, LOW under 35%. A race with a win bet reads BET RACE. Confidence says how likely the pick is to win; it is not a price check, which is what the bet tiers do.</p>
+      <p><b>Confidence level:</b> the pick's blended chance — the morning-line price and the board's own chance weighed together, about 2 to 1. HIGH is 45% or more, MODERATE 35% to 45%, LOW under 35%; if AI(2) ranks a different horse first, the level is one step lower. A race with a win bet reads BET RACE. Confidence says how likely the pick is to win; it is not a price check, which is what the bet tiers do.</p>
       <p><b>The plan:</b> PLAY — WIN BET ONLY (the win bet stands, exotics stay off), PLAY, or SKIP, with the reason printed under it. Then the tier line and its tested win percentage (see Tiers and percentages), the value-price line on win bets, the AI(1)/AI(2) line (do the two other methods agree with the pick), a one-line pace note, a race-type chip (how often the board's picks win in that type of race), and warning chips. A chip opens that race's facts.</p>
       <h3>Warning chips</h3>
-      <p><b>Selection reversal</b> — the board's pick differs from the plain ranking (figures, Prime Power and morning line). Reversals are the weaker races; a reversal alone does not justify a wager. <b>Wide open</b> and <b>Two-horse</b> — see When the two methods disagree. <b>Fragile favourite</b> — a short-priced favourite with signs it can finish out of the money. <b>Debut runner to watch</b> — a first-time starter the odds-maker rates as live. <b>Lone speed</b> / <b>Contested pace</b> — how the early speed sets up. Each chip's full text is in that race's Race facts fold.</p>
+      <p><b>Selection reversal</b> — the board's pick differs from the plain ranking (figures, Prime Power and morning line). Reversals are the weaker races; a reversal alone does not justify a wager. <b>Wide open</b> and <b>Two-horse</b> — see When the two methods disagree. <b>Fragile favourite</b> — a short-priced favourite with signs it can finish out of the money. <b>Debut runner to watch</b> — a first-time starter the odds-maker rates as live. <b>Close call</b> — the best rival's blended chance is within 5 points of the pick's, so the race is close to a coin flip between the two. <b>Lone speed</b> / <b>Contested pace</b> — how the early speed sets up. Each chip's full text is in that race's Race facts fold.</p>
       <h3>Rank score and case score</h3>
       <p><b>RS</b> (rank score) adds the horse's rank on the figures, Prime Power and morning line; lower is better. Penalties are then added: ⊖ fade signals add 5 each, ⬇ trouble or surface flags add 10, and "not competitive at level" adds 3. <b>CS</b> (case score) ranks horses by their favourable minus unfavourable race facts — the For and Against lists; the case tally is that difference.</p>
       <h3>Saving a PDF</h3>
@@ -1483,7 +1483,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
         <h3>When the two methods disagree</h3>
         <p>If AI(1) and AI(2) rank different horses first, the race is labelled: <b>TWO-HORSE RACE</b> (7 or fewer runners and AI(2)'s horse is AI(1)'s #2 — one of the two usually wins); <b>SMALL FIELD, SPLIT</b> (8 or fewer, not a maiden, AI(2)'s horse in AI(1)'s top 3 — use both on top, with the next horse); <b>WIDE OPEN</b> (9 or more runners, or a maiden race — a third horse usually wins); otherwise <b>SPLIT</b>.</p>
         <h3>Tiers and percentages</h3>
-        <p>Each race shows a tier for its named horse and the share of such horses that won on the cards in the pack: <b>Tier 1</b> DEFINITIVE with a clear #1 in a race that passes the race screen (73%) · <b>Tier 2</b> DEFINITIVE (66%) · <b>Tier 3</b> SOLID PICK (67%) · <b>Tier 4</b> CONDITIONAL, when 2-1 or higher at post (50%) · <b>Tier 5</b> top pick with HIGH confidence, no win bet (55%) · <b>Tier 6</b> top pick with MODERATE confidence, no win bet (43%) · <b>Tier 7</b> top pick with LOW confidence, no win bet (22%). Confidence is the pick's blended chance, the morning-line price and the board's own chance weighed together: HIGH is 45% or more (such picks won 65% of the time), MODERATE 35% to 45% (47%), LOW under 35% (25%). Tiers 1-3 are bets, Tier 4 only at 2-1 or higher; Tiers 5-7 carry no win-bet edge and say so. These are past results on the pack's cards, which the rules were built from; on new cards expect them to run a few points lower. When you record winners on the race cards, the percentages blend in your own results, and the scorecard at the top of the board shows how each tier, bet type and confidence level is doing.</p>
+        <p>Each race shows a tier for its named horse and the share of such horses that won on the cards in the pack: <b>Tier 1</b> DEFINITIVE with a clear #1 in a race that passes the race screen (73%) · <b>Tier 2</b> DEFINITIVE (66%) · <b>Tier 3</b> SOLID PICK (67%) · <b>Tier 4</b> CONDITIONAL, when 2-1 or higher at post (50%) · <b>Tier 5</b> top pick with HIGH confidence, no win bet (56%) · <b>Tier 6</b> top pick with MODERATE confidence, no win bet (50%) · <b>Tier 7</b> top pick with LOW confidence, no win bet (23%). Confidence is the pick's blended chance, the morning-line price and the board's own chance weighed together: HIGH is 45% or more (such picks won 69% of the time), MODERATE 35% to 45% (52%), LOW under 35% (25%). When AI(2) ranks a different horse first the level drops one step. Tiers 1-3 are bets, Tier 4 only at 2-1 or higher; Tiers 5-7 carry no win-bet edge and say so. These are past results on the pack's cards, which the rules were built from; on new cards expect them to run a few points lower. When you record winners on the race cards, the percentages blend in your own results, and the scorecard at the top of the board shows how each tier, bet type and confidence level is doing.</p>
         <h3>BET — SOLID PICK</h3>
         <p>A win bet on the top-ranked horse when neither DEFINITIVE nor CONDITIONAL applies, and either (A) its morning line is 8-5 or shorter, it has the best Prime Power in the field, at most one no-finish trip comment in its last four, and the race is not low priority; or (B) its morning line is 2-1 or shorter, the field has 8 or fewer runners, it has the best last figure in the field, and its case tally is +4 or better.</p>
         <h3>Figure leader and value dropper</h3>
@@ -8009,6 +8009,8 @@ function hhDecision(html, rs){
   const flags = [...root.querySelectorAll('.pace-flag, .dis')]; let pace = ''; const chips = [];
   flags.forEach(f => { const x = f.textContent.replace(/\s+/g, ' ').trim(); if (/^\u26a1/.test(x) && !pace){ pace = x.replace(/^\u26a1\s*/, ''); const k = pace.search(/\.\s/); if (k > 25) pace = pace.slice(0, k + 1); if (pace.length > 130) pace = pace.slice(0, 127).replace(/\s+\S*$/, '') + '\u2026'; } else chips.push(hhLabel(x)); });
   const sub = tx('.race-hd-sub').replace(/^[\s\u00b7]+/, '');
+  let __cc = null; try { __cc = confidenceOf(rs); } catch(e){}
+  if (__cc && __cc.close){ for (let k = chips.length - 1; k >= 0; k--) if (/too close to call/i.test(chips[k])) chips.splice(k, 1); chips.unshift('\u2696 Close call'); }
   const act = tx('.vd-tier'), why = tx('.vd-why'), win = tx('.vd-win'), ai = tx('.cc-line');
   const tier = q('.tier'); const xb = [...root.querySelectorAll(':scope .xbet')].map(e => e.outerHTML).join('');
   const type = q('.dc-type'); const nm = m[3];
@@ -8044,7 +8046,9 @@ function hhLayoutFacts(){
       const keep = [];
       oldRoot.querySelectorAll('.pace-flag, .dis, .dc-box, .dc-key').forEach(n => keep.push(n));
       oldRoot.querySelectorAll(':scope > .selsum > .ss-l, :scope > .selsum > details.ss-n').forEach(n => keep.push(n));
-      body += `<div class="hhf-dec">${keep.map(n => hhStripIds(n.cloneNode(true)).outerHTML).join('')}</div>`;
+      oldRoot.querySelectorAll('.prio-why').forEach(n => { const d = document.createElement('div'); d.className = 'small-note'; d.textContent = 'Confidence: ' + n.textContent; keep.push(d); });
+      let __ccl = ''; try { const rs0 = (window.__ccRaceSummaries || []).find(r => String(r.race).trim() === race); const c0 = rs0 ? confidenceOf(rs0) : null; if (c0 && c0.close && !/TOO CLOSE TO CALL/i.test(oldRoot.textContent)) __ccl = `<div class="dis dis-split">\u2696 <b>CLOSE CALL</b> \u2014 #${escHtml(c0.riv.post || '?')} ${escHtml(c0.riv.horse)} is within 5 points of the pick on blended chance (${Math.round(100 * c0.rp)}% to ${Math.round(100 * c0.p)}%).</div>`; } catch(e){}
+      body += `<div class="hhf-dec">${__ccl}${keep.map(n => hhStripIds(n.cloneNode(true)).outerHTML).join('')}</div>`;
     }
     const rf = el.querySelector('details.rf'); if (rf){ const c = rf.cloneNode(true); c.setAttribute('open', ''); body += c.outerHTML; }
     const card = cardList ? cardList.querySelector('#card-race-' + CSS.escape(race)) : null;
@@ -8535,7 +8539,7 @@ function disagreeHTML(rs){
 
 // v3.90 (Robert, 20 Oct: "the program should be self learning"). Results you record are kept
 // in this browser; tier percentages blend the pack's record with yours.
-const TIER_POOL = {1: [11, 15], 2: [27, 41], 3: [12, 18], 4: [8, 16], 5: [21, 38], 6: [46, 107], 7: [78, 348]};   // v4.38: full history re-run (62 cards, 585 races) under the current rules; tiers 5-7 now follow the confidence level   // v4.29: re-run of the full history with the corrected comparison   // v3.92: from the v3.91 audit of 556 races
+const TIER_POOL = {1: [11, 15], 2: [27, 41], 3: [12, 18], 4: [8, 16], 5: [14, 25], 6: [42, 84], 7: [89, 384]};   // v4.40: full history re-run (62 cards, 585 races) with AI(2)'s picks loaded; tiers 5-7 follow the confidence level, which now includes the AI(2) check
 function resultsStore(){ try { return JSON.parse(localStorage.getItem('ob_results') || '{}'); } catch(e){ return {}; } }
 function resultsSave(o){ try { localStorage.setItem('ob_results', JSON.stringify(o)); } catch(e){} }
 function raceKey(rs){ const h = (rs.horses || [])[0] || {}; return String(h.raceDateYmd || '') + '|' + String(h.trackCode || '') + '|' + String(rs.race).trim(); }
@@ -8558,8 +8562,19 @@ function blendMap(rs){
   live.forEach((h, i) => out.set(h, e[i] / se)); return out;
 }
 function confidenceFor(rs, h){
+  // v4.40 (Robert, 30 Oct: "AI(1) and AI(2) disagree = pass"): when AI(2) ranks a different horse first the level drops one step
+  // (HIGH to MODERATE, MODERATE to LOW). Without AI(2) data the level is the blend alone. Also reports the best rival for the close-call flag.
   if (!h) return null;
-  try { const p = blendMap(rs).get(h); if (p == null) return null; return {h, p, level: p >= CONF_CUT.HIGH ? 'HIGH' : p >= CONF_CUT.MODERATE ? 'MODERATE' : 'LOW'}; } catch(e){ return null; }
+  try {
+    const bm = blendMap(rs); const p = bm.get(h); if (p == null) return null;
+    const base = p >= CONF_CUT.HIGH ? 'HIGH' : p >= CONF_CUT.MODERATE ? 'MODERATE' : 'LOW'; let level = base, ai2 = 'none';
+    if (typeof ai2Ready === 'function' && ai2Ready()){
+      const a2 = ai2ModelPick(rs);
+      if (a2){ ai2 = (a2 === h || normHorseName(a2.horse) === normHorseName(h.horse)) ? 'agree' : 'disagree'; if (ai2 === 'disagree') level = base === 'HIGH' ? 'MODERATE' : 'LOW'; }
+    }
+    let riv = null, rp = 0; bm.forEach((v, k) => { if (k !== h && v > rp){ rp = v; riv = k; } });
+    return {h, p, level, base, ai2, riv, rp, close: !!riv && (p - rp) < 0.05};
+  } catch(e){ return null; }
 }
 function confidenceOf(rs){ let h = null; try { h = finalSelection(rs); } catch(e){} return confidenceFor(rs, h); }
 // races with no win bet: the tier follows the confidence level (5 HIGH, 6 MODERATE, 7 LOW) - the tier numbers are kept so recorded results still line up
@@ -8923,9 +8938,9 @@ function priorityHTML(rs){
   const pctTxt = Math.round(100 * c.p), cls = c.level === 'HIGH' ? 'focus' : c.level === 'MODERATE' ? 'consider' : 'low';
   // a win bet that rates LOW on the blend stays a bet (its tier record is what counts), so the banner just says BET RACE
   const head = isBet ? (c.level === 'LOW' ? 'BET RACE' : 'BET RACE \u00b7 ' + c.level + ' CONFIDENCE') : c.level + ' CONFIDENCE';
-  const note = c.level === 'LOW' && isBet ? ' The bet rests on its tier record, not on this blend.' : '';
+  const note = (c.level === 'LOW' && isBet ? ' The bet rests on its tier record, not on this blend.' : '') + (c.ai2 === 'disagree' && c.level !== c.base ? ' AI(2) ranks a different horse first, so the level is one step lower.' : (c.ai2 === 'disagree' ? ' AI(2) ranks a different horse first.' : ''));
   return `<div class="prio prio-${isBet ? (c.level === 'LOW' ? 'consider' : cls) : cls}"><b>${head}</b>`
-    + `<details class="prio-d"><summary>how this is worked out</summary><div class="prio-why">#${escHtml(c.h.post || '?')} ${escHtml(c.h.horse)}: blended chance ${pctTxt}% \u2014 the morning-line price and the board's own chance weighed together, about 2 to 1. HIGH starts at 45%, MODERATE at 35%.${note}</div></details></div>`;
+    + `<details class="prio-d"><summary>how this is worked out</summary><div class="prio-why">#${escHtml(c.h.post || '?')} ${escHtml(c.h.horse)}: blended chance ${pctTxt}% \u2014 the morning-line price and the board's own chance weighed together, about 2 to 1. HIGH starts at 45%, MODERATE at 35%; if AI(2) ranks a different horse first the level is one step lower.${note}</div></details></div>`;
 }
 function confStripHTML(raceSummaries){
   try {
@@ -10238,7 +10253,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.39 · released 30 October 2026 · build 2026-10-30-d</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.40 · released 30 October 2026 · build 2026-10-30-f</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
