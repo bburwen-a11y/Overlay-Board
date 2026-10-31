@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.40 — Race Card Reader</title>
+<title>Overlay Board v4.41 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1277,7 +1277,7 @@
 .hhd-lab{font-family:var(--mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#4a3f22;margin:2px 0 6px}
 .hhd-act{font-size:14px;margin:4px 0}.hhd-bet{font-size:13.5px;font-weight:700;color:#173f26;margin:4px 0}
 .hhd .tier{margin:6px 0;font-size:13px}.hhd-ai{font-size:12.5px;color:#4a3f22;margin:6px 0 2px;border-top:1px solid #e3dcc6;padding-top:6px}
-.hhd-pace{font-size:12.5px;margin:3px 0}.hhd-why{font-size:12px;color:#6b6250;margin:0 0 4px}
+.hhd-pace{font-size:12.5px;margin:3px 0}.hhd-pass{color:#8a2a1c}.hhd-fts .hhd-name{text-decoration:none}.hhd-why{font-size:12px;color:#6b6250;margin:0 0 4px}
 .hhd-foot{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px}
 .hhd-flag{font-size:11.5px;background:#fbeee0;border:1px solid #e0b98a;border-radius:999px;padding:2px 8px;color:#6a3d12;text-decoration:none}
 .hhd-more{margin-left:auto;font-size:12px;font-weight:700}
@@ -1312,7 +1312,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.40</span> · released 30 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.41</span> · released 31 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -1439,6 +1439,8 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
       <p><b>Top row:</b> race number, distance and surface, class, number of runners, and the board's <b>chance</b> for its pick — that horse's share of the field's chance, worked out from the rank score and case score and then adjusted for the warnings (not a win probability or a price). The pick is the board's final selection after the warnings are weighed.</p>
       <p><b>Confidence level:</b> the pick's blended chance — the morning-line price and the board's own chance weighed together, about 2 to 1. HIGH is 45% or more, MODERATE 35% to 45%, LOW under 35%; if AI(2) ranks a different horse first, the level is one step lower. A race with a win bet reads BET RACE. Confidence says how likely the pick is to win; it is not a price check, which is what the bet tiers do.</p>
       <p><b>The plan:</b> PLAY — WIN BET ONLY (the win bet stands, exotics stay off), PLAY, or SKIP, with the reason printed under it. Then the tier line and its tested win percentage (see Tiers and percentages), the value-price line on win bets, the AI(1)/AI(2) line (do the two other methods agree with the pick), a one-line pace note, a race-type chip (how often the board's picks win in that type of race), and warning chips. A chip opens that race's facts.</p>
+      <h3>First-time starters</h3>
+      <p>A first-time starter has no past performances to read, so the board never names one as its pick. When one leads the ranking the card says so and gives no pick and no bet; the best horse that has raced is listed in Race facts. In the past performances the <b>Run</b> column shows a past race's running line — positions at the first call, second call, stretch and finish, with the field size — and the early-speed note quotes the last race's running line so the number can be checked against it.</p>
       <h3>Warning chips</h3>
       <p><b>Selection reversal</b> — the board's pick differs from the plain ranking (figures, Prime Power and morning line). Reversals are the weaker races; a reversal alone does not justify a wager. <b>Wide open</b> and <b>Two-horse</b> — see When the two methods disagree. <b>Fragile favourite</b> — a short-priced favourite with signs it can finish out of the money. <b>Debut runner to watch</b> — a first-time starter the odds-maker rates as live. <b>Close call</b> — the best rival's blended chance is within 5 points of the pick's, so the race is close to a coin flip between the two. <b>Lone speed</b> / <b>Contested pace</b> — how the early speed sets up. Each chip's full text is in that race's Race facts fold.</p>
       <h3>Rank score and case score</h3>
@@ -8005,7 +8007,11 @@ function hhDecision(html, rs){
   const q = s => root.querySelector(s), tx = s => { const e = q(s); return e ? e.textContent.replace(/\s+/g, ' ').trim() : ''; };
   const prio = q('.prio'); const prioTxt = prio ? (prio.querySelector('b') || prio).textContent.replace(/\s+/g, ' ').trim() : '';
   const isBet = /^BET RACE/.test(prioTxt) || !!q('.vd-win');
-  const cls = isBet ? 'bet' : (prio && /prio-focus/.test(prio.className)) ? 'high' : (prio && /prio-consider/.test(prio.className)) ? 'mod' : 'low';
+  let fsh = null; try { fsh = finalSelection(rs); } catch(e){}
+  const isFts = !!fsh && !(fsh.ppRaces || []).length && !isBet;
+  let livePass = false, liveNote = '';
+  if (fsh && fsh.usedFinal && Number(fsh.decimalOdds) > 1 && /only if 2-1 or higher/i.test(tx('.vd-win'))){ const od = fsh.decimalOdds - 1; livePass = od < 2; liveNote = livePass ? `PASS \u2014 the price is ${od.toFixed(1)}-1, under the 2-1 this bet needs` : `Price check: ${od.toFixed(1)}-1 clears the 2-1 line`; }
+  const cls = isFts ? 'low' : isBet ? 'bet' : (prio && /prio-focus/.test(prio.className)) ? 'high' : (prio && /prio-consider/.test(prio.className)) ? 'mod' : 'low';
   const flags = [...root.querySelectorAll('.pace-flag, .dis')]; let pace = ''; const chips = [];
   flags.forEach(f => { const x = f.textContent.replace(/\s+/g, ' ').trim(); if (/^\u26a1/.test(x) && !pace){ pace = x.replace(/^\u26a1\s*/, ''); const k = pace.search(/\.\s/); if (k > 25) pace = pace.slice(0, k + 1); if (pace.length > 130) pace = pace.slice(0, 127).replace(/\s+\S*$/, '') + '\u2026'; } else chips.push(hhLabel(x)); });
   const sub = tx('.race-hd-sub').replace(/^[\s\u00b7]+/, '');
@@ -8014,12 +8020,12 @@ function hhDecision(html, rs){
   const act = tx('.vd-tier'), why = tx('.vd-why'), win = tx('.vd-win'), ai = tx('.cc-line');
   const tier = q('.tier'); const xb = [...root.querySelectorAll(':scope .xbet')].map(e => e.outerHTML).join('');
   const type = q('.dc-type'); const nm = m[3];
-  return `<div class="hhd hhd-${cls} race-anchor-target" id="pick-r${escAttr(race)}">`
-    + `<div class="hhd-r1"><span class="hhd-chip">RACE ${escHtml(race)}</span><span class="hhd-sub">${escHtml(sub)}</span><div class="hhd-share"><b>${escHtml(m[5])}%</b><small>chance</small></div></div>`
+  return `<div class="hhd hhd-${cls}${isFts ? ' hhd-fts' : ''}${livePass ? ' hhd-livepass' : ''} race-anchor-target" id="pick-r${escAttr(race)}">`
+    + `<div class="hhd-r1"><span class="hhd-chip">RACE ${escHtml(race)}</span><span class="hhd-sub">${escHtml(sub)}</span><div class="hhd-share">${isFts ? '<b>\u2014</b><small>no record</small>' : `<b>${escHtml(m[5])}%</b><small>chance</small>`}</div></div>`
     + `<div class="hhd-pick"><span class="hhd-no">#${escHtml(m[2])}</span><a href="#" class="pp-link hhd-name" data-pp-race="${escAttr(race)}" data-pp-horse="${escAttr(nm)}">${escHtml(nm)}</a><span class="hhd-ml">${escHtml(m[4])}</span></div>`
-    + `<div class="hhd-lab">${escHtml(m[1])}${prioTxt ? ' \u00b7 ' + escHtml(prioTxt) : ''}</div>`
-    + (act ? `<div class="hhd-act"><b>${escHtml(act)}</b></div>` + (why ? `<div class="hhd-why">${escHtml(why)}</div>` : '') : '')
-    + (win ? `<div class="hhd-bet">${escHtml(win)}</div>` : '') + xb
+    + `<div class="hhd-lab">${isFts ? 'FIRST-TIME STARTER LEADS THE RANKING \u00b7 NO RECORD TO READ' : escHtml(m[1]) + (prioTxt ? ' \u00b7 ' + escHtml(prioTxt) : '')}</div>`
+    + (isFts ? `<div class="hhd-act"><b>NO PICK, NO BET</b></div><div class="hhd-why">A first-time starter has no past performances to read. The best horse that has raced is in Race facts.</div>` : act ? `<div class="hhd-act"><b>${escHtml(livePass ? 'PASS \u2014 no bet at this price' : act)}</b></div>` + (why ? `<div class="hhd-why">${escHtml(why)}</div>` : '') : '')
+    + (win ? `<div class="hhd-bet${livePass ? ' hhd-pass' : ''}">${escHtml(win)}</div>` : '') + (liveNote ? `<div class="hhd-bet${livePass ? ' hhd-pass' : ''}">${escHtml(liveNote)}</div>` : '') + xb
     + (tier ? tier.outerHTML : '')
     + (ai ? `<div class="hhd-ai">${escHtml(ai)}</div>` : '')
     + (pace ? `<div class="hhd-pace"><b>PACE</b> \u2014 ${escHtml(pace)}</div>` : '')
@@ -8076,6 +8082,14 @@ function hhLayoutFacts(){
     if (h && ((h.ppRaces && h.ppRaces.length) || (h.ppWorks && h.ppWorks.length))) c.innerHTML = `<a href="#" class="pp-link" data-pp-race="${escAttr(race)}" data-pp-horse="${escAttr(h.horse)}">${c.innerHTML}</a>`;
   });
   bindTapHandlers(list);
+}
+function runLineText(p){
+  if (!p) return '';
+  const f = x => (x != null && Number(x) > 0) ? String(Number(x)) : '\u2013';
+  const fin = (p.finPos != null && Number(p.finPos) > 0) ? p.finPos : parseInt(p.fin, 10);
+  const parts = [p.c1pos, p.c2pos, (p.strpos != null ? p.strpos : p.strPos), isNaN(fin) ? null : fin].map(f);
+  if (parts.every(x => x === '\u2013')) return '';
+  return parts.join('-') + (p.pastField ? ' of ' + p.pastField : '');
 }
 function showTab(name){
   if (name === 'cards') name = 'field';   // v4.39: the old Race cards tab is folded into Race facts; the Race card tab is the full field
@@ -8539,7 +8553,7 @@ function disagreeHTML(rs){
 
 // v3.90 (Robert, 20 Oct: "the program should be self learning"). Results you record are kept
 // in this browser; tier percentages blend the pack's record with yours.
-const TIER_POOL = {1: [11, 15], 2: [27, 41], 3: [12, 18], 4: [8, 16], 5: [14, 25], 6: [42, 84], 7: [89, 384]};   // v4.40: full history re-run (62 cards, 585 races) with AI(2)'s picks loaded; tiers 5-7 follow the confidence level, which now includes the AI(2) check
+const TIER_POOL = {1: [11, 15], 2: [27, 41], 3: [12, 18], 4: [8, 16], 5: [14, 25], 6: [41, 82], 7: [90, 386]};   // v4.41: full history re-run (62 cards, 585 races) with AI(2)'s picks loaded; tiers 5-7 follow the confidence level (a first-time-starter pick is always LOW)
 function resultsStore(){ try { return JSON.parse(localStorage.getItem('ob_results') || '{}'); } catch(e){ return {}; } }
 function resultsSave(o){ try { localStorage.setItem('ob_results', JSON.stringify(o)); } catch(e){} }
 function raceKey(rs){ const h = (rs.horses || [])[0] || {}; return String(h.raceDateYmd || '') + '|' + String(h.trackCode || '') + '|' + String(rs.race).trim(); }
@@ -8572,6 +8586,7 @@ function confidenceFor(rs, h){
       const a2 = ai2ModelPick(rs);
       if (a2){ ai2 = (a2 === h || normHorseName(a2.horse) === normHorseName(h.horse)) ? 'agree' : 'disagree'; if (ai2 === 'disagree') level = base === 'HIGH' ? 'MODERATE' : 'LOW'; }
     }
+    if (!(h.ppRaces || []).length) level = 'LOW';   // v4.41: a first-time starter has no record to read
     let riv = null, rp = 0; bm.forEach((v, k) => { if (k !== h && v > rp){ rp = v; riv = k; } });
     return {h, p, level, base, ai2, riv, rp, close: !!riv && (p - rp) < 0.05};
   } catch(e){ return null; }
@@ -8740,7 +8755,7 @@ function forAgainst(rs, h){
   if (lf){ if (lf.rank === 1) F.push(`best last figure (${h.lastSpd})` + (lf.tie ? ' (shared)' : '')); else if (lf.rank >= 4) A.push(`last figure only ${pos(lf)} (${h.lastSpd})`); }
   if (pp){ if (pp.rank === 1) F.push('best Prime Power'); else if (pp.rank >= 4) A.push('Prime Power only ' + pos(pp)); }
   if (ml){ if (ml.rank === 1) F.push('morning-line favourite (' + (h.mlOddsStr || '') + ')'); else if (ml.rank >= 3) A.push(`not favoured (morning line ${h.mlOddsStr || ''}, ${pos(ml)} choice)`); }
-  const q = h.quirin; if (q != null){ const top = Math.max(...live.map(x => x.quirin || 0)); if (q >= 2 && q === top) F.push(`most early speed (${q} points)`); else if (q >= 2) F.push(`early speed (${q} points)`); else A.push(`little early speed (${q} point${q === 1 ? '' : 's'})`); }
+  const q = h.quirin; if (q != null){ const top = Math.max(...live.map(x => x.quirin || 0)); if (q >= 2 && q === top) F.push(`most early speed (${q} points)`); else if (q >= 2) F.push(`early speed (${q} points)`); else { const rl = (h.ppRaces || [])[0] ? runLineText(h.ppRaces[0]) : ''; A.push(`little early speed (${q} point${q === 1 ? '' : 's'}${rl ? '; last race ' + rl : ''})`); } }
   const rec = (h.ppRaces || []).slice(0, 4); if (rec.length >= 2){ const itm = rec.filter(r => parseInt(r.fin, 10) <= 3).length; if (itm >= 3) F.push(`in the money ${itm} of last ${rec.length}`); else if (itm <= 1) A.push(`in the money only ${itm} of last ${rec.length}`); }
   if ((h.ppRaces || [])[0] && parseInt(h.ppRaces[0].fin, 10) === 1) F.push('won its last start');
   if (h.todayClassPar != null && h.lastClassPar != null){ const d = h.todayClassPar - h.lastClassPar; if (d <= -2) F.push(`dropping ${Math.abs(d).toFixed(1)} class points`); else if (d >= 2) A.push(`moving up ${d.toFixed(1)} class points`); }
@@ -9794,7 +9809,7 @@ function ppHorseBlock(h, race, standalone, inModal){
   const wpsSets = raceRunnerSets(race);
   const todayRider = (h.riderChange ? h.riderChange.to : h.jockey) || '';
   const races = (h.ppRaces || []).map(p => `
-    <tr><td>${fmtPPDate(p.date)}</td><td>${escHtml(p.track||'')}</td><td>${fmtDistY(p.distYds)}${/^[Tt]$/.test(p.surf||'') ? '<span class="pp-turf" title="run on turf">T</span>' : ''}</td><td class="pp-class">${escHtml(p.classTxt || fmtClass(p.rtype, p.claim))}${classLadder(p, h)}</td><td class="pp-post">${(p.pastPost != null && p.pastField != null && p.pastPost >= 1 && p.pastPost <= p.pastField) ? `${p.pastPost}<span class="pp-of">/${p.pastField}</span>` : ''}</td><td>${escHtml(p.fin||'')}</td><td>${p.margin != null ? (p.won ? '<span class="pp-wonby">won ' + p.margin + 'L</span>' : p.margin + 'L') : ''}</td><td class="pp-spd">${p.spd != null && p.spd > 0 ? p.spd : ''}</td><td class="pp-pace">${escHtml(paceCallsText(p))}${paceShapeText(p) ? `<br><span class="pp-of">${escHtml(paceShapeText(p))}</span>` : ''}</td><td class="pp-jky-cell">${p.jky ? (sameJockey(p.jky, todayRider) ? `<b class="pp-jky-same" title="today's rider">${escHtml(p.jky)}</b>` : escHtml(p.jky)) : ''}</td><td>${escHtml((p.comment||'').slice(0,36))}</td><td class="pp-wps">${wpsCell([p.winner, p.second, p.third], wpsSets)}</td></tr>`).join('');
+    <tr><td>${fmtPPDate(p.date)}</td><td>${escHtml(p.track||'')}</td><td>${fmtDistY(p.distYds)}${/^[Tt]$/.test(p.surf||'') ? '<span class="pp-turf" title="run on turf">T</span>' : ''}</td><td class="pp-class">${escHtml(p.classTxt || fmtClass(p.rtype, p.claim))}${classLadder(p, h)}</td><td class="pp-post">${(p.pastPost != null && p.pastField != null && p.pastPost >= 1 && p.pastPost <= p.pastField) ? `${p.pastPost}<span class="pp-of">/${p.pastField}</span>` : ''}</td><td>${escHtml(p.fin||'')}</td><td>${p.margin != null ? (p.won ? '<span class="pp-wonby">won ' + p.margin + 'L</span>' : p.margin + 'L') : ''}</td><td class="pp-run">${escHtml(runLineText(p))}</td><td class="pp-spd">${p.spd != null && p.spd > 0 ? p.spd : ''}</td><td class="pp-pace">${escHtml(paceCallsText(p))}${paceShapeText(p) ? `<br><span class="pp-of">${escHtml(paceShapeText(p))}</span>` : ''}</td><td class="pp-jky-cell">${p.jky ? (sameJockey(p.jky, todayRider) ? `<b class="pp-jky-same" title="today's rider">${escHtml(p.jky)}</b>` : escHtml(p.jky)) : ''}</td><td>${escHtml((p.comment||'').slice(0,36))}</td><td class="pp-wps">${wpsCell([p.winner, p.second, p.third], wpsSets)}</td></tr>`).join('');
   const works = (h.ppWorks || []).slice(0, PP_WORK_LIMIT).map(w => {
     const bullet = (w.time || '').trim().startsWith('-');
     return `${bullet ? '● ' : ''}${fmtPPDate(w.date)} ${escHtml(w.track||'')} ${escHtml((w.time||'').replace('-',''))} ${escHtml(w.desc||'')}`;
@@ -9821,7 +9836,7 @@ function ppHorseBlock(h, race, standalone, inModal){
     ${breedingLine(h)}
     ${ppRecordLine(h)}
     ${races ? `<div class="pp-section">Last ${(h.ppRaces||[]).length} starts${h.ltStarts != null && h.ltStarts > (h.ppRaces||[]).length ? ` <span style="text-transform:none;letter-spacing:0;font-weight:400;">(of ${h.ltStarts} career — the data file carries 10)</span>` : ''}</div>
-    <div class="pp-table-wrap"><table class="pp-table"><thead><tr><th>Date</th><th>Trk</th><th>Dist</th><th>Class</th><th title="Post position that day, and the number of starters. Validated on 8,182 past starts.">PP</th><th>Fin</th><th>Btn</th><th title="BRIS speed rating for that race, as supplied by the data file">Spd</th><th title="BRIS pace-call figures for that race: 2-call, 4-call, 6-call, 8-call, late pace, in order supplied. The shape word beside them is read from lengths behind at the second call against the finish, not from these figures.">Pace</th><th title="Who rode that day. Bold = the rider on the horse today, so the horse's record for this rider can be read against its record for others.">Jky</th><th>Trip comment</th><th title="Who finished first, second and third in that race. Highlighted = a contender in today's race; bold = another runner in it.">W / P / S</th></tr></thead><tbody>${races}</tbody></table></div>` : `<p class="pp-sub">No past races in the data file — first-time starter.</p>`}
+    <div class="pp-table-wrap"><table class="pp-table"><thead><tr><th>Date</th><th>Trk</th><th>Dist</th><th>Class</th><th title="Post position that day, and the number of starters. Validated on 8,182 past starts.">PP</th><th>Fin</th><th>Btn</th><th title="Running position at the first call, second call, stretch call and finish, with the number of starters">Run</th><th title="BRIS speed rating for that race, as supplied by the data file">Spd</th><th title="BRIS pace-call figures for that race: 2-call, 4-call, 6-call, 8-call, late pace, in order supplied. The shape word beside them is read from lengths behind at the second call against the finish, not from these figures.">Pace</th><th title="Who rode that day. Bold = the rider on the horse today, so the horse's record for this rider can be read against its record for others.">Jky</th><th>Trip comment</th><th title="Who finished first, second and third in that race. Highlighted = a contender in today's race; bold = another runner in it.">W / P / S</th></tr></thead><tbody>${races}</tbody></table></div>` : `<p class="pp-sub">No past races in the data file — first-time starter.</p>`}
     ${riderSplitLine(h)}
     ${works ? `<div class="pp-section">Last ${Math.min((h.ppWorks||[]).length, PP_WORK_LIMIT)} workouts (● = bullet)</div><div class="pp-works">${works}</div>` : ''}`;
 }
@@ -10253,7 +10268,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.40 · released 30 October 2026 · build 2026-10-30-f</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.41 · released 31 October 2026 · build 2026-10-31-a</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
