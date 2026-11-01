@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.43 — Race Card Reader</title>
+<title>Overlay Board v4.44 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1312,7 +1312,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.43</span> · released 31 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.44</span> · released 31 October 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -1440,7 +1440,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
       <p><b>Confidence level:</b> the pick's blended chance — the morning-line price and the board's own chance weighed together, about 2 to 1. HIGH is 45% or more, MODERATE 35% to 45%, LOW under 35%; if AI(2) ranks a different horse first, the level is one step lower. A race with a win bet reads BET RACE. Confidence says how likely the pick is to win; it is not a price check, which is what the bet tiers do.</p>
       <p><b>The plan:</b> PLAY — WIN BET ONLY (the win bet stands, exotics stay off), PLAY, or SKIP, with the reason printed under it. Then the tier line and its tested win percentage (see Tiers and percentages), the value-price line on win bets, the AI(1)/AI(2) line (do the two other methods agree with the pick), a one-line pace note, a race-type chip (how often the board's picks win in that type of race), and warning chips. A chip opens that race's facts.</p>
       <h3>When the pick moves, and when to trust the morning line</h3>
-      <p>In a race with no bet, if the second-best chance is within 10 points of the leader and that horse is the morning-line favourite or AI(2)'s top pick, the pick moves to it; the card says so. A pick that faded late in most of its last three races drops one confidence step. The chip "Morning line reliable here" or "not reliable here" says whether the favourite has been worth trusting in races of this kind (turf, allowance and stakes, short-priced favourites and fields with no first-time starters, against claiming races, first-time-starter favourites and long-priced favourites). On a bet, the card also notes a poor record on today's surface and a race graded RED. These notes change no bet.</p>
+      <p>In a race with no bet, if the second-best chance is within 10 points of the leader and that horse is the morning-line favourite or AI(2)'s top pick, the pick moves to it; the card says so. A pick that faded late in most of its last three races drops one confidence step. The chip "Morning line reliable here" or "not reliable here" says whether the favourite has been worth trusting in races of this kind (turf, allowance and stakes, short-priced favourites and fields with no first-time starters, against claiming races, first-time-starter favourites and long-priced favourites). On a bet, the card also notes a poor record on today's surface and a race graded RED. These notes change no bet. Race facts also say whether the race shapes up as a two-horse race or is wide open, from how much of the chance the top two horses hold.</p>
       <h3>First-time starters</h3>
       <p>A first-time starter has no past performances to read, so the board never names one as its pick. When one leads the ranking the card says so and gives no pick and no bet; the best horse that has raced is listed in Race facts. In the past performances the <b>Run</b> column shows a past race's running line — positions at the first call, second call, stretch and finish, with the field size — and the early-speed note quotes the last race's running line so the number can be checked against it.</p>
       <h3>Warning chips</h3>
@@ -9147,6 +9147,19 @@ function selectionSummaryHTML(rs){
     const edges = eo && eo.top === sel && eo.e.length ? ' \u00b7 beats the selection on ' + eo.e.slice(0, 2).join('; ') : '';
     const dq = doubtfulFigureHorse(rs, h);
     return `<li><b>#${escHtml(h.post || '?')} ${escHtml(h.horse)}</b> (${escHtml(h.mlOddsStr || '')}) \u2014 <b>${pct(h)}%</b>${dq ? ' <span class="ss-warn">\u26a0 doubtful: strong figures but ' + escHtml(dq.join(', ')) + ' \u2014 horses like this have won far less than their figures suggest</span>' : ''} \u00b7 RS ${w.rs} \u00b7 CS ${w.cs} (${w.tally > 0 ? '+' : ''}${w.tally}) \u00b7 ${escHtml((f.F || []).slice(0, 2).join('; ') || 'no strong facts')}${escHtml(edges)}</li>`; }).join('');
+  // v4.44 (Robert, 31 Oct): how much of the chance the top two hold says whether this is a two-horse race or wide open (Race facts only; no pick or bet changes)
+  let shapeLine = '';
+  try {
+    const __e = [...ch.entries()].sort((a, b) => b[1] - a[1]); const __tot = __e.reduce((a, x) => a + x[1], 0);
+    if (__e.length >= 4 && __tot > 0){
+      const sh = (__e[0][1] + __e[1][1]) / __tot, p2 = Math.round(100 * sh), nm = h => '#' + (h.post || '?') + ' ' + h.horse;
+      const txt = sh >= 0.62 ? 'Two-horse race on the board\u2019s numbers: ' + nm(__e[0][0]) + ' and ' + nm(__e[1][0]) + ' hold ' + p2 + '% of the chance between them.'
+        : sh >= 0.52 ? 'Leans to two horses: ' + nm(__e[0][0]) + ' and ' + nm(__e[1][0]) + ' hold ' + p2 + '% of the chance.'
+        : sh >= 0.43 ? 'Open race: the top two hold ' + p2 + '% of the chance, so the winner can come from further down. Cover three horses.'
+        : 'Wide open: the top two hold only ' + p2 + '% of the chance. Cover three or four horses.';
+      shapeLine = '<div class="ss-l"><b>Shape of the race:</b> ' + escHtml(txt) + '</div>';
+    }
+  } catch(e){}
   const prL = racePriority(rs); const share = prL.level === 'FOCUS' ? 'about 5 or 6 times in 10' : 'about 7 times in 10';
   const others = (prL.top3 || []).filter(h => h !== sel);
   const ifLose = others.length ? `<div class="ss-l"><b>If #${escHtml(sel.post || '?')} loses:</b> in races like this the winner has been one of the other contenders (${others.map(h => '#' + (h.post || '?')).join(', ')}) ${share}.</div>` : '';
@@ -9164,6 +9177,7 @@ function selectionSummaryHTML(rs){
   return `<div class="selsum"><div class="ss-h">${isBet ? 'BET SELECTION' : 'TOP PICK (no bet)'}: #${escHtml(sel.post || '?')} ${escHtml(sel.horse)} (${escHtml(sel.mlOddsStr || '')}) \u2014 ${selCh}</div>` + alsoHTML + (selDq ? `<div class="ss-l ss-warn">\u26a0 Doubtful: strong figures but ${escHtml(selDq.join(', '))} \u2014 horses like this have won far less than their figures suggest; read the chance as much lower.</div>` : '') + bestNote
     + `<div class="ss-l"><b>Why:</b> ${escHtml(how)}.</div>`
     + `<div class="ss-l"><b>Rank score:</b> ${rsLine ? escHtml(rsLine) + ' (lower is better; figures + Prime Power + morning line + adjustments)' : 'not ranked (too little form to score)'} \u00b7 <b>Case:</b> CS ${v.cs} (${v.tally > 0 ? '+' : ''}${v.tally}: ${(fa.F || []).length} for, ${(fa.A || []).length} against)</div>`
+    + shapeLine
     + `<div class="ss-l"><b>Threats:</b><ul class="ss-t">${thr}</ul>All other runners together: ${rest}%.</div>`
     + longShotWatchHTML(rs)
     + `<details class="ss-n"><summary>How the chances are worked out</summary>Chances: RS and CS, then reviewed for the morning-line favourite (raised), doubtful figure horses (cut sharply), speed favourites (raised) and fragile favourites (lowered) \u2014 a model checked on past races it had not seen. They are not the odds.</details></div>`;
@@ -10324,7 +10338,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.43 · released 31 October 2026 · build 2026-10-31-c</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.44 · released 31 October 2026 · build 2026-10-31-d</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
