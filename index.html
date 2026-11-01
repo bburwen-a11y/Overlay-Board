@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.44 — Race Card Reader</title>
+<title>Overlay Board v4.45 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1312,7 +1312,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.44</span> · released 31 October 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.45</span> · released 1 November 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -1440,7 +1440,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
       <p><b>Confidence level:</b> the pick's blended chance — the morning-line price and the board's own chance weighed together, about 2 to 1. HIGH is 45% or more, MODERATE 35% to 45%, LOW under 35%; if AI(2) ranks a different horse first, the level is one step lower. A race with a win bet reads BET RACE. Confidence says how likely the pick is to win; it is not a price check, which is what the bet tiers do.</p>
       <p><b>The plan:</b> PLAY — WIN BET ONLY (the win bet stands, exotics stay off), PLAY, or SKIP, with the reason printed under it. Then the tier line and its tested win percentage (see Tiers and percentages), the value-price line on win bets, the AI(1)/AI(2) line (do the two other methods agree with the pick), a one-line pace note, a race-type chip (how often the board's picks win in that type of race), and warning chips. A chip opens that race's facts.</p>
       <h3>When the pick moves, and when to trust the morning line</h3>
-      <p>In a race with no bet, if the second-best chance is within 10 points of the leader and that horse is the morning-line favourite or AI(2)'s top pick, the pick moves to it; the card says so. A pick that faded late in most of its last three races drops one confidence step. The chip "Morning line reliable here" or "not reliable here" says whether the favourite has been worth trusting in races of this kind (turf, allowance and stakes, short-priced favourites and fields with no first-time starters, against claiming races, first-time-starter favourites and long-priced favourites). On a bet, the card also notes a poor record on today's surface and a race graded RED. These notes change no bet. Race facts also say whether the race shapes up as a two-horse race or is wide open, from how much of the chance the top two horses hold.</p>
+      <p>In a race with no bet, if the second-best chance is within 10 points of the leader and that horse is the morning-line favourite or AI(2)'s top pick, the pick moves to it; the card says so. A pick that faded late in most of its last three races drops one confidence step. The chip "Morning line reliable here" or "not reliable here" says whether the favourite has been worth trusting in races of this kind (turf, allowance and stakes, short-priced favourites and fields with no first-time starters, against claiming races, first-time-starter favourites and long-priced favourites). On a bet, the card also notes a poor record on today's surface and a race graded RED. The one exception is a readiness check: there is no win bet on a horse whose last race finished 7th or worse and that has no win in its last 6 starts. These notes change no other bet. Race facts also say whether the race shapes up as a two-horse race or is wide open, from how much of the chance the top two horses hold.</p>
       <h3>First-time starters</h3>
       <p>A first-time starter has no past performances to read, so the board never names one as its pick. When one leads the ranking the card says so and gives no pick and no bet; the best horse that has raced is listed in Race facts. In the past performances the <b>Run</b> column shows a past race's running line — positions at the first call, second call, stretch and finish, with the field size — and the early-speed note quotes the last race's running line so the number can be checked against it.</p>
       <h3>Warning chips</h3>
@@ -1485,7 +1485,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
 
       <div class="help-block">
         <h3>When the two methods disagree</h3>
-        <p>If AI(1) and AI(2) rank different horses first, the race is labelled: <b>TWO-HORSE RACE</b> (7 or fewer runners and AI(2)'s horse is AI(1)'s #2 — one of the two usually wins); <b>SMALL FIELD, SPLIT</b> (8 or fewer, not a maiden, AI(2)'s horse in AI(1)'s top 3 — use both on top, with the next horse); <b>WIDE OPEN</b> (9 or more runners, or a maiden race — a third horse usually wins); otherwise <b>SPLIT</b>.</p>
+        <p>If AI(1) and AI(2) rank different horses first, the race is labelled: <b>SPLIT ON THE ORDER</b> (7 or fewer runners and AI(2)'s horse is AI(1)'s #2); <b>SMALL FIELD, SPLIT</b> (8 or fewer, not a maiden, AI(2)'s horse in AI(1)'s top 3 — use both on top, with the next horse); otherwise <b>SPLIT</b>. Whether the race is a two-horse race or wide open is a separate fact, from how much of the chance the top two horses hold (Shape of the race).</p>
         <h3>Tiers and percentages</h3>
         <p>Each race shows a tier for its named horse and the share of such horses that won on the cards in the pack: <b>Tier 1</b> DEFINITIVE with a clear #1 in a race that passes the race screen (73%) · <b>Tier 2</b> DEFINITIVE (66%) · <b>Tier 3</b> SOLID PICK (53%) · <b>Tier 4</b> CONDITIONAL, when 2-1 or higher at post (58%) · <b>Tier 5</b> top pick with HIGH confidence, no win bet (67%) · <b>Tier 6</b> top pick with MODERATE confidence, no win bet (53%) · <b>Tier 7</b> top pick with LOW confidence, no win bet (28%). Confidence is the pick's blended chance, the morning-line price and the board's own chance weighed together: HIGH is 45% or more (such picks won 78% of the time), MODERATE 35% to 45% (53%), LOW under 35% (30%). When AI(2) ranks a different horse first the level drops one step. Tiers 1-3 are bets, Tier 4 only at 2-1 or higher; Tiers 5-7 carry no win-bet edge and say so. These are past results on the pack's cards, which the rules were built from; on new cards expect them to run a few points lower. When you record winners on the race cards, the percentages blend in your own results, and the scorecard at the top of the board shows how each tier, bet type and confidence level is doing.</p>
         <h3>BET — SOLID PICK</h3>
@@ -8019,8 +8019,14 @@ function hhDecision(html, rs){
   const sub = tx('.race-hd-sub').replace(/^[\s\u00b7]+/, '');
   let __cc = null; try { __cc = confidenceOf(rs); } catch(e){}
   if (__cc && __cc.close){ for (let k = chips.length - 1; k >= 0; k--) if (/too close to call/i.test(chips[k])) chips.splice(k, 1); chips.unshift('\u2696 Close call'); }
+  try { const sh0 = raceShape(rs); if (sh0 && sh0.kind === 'two') chips.push('\u25d1 Two-horse race'); else if (sh0 && sh0.kind === 'wide') chips.push('\u25cc Wide open'); } catch(e){}
   try {
     if (fsh && !isFts){
+      const rv0 = readinessVeto(fsh); if (rv0) chips.push('\u2298 No win bet: ' + rv0);
+      try {
+        const vh = (rs.horses || []).filter(x => !isScratchedNow(rs, x) && x !== fsh && readinessVeto(x)).find(x => /best 3-race figure average/.test((forAgainst(rs, x).F || []).join('|')));
+        if (vh) chips.push('\u2298 No bet on #' + (vh.post || '?') + ' ' + vh.horse + ' (best 3-race average): ' + readinessVeto(vh));
+      } catch(e){}
       const ml0 = mlReliability(rs); if (ml0 && ml0.level !== 'mixed') chips.push((ml0.level === 'reliable' ? '\u2713 Morning line reliable here: ' : '\u26a0 Morning line not reliable here: ') + ml0.why.join(', '));
       let pm0 = null; try { pm0 = paceMajorityFor(fsh); } catch(e){}
       if (pm0 && pm0.faded === true) chips.push('\u2296 Faded late in ' + pm0.fadedCount + ' of its last ' + pm0.shapes.length + ' races');
@@ -8190,6 +8196,16 @@ function raceIsFlagged(rs){
 //  FIGURE LEADER - case +6 or better (v4.42; was +3), the best 3-race average, 8 or fewer runners
 //  VALUE DROPPER - a dirt/all-weather race, dropping in class, data fair odds shorter than its morning line
 //                  (106 bets, 18% won at a median 7-1, $1.44)
+// v4.45 (Robert, Belmont 10/30 R6, Storm Miami: went to the lead, tired, finished last): no win bet on a horse whose last race finished 7th or worse
+// and that has no win in its last 6 starts. Over the 62-card history this removes none of the 117 bets and flags 8 picks (25% won against 37%).
+function readinessVeto(h){
+  try {
+    const pp = (h.ppRaces || []).slice(0, 6); if (pp.length < 6) return '';
+    const f1 = Number(pp[0].fin); if (!(f1 >= 7 && f1 < 90)) return '';
+    if (pp.some(p => p.won)) return '';
+    return 'last race finished ' + f1 + '; no wins in last 6';
+  } catch(e){ return ''; }
+}
 function overbetByData(rs, h){
   try {
     if (!(h.ppRaces || []).length) return false;
@@ -8209,7 +8225,7 @@ function extraBets(rs){
       let fa; try { fa = forAgainst(rs, h); } catch(e){ return; }
       const F = (fa.F || []).join(' | '); const Ag = (fa.A || []).join(' | '); const tal = (m.get(h) || {}).tally || 0;
       // v4.12 (GP 10/24 R2 Kinetic Stone): not when the data rates the horse overbet, or it tires late
-      if (overbetByData(rs, h) || /tires late/.test(Ag)) return;
+      if (overbetByData(rs, h) || readinessVeto(h) || /tires late/.test(Ag)) return;
       // v4.22 (BEL 9/30 R1 Foolin): not when its top figure came on another surface - such figure leaders won 3 of 13 (23%), returning 60 cents, both halves under $1
       if (/earned on/.test(Ag)) return;
       if (tal >= 6 && /best 3-race figure average/.test(F) && live.length <= 8) out.push({type: 'FIGURE', h, tal});
@@ -8330,6 +8346,10 @@ function verdictOf(rs){
                                : {tier: 'PASS', h: null, downFrom: 4, downH: v.h, downWhy: why, downN: A.length, why: v.why};
       }
     } catch(e){} finally { __downGuard = false; }
+  }
+  if (v && v.h && ['STRONG', 'SOLID', 'BET'].includes(v.tier)){
+    const __rv = readinessVeto(v.h);
+    if (__rv) v = {tier: 'PASS', h: null, downFrom: v.tier === 'STRONG' ? 2 : v.tier === 'SOLID' ? 3 : 4, downH: v.h, downWhy: __rv, downN: 1, why: v.why};
   }
   // v4.11 (Robert, GP 10/24 R8 Role Play, ML 7-5): a "2-1 or higher" bet should never depend on the horse
   // drifting - a top pick drifting well above its morning line has won about 1 in 7. So a CONDITIONAL bet
@@ -8545,6 +8565,15 @@ function speedFavHTML(rs){
   return `<div class="dis dis-split">\u26a1 <b>SPEED FAVOURITE</b> \u2014 #${escHtml(x.h.post || '?')} ${escHtml(x.h.horse)} is the morning-line favourite and has the most early speed (${x.q} points), but the board ranks it #${x.rank}. Horses like this have won more often than the board's #1 in recent cards; check it before betting against it. A display note only \u2014 the ranking and tier are unchanged.</div>`;
 }
 
+// v4.44: the shape of a race, from how much of the board's chance the top two horses hold (the one source for 'two-horse race' and 'wide open')
+function raceShape(rs){
+  try {
+    const e = [...rscsChances(rs).entries()].sort((a, b) => b[1] - a[1]); const tot = e.reduce((a, x) => a + x[1], 0);
+    if (e.length < 4 || !(tot > 0)) return null;
+    const sh = (e[0][1] + e[1][1]) / tot;
+    return {sh, pct: Math.round(100 * sh), a: e[0][0], b: e[1][0], kind: sh >= 0.62 ? 'two' : sh >= 0.52 ? 'lean' : sh >= 0.43 ? 'open' : 'wide'};
+  } catch(e){ return null; }
+}
 function disagreeCategory(rs){
   const o2 = ai2ModelPick(rs); const rf = rankedField(rs, []); if (!o2 || !rf.length) return null;
   let __fs = null; try { __fs = finalSelection(rs); } catch(e){}
@@ -8553,8 +8582,8 @@ function disagreeCategory(rs){
   const t = String((live[0] || {}).ai3RaceType || '').toUpperCase(); const mdn = t === 'S' || t === 'M' || t === 'MO';
   const __list = [top].concat(rf.map(r => r.h).filter(h => h !== top)); const a2rank = __list.indexOf(o2) + 1;
   const lab = h => '#' + (h.post || '?') + ' ' + h.horse;
-  if (n <= 7 && a2rank === 2) return {cat: 'two', text: `TWO-HORSE RACE: ${lab(top)} vs ${lab(o2)} \u2014 a small field where the two methods agree on the top two and differ only on the order; one of these two usually wins.`};
-  if (n >= 9 || mdn) return {cat: 'wide', text: `WIDE OPEN \u2014 ${n >= 9 ? n + ' runners' : 'a maiden race'} and the two methods disagree (${lab(top)} / ${lab(o2)}); a third horse usually wins.`};
+  if (n <= 7 && a2rank === 2) return {cat: 'two', text: `SPLIT ON THE ORDER: ${lab(top)} vs ${lab(o2)} \u2014 the two methods agree on the top two in a small field and differ only on which is first.`};
+  if (n >= 9 || mdn) return {cat: 'wide', text: `SPLIT \u2014 ${n >= 9 ? n + ' runners' : 'a maiden race'} and the two methods disagree (${lab(top)} / ${lab(o2)}).`};
   if (n <= 8 && a2rank >= 1 && a2rank <= 3) { const third = rf.find(r => r.h !== o2 && r.h !== top); return {cat: 'split', text: `SMALL FIELD, SPLIT: ${lab(top)} and ${lab(o2)} on top${third ? ', with #' + (third.h.post || '?') + ' ' + third.h.horse + ' next' : ''}.`}; }
   return {cat: 'open', text: `SPLIT \u2014 the two methods disagree (${lab(top)} / ${lab(o2)}) and neither has a clear hold on this race.`};
 }
@@ -8566,7 +8595,7 @@ function disagreeHTML(rs){
     const o2 = ai2ModelPick(rs); const rf = rankedField(rs, []); const top = rf.length ? rf[0].h : null;
     const live = (rs.horses || []).filter(h => !isScratchedNow(rs, h) && h.decimalOdds != null);
     const fav = live.length ? live.reduce((a, b) => (b.decimalOdds < a.decimalOdds ? b : a)) : null;
-    if (o2 && fav === o2) extra = `<div class="dis-note">AI(2)'s horse #${escHtml(o2.post || '?')} ${escHtml(o2.horse)} is the morning-line favourite \u2014 in two-horse races like this it has won more often than our #1, but at a short price.</div>`;
+    if (o2 && fav === o2) extra = `<div class="dis-note">AI(2)'s horse #${escHtml(o2.post || '?')} ${escHtml(o2.horse)} is the morning-line favourite \u2014 in small-field races like this it has won more often than our #1, but at a short price.</div>`;
   }
   return `<div class="dis dis-${d.cat}">\u2696 ${escHtml(d.text)}${extra}</div>`;
 }
@@ -9150,13 +9179,13 @@ function selectionSummaryHTML(rs){
   // v4.44 (Robert, 31 Oct): how much of the chance the top two hold says whether this is a two-horse race or wide open (Race facts only; no pick or bet changes)
   let shapeLine = '';
   try {
-    const __e = [...ch.entries()].sort((a, b) => b[1] - a[1]); const __tot = __e.reduce((a, x) => a + x[1], 0);
-    if (__e.length >= 4 && __tot > 0){
-      const sh = (__e[0][1] + __e[1][1]) / __tot, p2 = Math.round(100 * sh), nm = h => '#' + (h.post || '?') + ' ' + h.horse;
-      const txt = sh >= 0.62 ? 'Two-horse race on the board\u2019s numbers: ' + nm(__e[0][0]) + ' and ' + nm(__e[1][0]) + ' hold ' + p2 + '% of the chance between them.'
-        : sh >= 0.52 ? 'Leans to two horses: ' + nm(__e[0][0]) + ' and ' + nm(__e[1][0]) + ' hold ' + p2 + '% of the chance.'
-        : sh >= 0.43 ? 'Open race: the top two hold ' + p2 + '% of the chance, so the winner can come from further down. Cover three horses.'
-        : 'Wide open: the top two hold only ' + p2 + '% of the chance. Cover three or four horses.';
+    const __s = raceShape(rs);
+    if (__s){
+      const nm = h => '#' + (h.post || '?') + ' ' + h.horse;
+      const txt = __s.kind === 'two' ? 'Two-horse race on the board\u2019s numbers: ' + nm(__s.a) + ' and ' + nm(__s.b) + ' hold ' + __s.pct + '% of the chance between them.'
+        : __s.kind === 'lean' ? 'Leans to two horses: ' + nm(__s.a) + ' and ' + nm(__s.b) + ' hold ' + __s.pct + '% of the chance.'
+        : __s.kind === 'open' ? 'Open race: the top two hold ' + __s.pct + '% of the chance, so the winner can come from further down. Cover three horses.'
+        : 'Wide open: the top two hold only ' + __s.pct + '% of the chance. Cover three or four horses.';
       shapeLine = '<div class="ss-l"><b>Shape of the race:</b> ' + escHtml(txt) + '</div>';
     }
   } catch(e){}
@@ -10258,8 +10287,11 @@ function buildCardPdf(){
     const live = (rs.horses || []).filter(h => !isScratchedNow(rs, h)); const need = 60 + 11 * (live.length + 6); if (y - need < BOT) newPage();
     gap(4); text('RACE ' + race + '   ' + q('.hhd-sub'), 11, 'F2');
     if (card && card.classList.contains('hhd')){
-      text('#' + q('.hhd-no').replace('#', '') + ' ' + q('.hhd-name') + '   ML ' + q('.hhd-ml') + '   chance ' + q('.hhd-share b'), 13, 'F2');
-      text(q('.hhd-lab'), 8.5, 'F1'); text(q('.hhd-act') + (q('.hhd-why') ? ' - ' + q('.hhd-why') : ''), 9.5, 'F2'); if (q('.hhd-bet')) text(q('.hhd-bet'), 9.5, 'F2');
+      if (card.classList.contains('hhd-fts')) text('NO PICK   (first-time starter #' + q('.hhd-no').replace('#', '') + ' ' + q('.hhd-name') + ' leads the ranking, ML ' + q('.hhd-ml') + ')', 12, 'F2');
+      else text('#' + q('.hhd-no').replace('#', '') + ' ' + q('.hhd-name') + '   ML ' + q('.hhd-ml') + '   chance ' + q('.hhd-share b'), 13, 'F2');
+      text(q('.hhd-lab'), 8.5, 'F1');
+      try { const rp = reviewedPick(rs); if (rp && rp.from && !/BET SELECTION/.test(q('.hhd-lab'))){ const cm = rscsChances(rs); const pc = h => Math.round(100 * (cm.get(h) || 0)); text('Close call: the pick moved from #' + (rp.from.post || '?') + ' ' + rp.from.horse + ' (' + pc(rp.from) + '%) to #' + (rp.h.post || '?') + ' ' + rp.h.horse + ' (' + pc(rp.h) + '%), which ' + rp.why + '.', 9, 'F1'); } } catch(e){}
+      text(q('.hhd-act') + (q('.hhd-why') ? ' - ' + q('.hhd-why') : ''), 9.5, 'F2'); if (q('.hhd-bet')) text(q('.hhd-bet'), 9.5, 'F2');
       const tr = card.querySelector('.tier'); if (tr){ const tt = tr.cloneNode(true); tt.querySelectorAll('div').forEach(d => d.remove()); text(tt.textContent, 9, 'F1'); const vp = tr.querySelector('div'); if (vp) text(vp.textContent, 8.5, 'F1', 8); }
       if (q('.hhd-ai')) text(q('.hhd-ai'), 9, 'F1'); if (q('.hhd-pace')) text(q('.hhd-pace'), 9, 'F1');
       const chips = [...card.querySelectorAll('.hhd-flag')].map(e => e.textContent.trim()).join('; '); if (chips) text('Flags: ' + chips + '  (details under Race facts)', 8.5, 'F1');
@@ -10338,7 +10370,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.44 · released 31 October 2026 · build 2026-10-31-d</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.45 · released 1 November 2026 · build 2026-11-01-b</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
