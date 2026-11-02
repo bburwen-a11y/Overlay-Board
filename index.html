@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.45 — Race Card Reader</title>
+<title>Overlay Board v4.46 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1312,7 +1312,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.45</span> · released 1 November 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.46</span> · released 1 November 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -1440,7 +1440,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
       <p><b>Confidence level:</b> the pick's blended chance — the morning-line price and the board's own chance weighed together, about 2 to 1. HIGH is 45% or more, MODERATE 35% to 45%, LOW under 35%; if AI(2) ranks a different horse first, the level is one step lower. A race with a win bet reads BET RACE. Confidence says how likely the pick is to win; it is not a price check, which is what the bet tiers do.</p>
       <p><b>The plan:</b> PLAY — WIN BET ONLY (the win bet stands, exotics stay off), PLAY, or SKIP, with the reason printed under it. Then the tier line and its tested win percentage (see Tiers and percentages), the value-price line on win bets, the AI(1)/AI(2) line (do the two other methods agree with the pick), a one-line pace note, a race-type chip (how often the board's picks win in that type of race), and warning chips. A chip opens that race's facts.</p>
       <h3>When the pick moves, and when to trust the morning line</h3>
-      <p>In a race with no bet, if the second-best chance is within 10 points of the leader and that horse is the morning-line favourite or AI(2)'s top pick, the pick moves to it; the card says so. A pick that faded late in most of its last three races drops one confidence step. The chip "Morning line reliable here" or "not reliable here" says whether the favourite has been worth trusting in races of this kind (turf, allowance and stakes, short-priced favourites and fields with no first-time starters, against claiming races, first-time-starter favourites and long-priced favourites). On a bet, the card also notes a poor record on today's surface and a race graded RED. The one exception is a readiness check: there is no win bet on a horse whose last race finished 7th or worse and that has no win in its last 6 starts. These notes change no other bet. Race facts also say whether the race shapes up as a two-horse race or is wide open, from how much of the chance the top two horses hold.</p>
+      <p>In a race with no bet, if the second-best chance is within 10 points of the leader and that horse is the morning-line favourite or AI(2)'s top pick, and has not faded late in most of its last three races, the pick moves to it; the card says so. A pick that faded late in most of its last three races drops one confidence step. The chip "Morning line reliable here" or "not reliable here" says whether the favourite has been worth trusting in races of this kind (turf, allowance and stakes, short-priced favourites and fields with no first-time starters, against claiming races, first-time-starter favourites and long-priced favourites). On a bet, the card also notes a poor record on today's surface and a race graded RED. The one exception is a readiness check: there is no win bet on a horse whose last race finished 7th or worse and that has no win in its last 6 starts. These notes change no other bet. Race facts also say whether the race shapes up as a two-horse race or is wide open, from how much of the chance the top two horses hold.</p>
       <h3>First-time starters</h3>
       <p>A first-time starter has no past performances to read, so the board never names one as its pick. When one leads the ranking the card says so and gives no pick and no bet; the best horse that has raced is listed in Race facts. In the past performances the <b>Run</b> column shows a past race's running line — positions at the first call, second call, stretch and finish, with the field size — and the early-speed note quotes the last race's running line so the number can be checked against it.</p>
       <h3>Warning chips</h3>
@@ -8602,7 +8602,7 @@ function disagreeHTML(rs){
 
 // v3.90 (Robert, 20 Oct: "the program should be self learning"). Results you record are kept
 // in this browser; tier percentages blend the pack's record with yours.
-const TIER_POOL = {1: [11, 15], 2: [27, 41], 3: [9, 17], 4: [7, 12], 5: [10, 15], 6: [35, 66], 7: [116, 417]};   // v4.43: full history re-run (62 cards, 583 races, morning-line odds) with the close-call switch and the late-fade step
+const TIER_POOL = {1: [11, 15], 2: [27, 41], 3: [9, 17], 4: [7, 12], 5: [10, 15], 6: [35, 66], 7: [118, 417]};   // v4.46: full history re-run (62 cards, 583 races, morning-line odds), close-call switch skips a rival that faded late
 function resultsStore(){ try { return JSON.parse(localStorage.getItem('ob_results') || '{}'); } catch(e){ return {}; } }
 function resultsSave(o){ try { localStorage.setItem('ob_results', JSON.stringify(o)); } catch(e){} }
 function raceKey(rs){ const h = (rs.horses || [])[0] || {}; return String(h.raceDateYmd || '') + '|' + String(h.trackCode || '') + '|' + String(rs.race).trim(); }
@@ -9232,6 +9232,9 @@ function reviewedPick(rs){
     const riv = rows[1]; if (!riv) return out;
     const h0 = top[0], r = riv[0];
     if ((top[1] - riv[1]) * 100 >= 10 || !(r.ppRaces || []).length) return out;
+    // v4.46 (Robert, Belmont 10/30 R8): no move to a rival that faded late in most of its last three. Over 87 no-bet switches the move to a rival that had faded lost
+    // ground (the old pick won 25%, the rival 19%); to one that had not faded it gained (old pick 18%, rival 28%), ahead in both halves.
+    try { if (paceMajorityFor(r).faded === true) return out; } catch(e){}
     const live = (rs.horses || []).filter(x => !isScratchedNow(rs, x)); const mlv = x => parseOdds(x.mlOddsStr);
     const prices = live.map(mlv).filter(v => v != null); const minP = prices.length ? Math.min(...prices) : null;
     const isFav = minP != null && mlv(r) != null && Math.abs(mlv(r) - minP) < 1e-9 && !(mlv(h0) != null && Math.abs(mlv(h0) - minP) < 1e-9);
@@ -10370,7 +10373,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.45 · released 1 November 2026 · build 2026-11-01-b</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.46 · released 1 November 2026 · build 2026-11-01-c</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
