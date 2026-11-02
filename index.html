@@ -1141,6 +1141,7 @@
   .pp-same{color:var(--ink-soft);}
   .pp-spd{font-family:var(--mono); font-weight:700;}
   .pp-pace{font-family:var(--mono); font-size:11px; white-space:nowrap;}
+  .pp-table td.pp-run{white-space:nowrap; font-family:var(--mono);}
   .spd-cell{font-family:var(--mono);}
   .spd-best{color:var(--ink-soft); font-size:11px;}
   /* A bold name in the full field means there are past performances behind it
@@ -9934,7 +9935,7 @@ function ppHorseBlock(h, race, standalone, inModal){
   const wpsSets = raceRunnerSets(race);
   const todayRider = (h.riderChange ? h.riderChange.to : h.jockey) || '';
   const races = (h.ppRaces || []).map(p => `
-    <tr><td>${fmtPPDate(p.date)}</td><td>${escHtml(p.track||'')}</td><td>${fmtDistY(p.distYds)}${/^[Tt]$/.test(p.surf||'') ? '<span class="pp-turf" title="run on turf">T</span>' : ''}</td><td class="pp-class">${escHtml(p.classTxt || fmtClass(p.rtype, p.claim))}${classLadder(p, h)}</td><td class="pp-post">${(p.pastPost != null && p.pastField != null && p.pastPost >= 1 && p.pastPost <= p.pastField) ? `${p.pastPost}<span class="pp-of">/${p.pastField}</span>` : ''}</td><td>${escHtml(p.fin||'')}</td><td>${p.margin != null ? (p.won ? '<span class="pp-wonby">won ' + p.margin + 'L</span>' : p.margin + 'L') : ''}</td><td class="pp-run">${escHtml(runLineText(p))}</td><td class="pp-spd">${p.spd != null && p.spd > 0 ? p.spd : ''}</td><td class="pp-pace">${escHtml(paceCallsText(p))}${paceShapeText(p) ? `<br><span class="pp-of">${escHtml(paceShapeText(p))}</span>` : ''}</td><td class="pp-jky-cell">${p.jky ? (sameJockey(p.jky, todayRider) ? `<b class="pp-jky-same" title="today's rider">${escHtml(p.jky)}</b>` : escHtml(p.jky)) : ''}</td><td>${escHtml((p.comment||'').slice(0,36))}</td><td class="pp-wps">${wpsCell([p.winner, p.second, p.third], wpsSets)}</td></tr>`).join('');
+    <tr><td>${fmtPPDate(p.date)}</td><td>${escHtml(p.track||'')}</td><td>${fmtDistY(p.distYds)}${/^[Tt]$/.test(p.surf||'') ? '<span class="pp-turf" title="run on turf">T</span>' : ''}</td><td class="pp-class">${escHtml(p.classTxt || fmtClass(p.rtype, p.claim))}${classLadder(p, h)}</td><td class="pp-post">${(p.pastPost != null && p.pastField != null && p.pastPost >= 1 && p.pastPost <= p.pastField) ? `${p.pastPost}<span class="pp-of">/${p.pastField}</span>` : ''}</td><td>${escHtml(p.fin||'')}</td><td>${p.margin != null ? (p.won ? '<span class="pp-wonby">won ' + p.margin + 'L</span>' : p.margin + 'L') : ''}</td><td class="pp-run">${escHtml(runLineText(p)).replace(/ of (\d+)$/, '<span class="pp-of"> of $1</span>')}</td><td class="pp-spd">${p.spd != null && p.spd > 0 ? p.spd : ''}</td><td class="pp-pace">${escHtml(paceCallsText(p))}${paceShapeText(p) ? `<br><span class="pp-of">${escHtml(paceShapeText(p))}</span>` : ''}</td><td class="pp-jky-cell">${p.jky ? (sameJockey(p.jky, todayRider) ? `<b class="pp-jky-same" title="today's rider">${escHtml(p.jky)}</b>` : escHtml(p.jky)) : ''}</td><td>${escHtml((p.comment||'').slice(0,36))}</td><td class="pp-wps">${wpsCell([p.winner, p.second, p.third], wpsSets)}</td></tr>`).join('');
   const works = (h.ppWorks || []).slice(0, PP_WORK_LIMIT).map(w => {
     const bullet = (w.time || '').trim().startsWith('-');
     return `${bullet ? '● ' : ''}${fmtPPDate(w.date)} ${escHtml(w.track||'')} ${escHtml((w.time||'').replace('-',''))} ${escHtml(w.desc||'')}`;
@@ -10397,7 +10398,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.47 · released 1 November 2026 · build 2026-11-01-d</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.47 · released 1 November 2026 · build 2026-11-01-e</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
