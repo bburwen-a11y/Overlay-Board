@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.47 — Race Card Reader</title>
+<title>Overlay Board v4.48 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1142,6 +1142,9 @@
   .pp-spd{font-family:var(--mono); font-weight:700;}
   .pp-pace{font-family:var(--mono); font-size:11px; white-space:nowrap;}
   .pp-table td.pp-run{white-space:nowrap; font-family:var(--mono);}
+  .rf-sg{margin-top:4px; line-height:1.9;}
+  .rf-sg b{display:inline-block; font-size:10px; letter-spacing:.04em; padding:1px 6px; margin:0 4px 3px 0; border-radius:3px; border:1px solid #17312a; color:#17312a; background:#fff; font-weight:800;}
+  .rf-sg.multi b{background:#17312a; color:#fff;}
   .spd-cell{font-family:var(--mono);}
   .spd-best{color:var(--ink-soft); font-size:11px;}
   /* A bold name in the full field means there are past performances behind it
@@ -1313,7 +1316,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.47</span> · released 1 November 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.48</span> · released 1 November 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -1441,7 +1444,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
       <p><b>Confidence level:</b> the pick's blended chance — the morning-line price and the board's own chance weighed together, about 2 to 1. HIGH is 45% or more, MODERATE 35% to 45%, LOW under 35%; if AI(2) ranks a different horse first, the level is one step lower. A race with a win bet reads BET RACE. Confidence says how likely the pick is to win; it is not a price check, which is what the bet tiers do.</p>
       <p><b>The plan:</b> PLAY — WIN BET ONLY (the win bet stands, exotics stay off), PLAY, or SKIP, with the reason printed under it. Then the tier line and its tested win percentage (see Tiers and percentages), the value-price line on win bets, the AI(1)/AI(2) line (do the two other methods agree with the pick), a one-line pace note, a race-type chip (how often the board's picks win in that type of race), and warning chips. A chip opens that race's facts.</p>
       <h3>When the pick moves, and when to trust the morning line</h3>
-      <p>In a race with no bet, if the second-best chance is within 10 points of the leader and that horse is the morning-line favourite or AI(2)'s top pick, and has not faded late in most of its last three races, the pick moves to it; the card says so. A pick that faded late in most of its last three races drops one confidence step. The chip "Morning line reliable here" or "not reliable here" says whether the favourite has been worth trusting in races of this kind (turf, allowance and stakes, short-priced favourites and fields with no first-time starters, against claiming races, first-time-starter favourites and long-priced favourites). On a bet, the card also notes a poor record on today's surface and a race graded RED. The one exception is a readiness check: there is no win bet on a horse whose last race finished 7th or worse and that has no win in its last 6 starts. In a low-confidence race, Race facts also adds a second look: the next four horses by chance after the pick, with a tag where one is the morning-line favourite, AI(2)'s top pick or the top earner per start. These notes change no other bet. Race facts also say whether the race shapes up as a two-horse race or is wide open, from how much of the chance the top two horses hold.</p>
+      <p>In a race with no bet, if the second-best chance is within 10 points of the leader and that horse is the morning-line favourite or AI(2)'s top pick, and has not faded late in most of its last three races, the pick moves to it; the card says so. A pick that faded late in most of its last three races drops one confidence step. The chip "Morning line reliable here" or "not reliable here" says whether the favourite has been worth trusting in races of this kind (turf, allowance and stakes, short-priced favourites and fields with no first-time starters, against claiming races, first-time-starter favourites and long-priced favourites). On a bet, the card also notes a poor record on today's surface and a race graded RED. The one exception is a readiness check: there is no win bet on a horse whose last race finished 7th or worse and that has no win in its last 6 starts. In a low-confidence race, Race facts also adds a second look: the next four horses by chance after the pick, with a tag where one is the morning-line favourite, AI(2)'s top pick or the top earner per start. These notes change no other bet. In Race facts each horse also shows, in bold, the signals it carries: AI(2)'s pick, #1 on ability, #1 on readiness, #1 on chance, morning-line favourite, top earner per start, and #1 on rank score. A horse carrying two or more is shown in solid. These tags change no chance, pick, tier or bet. Race facts also say whether the race shapes up as a two-horse race or is wide open, from how much of the chance the top two horses hold.</p>
       <h3>First-time starters</h3>
       <p>A first-time starter has no past performances to read, so the board never names one as its pick. When one leads the ranking the card says so and gives no pick and no bet; the best horse that has raced is listed in Race facts. In the past performances the <b>Run</b> column shows a past race's running line — positions at the first call, second call, stretch and finish, with the field size — and the early-speed note quotes the last race's running line so the number can be checked against it.</p>
       <h3>Warning chips</h3>
@@ -6032,6 +6035,7 @@ async function runPeers(){
   });
   // v3.30: the verdicts depend on AI(2)'s model pick - redraw them now it is in.
   try { if (window.__ccRaceSummaries) renderPicks(window.__ccRaceSummaries); } catch(e){}
+  try { if (window.__ccRaceSummaries && typeof renderFactsTab === 'function') renderFactsTab(window.__ccRaceSummaries); } catch(e){}   // v4.48: Race facts carry the AI(2) signal tag, so redraw them too
 }
 // v3.30 - AI(2)'s model pick for a race (null while it is still running or failed)
 function ai2ModelPick(rs){
@@ -7030,6 +7034,52 @@ function raceFactsTable(rs, extra, label){
 }
 // v4.37 (display only; layout borrowed from the ChatGPT build Robert preferred): RS, CS and the chance in their own columns next to the
 // name, For / Against beside them, the board's pick marked, a banner over each first-time starter, first two columns frozen.
+// v4.48 (Robert, Belmont 10/30): the winners that day carried signals the low-confidence label cannot lift. Race facts now shows, in bold under each horse, which of seven
+// signals it carries: AI(2)'s pick, #1 ability, #1 readiness, #1 chance, morning-line favourite, top earner per start, #1 rank score. Display only: no chance, pick, tier or bet changes
+// (the board's chance already tracks these horses: 2-3 signals shown 20.6%, won 22.2%; 4+ signals shown 30.0%, won 25.0%).
+function reviewScores(rs){
+  const live = (rs.horses || []).filter(x => !isScratchedNow(rs, x)); const out = new Map();
+  const num = v => { const x = Number(v); return (v !== null && v !== '' && v !== undefined && Number.isFinite(x)) ? x : null; };
+  const avg = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
+  const z = arr => { const ok = arr.filter(v => v != null); if (ok.length < 3) return arr.map(() => 0); const m = avg(ok); const sd = Math.sqrt(ok.reduce((t, v) => t + (v - m) * (v - m), 0) / ok.length); if (sd < 1e-9) return arr.map(() => 0); return arr.map(v => v == null ? 0 : Math.max(-2.5, Math.min(2.5, (v - m) / sd))); };
+  const F = live.map(h => {
+    const pr = h.ppRaces || []; const fins = pr.slice(0, 3).map(r => num(r.fin)).filter(x => x != null); const wk = h.ppWorks || [];
+    const L = pr.slice(0, 4).map(r => ({fin: num(r.fin), fade: (() => { try { return paceShapeText(r) === 'faded late' ? 1 : 0; } catch(e){ return 0; } })()}));
+    const lte = (num(h.ltStarts) > 0) ? num(h.ltEarn) / num(h.ltStarts) : null;
+    const a3 = num(h.avgSpd3), ls = num(h.lastSpd);
+    const cmove = (num(h.todayClassPar) != null && num(h.lastClassPar) != null) ? h.todayClassPar - h.lastClassPar : null;
+    const surfm = pr.length ? pr.slice(0, 3).filter(r => String(r.surf || '').charAt(0) === String(h.surface || '').charAt(0)).length : null;
+    return {a3, pp: num(h.score), bspd: num(h.bestSpd), ls, lteLog: lte ? Math.log(1 + lte) : null, lte,
+      itm: L.length ? L.slice(0, 3).filter(s0 => s0.fin && s0.fin <= 3).length / Math.max(1, L.slice(0, 3).length) : null,
+      nf: L.length ? L.reduce((t, s0) => t + s0.fade, 0) : null, trend: (ls != null && a3 != null) ? ls - a3 : null, finavg: fins.length ? avg(fins) : null,
+      cm: cmove != null ? -cmove / 4 : null, dsw: num(h.daysSinceWork), bullets: wk.filter(w => num(w.rank) === 1).length, nworks: wk.length,
+      exp: ((num(h.distStarts) || 0) > 0 ? 1 : 0) + ((surfm || 0) > 0 ? 1 : 0), lay: num(h.layoffDays), n: pr.length};
+  });
+  const layScore = d => d == null ? 0 : d <= 45 ? 0.2 : d <= 90 ? 0 : d <= 180 ? -0.4 : -0.9;
+  const zpp = z(F.map(f => f.pp)), zb = z(F.map(f => f.bspd)), zl = z(F.map(f => f.ls)), ze = z(F.map(f => f.lteLog)), za3 = z(F.map(f => f.a3));
+  const zitm = z(F.map(f => f.itm)), znf = z(F.map(f => f.nf == null ? null : -f.nf)), ztr = z(F.map(f => f.trend)), zfa = z(F.map(f => f.finavg == null ? null : -f.finavg)), zcm = z(F.map(f => f.cm));
+  const zwk = z(F.map(f => (f.dsw != null && f.dsw <= 14 ? 1 : 0) + (f.bullets ? 0.5 : 0) + (f.nworks >= 3 ? 0.5 : 0))), zex = z(F.map(f => f.exp));
+  live.forEach((h, i) => {
+    const ability = 0.30 * za3[i] + 0.30 * zpp[i] + 0.15 * zb[i] + 0.15 * zl[i] + 0.10 * ze[i];
+    const ready = 0.30 * zitm[i] + 0.20 * znf[i] + 0.15 * ztr[i] + 0.10 * zfa[i] + 0.10 * zcm[i] + 0.10 * zwk[i] + 0.05 * zex[i] + 0.5 * layScore(F[i].lay) - (F[i].n === 0 ? 0.35 : 0);
+    out.set(h, {ability, ready, lte: F[i].lte});
+  });
+  return out;
+}
+function reviewSignals(rs){
+  try {
+    const live = (rs.horses || []).filter(x => !isScratchedNow(rs, x)); if (live.length < 4) return null;
+    const sc = reviewScores(rs), ch = rscsChances(rs), mp = rscsMap(rs); const res = new Map(); live.forEach(h => res.set(h, []));
+    const top = (fn, better) => { let b = null, bv = null; live.forEach(h => { const v = fn(h); if (v == null) return; if (bv == null || better(v, bv)){ b = h; bv = v; } }); return b; };
+    const add = (h, t) => { if (h && res.get(h)) res.get(h).push(t); };
+    let a2 = null; if (typeof ai2Ready === 'function' && ai2Ready()) a2 = ai2ModelPick(rs);
+    if (a2){ const hh = live.find(x => x === a2 || normHorseName(x.horse) === normHorseName(a2.horse)); add(hh, "AI(2)'S PICK"); }
+    add(top(h => sc.get(h).ability, (v, b) => v > b), '#1 ABILITY'); add(top(h => sc.get(h).ready, (v, b) => v > b), '#1 READINESS');
+    add(top(h => ch.get(h) || 0, (v, b) => v > b), '#1 CHANCE'); add(top(h => { const d = parseOdds(h.mlOddsStr); return d == null ? 99 : d; }, (v, b) => v < b), 'MORNING-LINE FAVOURITE');
+    add(top(h => (sc.get(h).lte != null ? sc.get(h).lte : -1), (v, b) => v > b), 'TOP EARNER PER START'); add(top(h => { const v = (mp.get(h) || {}).rs; return v == null ? 99 : v; }, (v, b) => v < b), '#1 RANK SCORE');
+    return res;
+  } catch(e){ return null; }
+}
 function polishFactsTable(rs, extra, html){
   if (!html) return html;
   html = html.replace('first start: no record to price', 'no record');
@@ -7038,6 +7088,7 @@ function polishFactsTable(rs, extra, html){
   const table = t.content.querySelector('table.rf-t'); if (!table) return html;
   const trs = [...table.rows]; if (trs.length !== R.rows.length + 1) return html;
   const m = rscsMap(rs), ch = rscsChances(rs); let sel = null; try { sel = finalSelection(rs); } catch(e){}
+  const SIGS = reviewSignals(rs);
   let bestRs = Infinity, bestCh = 0;
   R.rows.forEach(f => { const v = m.get(f.h) || {}; if (v.rs != null && v.rs < bestRs) bestRs = v.rs; bestCh = Math.max(bestCh, ch.get(f.h) || 0); });
   const mk = (tag, inner, cls) => { const e = document.createElement(tag); if (cls) e.className = cls; e.innerHTML = inner; return e; };
@@ -7058,6 +7109,7 @@ function polishFactsTable(rs, extra, html){
     let r2 = tr.cells[1]; add.forEach(([x, c]) => { const td = mk('td', x, c); r2.after(td); r2 = td; });
     const hc = tr.cells[1]; const chip = hc.querySelector('.rf-rscs'); if (chip) chip.remove();
     if (sel && sel === h){ tr.classList.add('rf-sel'); hc.insertAdjacentHTML('afterbegin', '<span class="rf-pick">PICK</span> '); }
+    try { const sg = (SIGS && SIGS.get(h)) || []; if (sg.length) hc.insertAdjacentHTML('beforeend', '<div class="rf-sg' + (sg.length >= 2 ? ' multi' : '') + '">' + sg.map(t => '<b>' + escHtml(t) + '</b>').join('') + '</div>'); } catch(e){}
     if (!(h.ppRaces || []).length && !(h.ltStarts > 0)){
       const b = document.createElement('tr'); b.className = 'rf-fts';
       b.innerHTML = '<td colspan="' + nCols + '"><span class="rf-ftsin">FIRST-TIME STARTER \u2014 no race record \u00b7 morning line ' + escHtml(h.mlOddsStr || '?') + '</span></td>';
@@ -10398,7 +10450,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.47 · released 1 November 2026 · build 2026-11-01-e</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.48 · released 1 November 2026 · build 2026-11-01-f</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
