@@ -6845,8 +6845,9 @@ function nextRankedBlock(rs){
   const rk = (f) => { const r = rankIn(live, T, f); return r ? `#${r.rank}${r.tied ? '=' : ''}` : '\u2014'; };
   const fig = v => v == null ? '\u2014' : Math.round(v);
   const debut = !(T.ppRaces || []).length;
-  return `<div class="dc-box sep-box sep-plain"><div class="sep-threat" style="margin-top:0"><b>NEXT RANKED:</b> ${horseLabel(T)} \u00b7 `
-    + (debut ? 'first-time starter' : `last figure ${fig(T.lastSpd)} ${rk(x => x.lastSpd)} \u00b7 3-race avg ${fig(avg3Of(T))} \u00b7 Prime Power ${T.rawPP != null ? Math.round(T.rawPP) : '\u2014'} ${rk(x => x.rawPP)} \u00b7 CORE ${coreConfirmations(rs, T).count} of 3`)
+  const __rs = ranked[1].score;   // v4.49 (Robert): name the rank itself, not "next ranked"
+  return `<div class="dc-box sep-box sep-plain"><div class="sep-threat" style="margin-top:0"><b>RANK #2${__rs != null ? ' (RS ' + __rs + ')' : ''}:</b> ${horseLabel(T)} \u00b7 `
+    + (debut ? 'first-time starter' : `last figure ${fig(T.lastSpd)} ${rk(x => x.lastSpd)} \u00b7 3-race avg ${fig(avg3Of(T))} ${rk(x => avg3Of(x))} \u00b7 Prime Power ${T.rawPP != null ? Math.round(T.rawPP) : '\u2014'} ${rk(x => x.rawPP)} \u00b7 CORE ${coreConfirmations(rs, T).count} of 3`)
     + ` \u00b7 ${speedFacts(rs, T)}</div></div>`;
 }
 
@@ -10464,7 +10465,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.49 · released 1 November 2026 · build 2026-11-01-h</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.49 · released 1 November 2026 · build 2026-11-01-i</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
