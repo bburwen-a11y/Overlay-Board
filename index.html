@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.51 — Race Card Reader</title>
+<title>Overlay Board v4.53 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1280,6 +1280,7 @@
 .hhd-r1{display:flex;align-items:flex-start;gap:8px;justify-content:space-between}
 .hhd-chip{font-family:var(--mono);font-size:11px;font-weight:800;border:1px solid #8a8168;border-radius:999px;padding:2px 8px;background:#fff;white-space:nowrap}
 .hhd-sub{flex:1;font-size:11.5px;color:#6b6250;padding-top:3px}
+.hhd-att{font-family:var(--mono);font-size:10px;font-weight:800;letter-spacing:.08em;color:#17312a;margin:2px 0 8px}
 .hhd-share{text-align:right;line-height:1}.hhd-share b{font-family:var(--mono);font-size:26px;color:#173f26}.hhd-share small{display:block;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:#6b6250}
 .hhd-pick{display:flex;align-items:center;gap:8px;margin:6px 0 2px;flex-wrap:wrap}
 .hhd-no{background:#173f26;color:#fff;font-weight:800;border-radius:6px;padding:3px 8px;font-size:17px}
@@ -1323,7 +1324,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.51</span> · released 5 November 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.53</span> · released 5 November 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -8110,6 +8111,7 @@ function hhDecision(html, rs){
   const type = q('.dc-type'); const nm = m[3];
   return `<div class="hhd hhd-${cls}${isFts ? ' hhd-fts' : ''}${livePass ? ' hhd-livepass' : ''} race-anchor-target" id="pick-r${escAttr(race)}">`
     + `<div class="hhd-r1"><span class="hhd-chip">RACE ${escHtml(race)}</span><span class="hhd-sub">${escHtml(sub)}</span><div class="hhd-share">${isFts ? '<b>\u2014</b><small>no record</small>' : `<b>${escHtml(m[5])}%</b><small>chance</small>`}</div></div>`
+    + attentionLine(rs, isBet)
     + `<div class="hhd-pick"><span class="hhd-no">#${escHtml(m[2])}</span><a href="#" class="pp-link hhd-name" data-pp-race="${escAttr(race)}" data-pp-horse="${escAttr(nm)}">${escHtml(nm)}</a><span class="hhd-ml">${escHtml(m[4])}</span></div>`
     + `<div class="hhd-lab">${isFts ? 'FIRST-TIME STARTER LEADS THE RANKING \u00b7 NO RECORD TO READ' : escHtml(m[1]) + (prioTxt ? ' \u00b7 ' + escHtml(prioTxt) : '')}</div>`
     + (isFts ? `<div class="hhd-act"><b>NO PICK, NO BET</b></div><div class="hhd-why">A first-time starter has no past performances to read. The best horse that has raced is in Race facts.</div>` : act ? `<div class="hhd-act"><b>${escHtml(livePass ? 'PASS \u2014 no bet at this price' : act)}</b></div>` + (why ? `<div class="hhd-why">${escHtml(why)}</div>` : '') : '')
@@ -9010,6 +9012,15 @@ function decisionSortMode(){ try { return window.__sortMode || localStorage.getI
 function setDecisionSort(m){ window.__sortMode = m; try { localStorage.setItem('ob_sort', m); } catch(e){} try { if (window.__ccRaceSummaries) renderPicks(window.__ccRaceSummaries); } catch(e){ console.error(e); }
   // v4.21: jump back to the top of the list so the new order is visible straight away
   try { const L = document.getElementById('pickList'); if (L) L.scrollIntoView({block: 'start'}); } catch(e){} }
+// v4.53 (Robert, 5 Nov: "the order was supposed to be which races deserve my attention and in what order"): in Attention order each card says where it stands and why.
+function attentionLine(rs, isBet){
+  try {
+    if (decisionSortMode() !== 'focus' || !rs.__bestOrder) return '';
+    const n = (window.__ccRaceSummaries || []).length; let cf = null; try { cf = confidenceOf(rs); } catch(e){}
+    const why = isBet ? 'WIN BET' : (cf ? (cf.level === 'HIGH' ? 'HIGH CONFIDENCE' : cf.level === 'MODERATE' ? 'MODERATE CONFIDENCE' : 'LOW CONFIDENCE \u00b7 SECOND LOOK') : '');
+    return '<div class="hhd-att">ATTENTION ' + rs.__bestOrder + ' OF ' + n + (why ? ' \u00b7 ' + why : '') + '</div>';
+  } catch(e){ return ''; }
+}
 function sortedForDecisions(raceSummaries){
   const L = raceSummaries.slice();
   if (decisionSortMode() !== 'focus') return L;
@@ -9018,9 +9029,11 @@ function sortedForDecisions(raceSummaries){
   // v4.21: races with a win bet first (best tier first), then the others by their top pick's chance
   const out = L.map((rs, i) => { let t = 9, c = 0;
     try { const x = winTier(rs); t = x ? x.t : 9; const xb = extraBets(rs); if (t > 4 && xb.length) t = xb.some(b => b.type === 'FIGURE') ? 4.5 : 4.8; } catch(e){}
-    try { const ch = rscsChances(rs); c = Math.max(0, ...ch.values()); } catch(e){} try { const cf = confidenceOf(rs); if (cf) c = cf.p; } catch(e){}
-    return {rs, i, t, c, bet: t <= 4.5}; })   // v4.23: a value-dropper-only race is a long-shot side bet, ordered by the race itself
-    .sort((a, b) => (b.bet - a.bet) || (a.bet ? a.t - b.t : 0) || (b.c - a.c) || (a.i - b.i));
+    let lv = 0; try { const ch = rscsChances(rs); c = Math.max(0, ...ch.values()); } catch(e){} try { const cf = confidenceOf(rs); if (cf){ c = cf.p; lv = cf.level === 'HIGH' ? 3 : cf.level === 'MODERATE' ? 2 : 1; } } catch(e){}
+    return {rs, i, t, c, lv, bet: t <= 4.5}; })   // v4.23: a value-dropper-only race is a long-shot side bet, ordered by the race itself
+    // v4.52 (Robert, 5 Nov, Belmont 10/4: a LOW race 4 was listed above a MODERATE race 2): confidence level first, then the blended number. Over the 62 cards the pick won
+    // 67.7% in the first race of each card this way (61.3% by the blended number alone, 53.2% by the shown chance).
+    .sort((a, b) => (b.bet - a.bet) || (a.bet ? a.t - b.t : 0) || (b.lv - a.lv) || (b.c - a.c) || (a.i - b.i));
   out.forEach((x, k) => { x.rs.__bestOrder = k + 1; x.rs.__bestLabel = (k === 0 && x.t <= 4.5); });
   return out.map(x => x.rs);
 }
@@ -9727,7 +9740,7 @@ function renderPicks0(raceSummaries){
   const index = buildBoardIndex(raceSummaries);
   const __ordered = sortedForDecisions(raceSummaries);
   const verdicts = buildVerdictBoard(__ordered);
-  const __sortBar = `<div class="sort-bar">Sort: <button type="button" class="sort-btn${decisionSortMode() !== 'focus' ? ' on' : ''}" onclick="setDecisionSort('race')">Race number</button><button type="button" class="sort-btn${decisionSortMode() === 'focus' ? ' on' : ''}" onclick="setDecisionSort('focus')">Best first</button></div>`;
+  const __sortBar = `<div class="sort-bar">Sort: <button type="button" class="sort-btn${decisionSortMode() !== 'focus' ? ' on' : ''}" onclick="setDecisionSort('race')">Race number</button><button type="button" class="sort-btn${decisionSortMode() === 'focus' ? ' on' : ''}" title="The races in the order they deserve your attention: win bets first, then by confidence level, then by the blended number" onclick="setDecisionSort('focus')">Attention order</button></div>`;
   // v2.91: the verdicts lead the board on every card, plays or not.
   const __blocks = decisionSortMode() === 'focus' ? __ordered.map(rs => blocks[raceSummaries.indexOf(rs)]) : blocks;
   // v4.17 (Robert, 26 Oct): the race-plans list is removed; the Decision board goes straight to each race's decision
@@ -10500,7 +10513,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.51 · released 5 November 2026 · build 2026-11-05-b</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.53 · released 5 November 2026 · build 2026-11-05-d</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
