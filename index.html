@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.49 — Race Card Reader</title>
+<title>Overlay Board v4.51 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -721,7 +721,14 @@
      can register as a tap instead of the scroll it was meant to be. */
   .pp-link{color:inherit; text-decoration:underline dotted; text-underline-offset:3px; cursor:pointer; touch-action:manipulation;}
   .pp-link:hover, .pp-link:active{color:var(--amber-dim);}
-  #ppOverlay{display:none; position:fixed; inset:0; background:rgba(15,42,32,.55); z-index:50; overflow-y:auto; padding:16px;}
+  /* v4.49 (Robert, 2 Nov: the past-performance panel stopped partway down the screen on the phone and the page showed through underneath): the panel is pinned to the whole
+     screen with the dynamic viewport height, scrolls on its own without passing the scroll to the page behind it, and the page behind is locked while it is open. */
+  .plays-strip{margin:8px 0 12px; font-family:var(--mono); font-size:11px; letter-spacing:.04em; color:var(--ink);}
+  .plays-strip b{display:block; margin-bottom:4px;}
+  .plays-strip .race-chip{margin:0 6px 6px 0; white-space:normal; text-align:left;}
+  #ppOverlay{display:none; position:fixed; top:0; right:0; bottom:0; left:0; width:100%; height:100vh; height:100dvh; background:rgba(15,42,32,.55); z-index:50; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; padding:16px; box-sizing:border-box; transform:translateZ(0);}
+  body.pp-open{position:fixed; left:0; right:0; width:100%; overflow:hidden;}
+  body.printing-pp.pp-open{position:static !important; overflow:visible !important; top:auto !important;}
   #ppOverlay.show{display:block;}
   .pp-card{max-width:720px; margin:24px auto; background:var(--paper); border-radius:4px; border:1px solid var(--paper-line); padding:18px 16px 22px; position:relative;}
   .pp-close{position:absolute; top:10px; right:12px; background:none; border:none; font-size:20px; color:var(--ink-soft); cursor:pointer;}
@@ -1316,7 +1323,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.49</span> · released 1 November 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.51</span> · released 5 November 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -1412,7 +1419,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
     <div class="status no-print" id="printStatus"></div>
 
     <div class="tabbar no-print" id="tabbar" style="display:none;">
-      <button data-tab="picks" id="tabPicks" class="on">Decisions<span class="tab-count" id="pickCount">0</span></button>
+      <button data-tab="picks" id="tabPicks" class="on">Decisions<span class="tab-count" id="pickCount" title="races with a win bet: a tier win bet or a figure-leader win bet">0</span></button>
       <button data-tab="field">Race card</button>
       <button data-tab="facts">Race facts</button>
       <button data-tab="help">Help</button>
@@ -9092,6 +9099,30 @@ function priorityHTML(rs){
   return `<div class="prio prio-${isBet ? (c.level === 'LOW' ? 'consider' : cls) : cls}"><b>${head}</b>`
     + `<details class="prio-d"><summary>how this is worked out</summary><div class="prio-why">#${escHtml(c.h.post || '?')} ${escHtml(c.h.horse)}: blended chance ${pctTxt}% \u2014 the morning-line price and the board's own chance weighed together, about 2 to 1. HIGH starts at 45%, MODERATE at 35%; if AI(2) ranks a different horse first, or the pick faded late in most of its last three races, the level is one step lower for each.${note}</div></details></div>`;
 }
+// v4.50 (Robert, 5 Nov: "I see decision is 2 but what are they"): the number on the Decisions tab counts the races with a win bet,
+// not the first cards on the page. This strip names them and jumps to each card.
+function playRaces(raceSummaries){
+  // v4.51 (Robert, 5 Nov: "only win bets"): the Decisions number and the line under it count win bets only - a tier win bet or a figure-leader win bet. Exacta plays are not counted.
+  const out = [];
+  raceSummaries.forEach(rs => {
+    let pl = null, xb = []; try { pl = racePlan(rs); } catch(e){} try { xb = extraBets(rs); } catch(e){}
+    const win = !!(pl && pl.win), fig = !win && xb.length > 0;
+    if (win || fig) out.push({rs, kind: win ? 'win bet' : 'figure-leader win bet'});
+  });
+  return out;
+}
+function playsStripHTML(raceSummaries){
+  try {
+    const plays = playRaces(raceSummaries);
+    if (!plays.length) return '<div class="plays-strip"><b>WIN BETS ON THIS CARD: none.</b> Every race is a pass or a no-bet.</div>';
+    const chips = plays.map(p => {
+      let fs = null; try { fs = finalSelection(p.rs); } catch(e){}
+      const nm = fs ? ' \u00b7 #' + escHtml(fs.post || '?') + ' ' + escHtml(fs.horse) : '';
+      return `<button class="race-chip green" data-goto="pick-r${escAttr(p.rs.race)}">R${escHtml(p.rs.race)}${nm} \u00b7 ${p.kind}</button>`;
+    }).join('');
+    return `<div class="plays-strip"><b>WIN BETS ON THIS CARD (${plays.length}):</b> ${chips}</div>`;
+  } catch(e){ return ''; }
+}
 function confStripHTML(raceSummaries){
   try {
     const hi = [], bets = [];
@@ -9700,8 +9731,9 @@ function renderPicks0(raceSummaries){
   // v2.91: the verdicts lead the board on every card, plays or not.
   const __blocks = decisionSortMode() === 'focus' ? __ordered.map(rs => blocks[raceSummaries.indexOf(rs)]) : blocks;
   // v4.17 (Robert, 26 Oct): the race-plans list is removed; the Decision board goes straight to each race's decision
-  list.innerHTML = __sortBar + confStripHTML(raceSummaries) + scorecardHTML() + __blocks.join('');   // v3.50: the old summary lists and the old per-race index are retired - the race plans are the one call
-  document.getElementById('pickCount').textContent = raceSummaries.filter(rs => racePlan(rs).play).length;
+  list.innerHTML = __sortBar + playsStripHTML(raceSummaries) + confStripHTML(raceSummaries) + scorecardHTML() + __blocks.join('');   // v3.50: the old summary lists and the old per-race index are retired - the race plans are the one call
+  document.getElementById('pickCount').textContent = playRaces(raceSummaries).length;
+  list.querySelectorAll('.plays-strip .race-chip').forEach(b => b.addEventListener('click', () => { const el = document.getElementById(b.dataset.goto); if (el && el.tagName === 'DETAILS') el.open = true; if (el) el.scrollIntoView({behavior:'smooth', block:'start'}); }));
   bindTapHandlers(list);
   // The race-number block carries its own handler: bindTapHandlers keys off
   // .race-jump + data-jump, and wrapping the number in that anchor let other
@@ -10141,8 +10173,11 @@ function ppBackLabel(){
   return ppReturn && ppReturn.label ? `\u25C0 Back to ${escHtml(ppReturn.label)}` : '\u25C0 Back';
 }
 
+let __ppScrollY = 0;
+function ppLock(){ const b = document.body; if (b.classList.contains('pp-open')) return; __ppScrollY = window.pageYOffset || document.documentElement.scrollTop || 0; b.style.top = (-__ppScrollY) + 'px'; b.classList.add('pp-open'); }
+function ppUnlock(){ const b = document.body; if (!b.classList.contains('pp-open')) return; b.classList.remove('pp-open'); b.style.top = ''; window.scrollTo(0, __ppScrollY); }
 function closePPOverlay(){
-  document.getElementById('ppOverlay').classList.remove('show');
+  document.getElementById('ppOverlay').classList.remove('show'); ppUnlock();
   const r = ppReturn;
   ppReturn = null;
   if (!r) return;
@@ -10213,7 +10248,7 @@ function openRacePP(race, filter, focusName){
      ${matchups}
      ${blocks}${PP_FOOT}`;
   document.querySelector('.pp-card').classList.add('pp-race-card');
-  document.getElementById('ppOverlay').classList.add('show');
+  document.getElementById('ppOverlay').classList.add('show'); ppLock();
   document.getElementById('ppContent').querySelectorAll('[data-pp-goto]').forEach(b =>
     b.addEventListener('click', e => { e.preventDefault(); e.stopPropagation();
       openRacePP(b.dataset.ppGoto);
@@ -10236,7 +10271,7 @@ function openPP(race, horseName){
   if (!h) return;
   document.getElementById('ppContent').innerHTML = `<button class="pp-back">${ppBackLabel()}</button>` + ppHorseBlock(h, race, true, true) + PP_FOOT;
   document.querySelector('.pp-card').classList.remove('pp-race-card');
-  document.getElementById('ppOverlay').classList.add('show');
+  document.getElementById('ppOverlay').classList.add('show'); ppLock();
 }
 
 function bindTapHandlers(root){
@@ -10465,7 +10500,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.49 · released 1 November 2026 · build 2026-11-01-i</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.51 · released 5 November 2026 · build 2026-11-05-b</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
