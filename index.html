@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.57 — Race Card Reader</title>
+<title>Overlay Board v4.61 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1328,7 +1328,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.57</span> · released 5 November 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.61</span> · released 6 November 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -1506,7 +1506,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
 
       <div class="help-block">
         <h3>When the two methods disagree</h3>
-        <p>If AI(1) and AI(2) rank different horses first, the race is labelled: <b>SPLIT ON THE ORDER</b> (7 or fewer runners and AI(2)'s horse is AI(1)'s #2); <b>SMALL FIELD, SPLIT</b> (8 or fewer, not a maiden, AI(2)'s horse in AI(1)'s top 3 — use both on top, with the next horse); otherwise <b>SPLIT</b>. Whether the race is a two-horse race or wide open is a separate fact, from how much of the chance the top two horses hold (Shape of the race).</p>
+        <p>If AI(1) and AI(2) rank different horses first, one short panel names the two horses and gives the class record of past disagreements, the one fact that has separated them: in allowance and maiden claiming races AI(1) has done much better, in maiden special weight somewhat better, and in claiming races the two have been even. Whether the race is a two-horse race or wide open is a separate fact, from how much of the chance the top two horses hold (Shape of the race).</p>
         <h3>Tiers and percentages</h3>
         <p>Each race shows a tier for its named horse and the share of such horses that won on the cards in the pack: <b>Tier 1</b> DEFINITIVE with a clear #1 in a race that passes the race screen (73%) · <b>Tier 2</b> DEFINITIVE (71%) · <b>Tier 3</b> SOLID PICK (53%) · <b>Tier 4</b> CONDITIONAL, when 2-1 or higher at post (82%) · <b>Tier 5</b> top pick with HIGH confidence, no win bet (72%) · <b>Tier 6</b> top pick with MODERATE confidence, no win bet (51%) · <b>Tier 7</b> top pick with LOW confidence, no win bet (27%). Confidence is the pick's blended chance, the morning-line price and the board's own chance weighed together: HIGH is 45% or more (such picks won 79% of the time), MODERATE 35% to 45% (53%), LOW under 35% (29%). When AI(2) ranks a different horse first the level drops one step. Tiers 1-3 are bets, Tier 4 only at 2-1 or higher; Tiers 5-7 carry no win-bet edge and say so. These are past results on the pack's cards, which the rules were built from; on new cards expect them to run a few points lower. When you record winners on the race cards, the percentages blend in your own results, and the scorecard at the top of the board shows how each tier, bet type and confidence level is doing.</p>
         <h3>BET — SOLID PICK</h3>
@@ -3350,7 +3350,7 @@ document.getElementById('computeBtn').addEventListener('click', () => {
       const parts = [];
       const h2h = horses.find(h => h.h2hNote);
       if (h2h) parts.push(`Head-to-head: ${h2h.h2hNote}`);
-      const shape = speedShape(horses);
+      const shape = winnerOnly() ? null : speedShape(horses);   // v4.58: the lone-speed and contested-speed sentences are hidden in Winner details only
       if (shape){
         if (shape.lone){
           parts.push(`<b>Lone speed: ${escHtml(shape.top.horse)}</b> (${shape.top.quirin} speed pts, ${shape.gap} clear of ${shape.second ? escHtml(shape.second.horse) : 'the field'})`);
@@ -3455,7 +3455,7 @@ document.getElementById('computeBtn').addEventListener('click', () => {
     .sort((a,b) => Number(a.race) - Number(b.race));
 
   window.__ccRaceSummaries = raceSummaries;
-  renderRaceCard(raceSummaries, scratchedCount);
+  window.__scratchedCount = scratchedCount; renderRaceCard(raceSummaries, scratchedCount);
   renderPicks(raceSummaries);
   renderContenders(raceSummaries);
   renderFactsTab(raceSummaries);
@@ -6087,7 +6087,7 @@ function crossCheckBlockHTML(rs){
   if (P && other && mine){
     agree = other === mine
       ? `<div class="cc-agree cc-all"><b>CONCURRENT</b> \u2014 both rank <b>${escHtml(mine.horse)}</b> first.</div>`
-      : `<div class="cc-agree cc-none"><b>DIFFERENT</b> \u2014 AI(1) ranks ${escHtml(mine.horse)} first, AI(2) ranks ${escHtml(other.horse)} first.</div>`;   // v4.36: the WIDE OPEN / TWO-HORSE note is already shown on the card
+      : '';   // v4.36: the WIDE OPEN / TWO-HORSE note is already shown on the card
   }
   return `<div class="cc-block" data-race="${escAttr(race)}">
     <div class="cc-head">Concurrence \u2014 two ranking methods on this field</div>
@@ -6386,7 +6386,7 @@ function noPickContenders(rs, flagged){
     if (a != null) bits.push(`last-3 avg ${a.toFixed(1)}${f.a3 ? ` (#${f.a3.rank}${f.a3.tied ? ' tied' : ''})` : ''}`);
     if (f.lf) bits.push(`last ${Math.round(f.lf.value)} (#${f.lf.rank}${f.lf.tied ? ' tied' : ''})`);
     if (f.pp) bits.push(`Prime Power #${f.pp.rank}${f.pp.tied ? ' tied' : ''}`);
-    bits.push(`CORE ${f.core.count} of 3`);
+    if (!winnerOnly()) bits.push(`CORE ${f.core.count} of 3`);
     const rec = (h.ppRaces || []).slice(0, 4).filter(q => q.fin != null && !isNaN(parseInt(q.fin, 10)));
     if (rec.length) bits.push(`${rec.filter(q => parseInt(q.fin, 10) <= 3).length} of last ${rec.length} in the money`);
     else bits.push('no starts');
@@ -6865,7 +6865,7 @@ function nextRankedBlock(rs){
   const debut = !(T.ppRaces || []).length;
   const __rs = ranked[1].score;   // v4.49 (Robert): name the rank itself, not "next ranked"
   return `<div class="dc-box sep-box sep-plain"><div class="sep-threat" style="margin-top:0"><b>RANK #2${__rs != null ? ' (RS ' + __rs + ')' : ''}:</b> ${horseLabel(T)} \u00b7 `
-    + (debut ? 'first-time starter' : `last figure ${fig(T.lastSpd)} ${rk(x => x.lastSpd)} \u00b7 3-race avg ${fig(avg3Of(T))} ${rk(x => avg3Of(x))} \u00b7 Prime Power ${T.rawPP != null ? Math.round(T.rawPP) : '\u2014'} ${rk(x => x.rawPP)} \u00b7 CORE ${coreConfirmations(rs, T).count} of 3`)
+    + (debut ? 'first-time starter' : `last figure ${fig(T.lastSpd)} ${rk(x => x.lastSpd)} \u00b7 3-race avg ${fig(avg3Of(T))} ${rk(x => avg3Of(x))} \u00b7 Prime Power ${T.rawPP != null ? Math.round(T.rawPP) : '\u2014'} ${rk(x => x.rawPP)}${winnerOnly() ? '' : ` \u00b7 CORE ${coreConfirmations(rs, T).count} of 3`}`)
     + ` \u00b7 ${speedFacts(rs, T)}</div></div>`;
 }
 
@@ -6902,7 +6902,7 @@ function pickSeparationBlock(rs, P){
   const T = d.T;
   const fig = v => v == null ? '\u2014' : Math.round(v);
   return `<div class="dc-box sep-box ${d.cls}">${d.label ? `<span class="sep-badge">${escHtml(d.label)}</span> ${escHtml(d.text)}` : ''}`
-    + `<div class="sep-threat"${d.label ? '' : ' style="margin-top:0"'}><b>MAIN THREAT:</b> ${horseLabel(T)}${d.isH2H ? ' \u00b7 H2H' : ''} \u00b7 3-race avg ${fig(d.aT)} (fig fav ${fig(d.aP)}) \u00b7 last figure ${fig(T.lastSpd)} (fig fav ${fig(P.lastSpd)}) \u00b7 Prime Power ${T.rawPP != null ? Math.round(T.rawPP) : '\u2014'} (fig fav ${P.rawPP != null ? Math.round(P.rawPP) : '\u2014'}) \u00b7 CORE ${d.cT.count} of 3 (fig fav ${d.cP.count} of 3) \u00b7 ${speedFacts(rs, T)} (fig fav: ${speedFacts(rs, P)})</div>`
+    + `<div class="sep-threat"${d.label ? '' : ' style="margin-top:0"'}><b>MAIN THREAT:</b> ${horseLabel(T)}${d.isH2H ? ' \u00b7 H2H' : ''} \u00b7 3-race avg ${fig(d.aT)} (fig fav ${fig(d.aP)}) \u00b7 last figure ${fig(T.lastSpd)} (fig fav ${fig(P.lastSpd)}) \u00b7 Prime Power ${T.rawPP != null ? Math.round(T.rawPP) : '\u2014'} (fig fav ${P.rawPP != null ? Math.round(P.rawPP) : '\u2014'}) \u00b7 ${winnerOnly() ? '' : `CORE ${d.cT.count} of 3 (fig fav ${d.cP.count} of 3) \u00b7 `}${speedFacts(rs, T)} (fig fav: ${speedFacts(rs, P)})</div>`
     + (d.isH2H ? h2hThreatLine(rs, P) : '')
     + `</div>`;
 }
@@ -7250,7 +7250,7 @@ function buildPick0(rs){
     const a3 = rankIn(live, h, y => avg3Of(y)), lf = rankIn(live, h, y => y.lastSpd), pp = rankIn(live, h, y => y.rawPP);
     const core = coreConfirmations(rs, h);
     const rk = r => r ? `#${r.rank}${r.tied ? '=' : ''}` : '\u2014';
-    const bits = [`<b>CORE ${core.count} of 3</b>`];
+    const bits = winnerOnly() ? [] : [`<b>CORE ${core.count} of 3</b>`];
     if (avg3Of(h) != null) bits.push(`Last-3 ${avg3Of(h).toFixed(1)} ${rk(a3)}`);
     if (h.lastSpd != null) bits.push(`Last ${Math.round(h.lastSpd)} ${rk(lf)}`);
     if (pp) bits.push(`Prime Power ${rk(pp)}`);
@@ -8095,7 +8095,7 @@ function hhDecision(html, rs){
   let livePass = false, liveNote = '';
   if (fsh && fsh.usedFinal && Number(fsh.decimalOdds) > 1 && /only if 2-1 or higher/i.test(tx('.vd-win'))){ const od = fsh.decimalOdds - 1; livePass = od < 2; liveNote = livePass ? `PASS \u2014 the price is ${od.toFixed(1)}-1, under the 2-1 this bet needs` : `Price check: ${od.toFixed(1)}-1 clears the 2-1 line`; }
   const cls = isFts ? 'low' : isBet ? 'bet' : (prio && /prio-focus/.test(prio.className)) ? 'high' : (prio && /prio-consider/.test(prio.className)) ? 'mod' : 'low';
-  const flags = [...root.querySelectorAll('.pace-flag, .dis')]; let pace = ''; const chips = [];
+  const flags = [...root.querySelectorAll('.pace-flag, .dis:not(.dis-panel)')]; let pace = ''; const chips = [];
   flags.forEach(f => { const x = f.textContent.replace(/\s+/g, ' ').trim(); if (/^\u26a1/.test(x) && !pace){ pace = x.replace(/^\u26a1\s*/, ''); const k = pace.search(/\.\s/); if (k > 25) pace = pace.slice(0, k + 1); if (pace.length > 130) pace = pace.slice(0, 127).replace(/\s+\S*$/, '') + '\u2026'; } else chips.push(hhLabel(x)); });
   const sub = tx('.race-hd-sub').replace(/^[\s\u00b7]+/, '');
   let __cc = null; try { __cc = confidenceOf(rs); } catch(e){}
@@ -8117,7 +8117,8 @@ function hhDecision(html, rs){
       }
     }
   } catch(e){}
-  const act = tx('.vd-tier'), why = tx('.vd-why'), win = tx('.vd-win'), ai = tx('.cc-line');
+  const act = tx('.vd-tier'), why = tx('.vd-why'), win = tx('.vd-win'); let ai = tx('.cc-line');
+  const __dp = root.querySelector('.dis-panel'); if (__dp) ai = [...__dp.children].map(e => e.textContent.replace(/\s+/g, ' ').trim()).join(' \u00b7 ');
   const tier = q('.tier'); const xb = [...root.querySelectorAll(':scope .xbet')].map(e => e.outerHTML).join('');
   const type = q('.dc-type'); const nm = m[3];
   return `<div class="hhd hhd-${cls}${isFts ? ' hhd-fts' : ''}${livePass ? ' hhd-livepass' : ''} race-anchor-target" id="pick-r${escAttr(race)}">`
@@ -8679,7 +8680,7 @@ function speedFavHTML(rs){
 // poor-record-on-today's-surface chip, CORE lines, the second-look list, and the signal tags that did not help (#1 readiness, #1 rank score, top earner). The switch brings them back.
 function winnerOnly(){ try { return window.__winnerOnly != null ? window.__winnerOnly : (localStorage.getItem('ob_winner_only') !== '0'); } catch(e){ return true; } }
 function setWinnerOnly(v){ window.__winnerOnly = !!v; try { localStorage.setItem('ob_winner_only', v ? '1' : '0'); } catch(e){}
-  try { if (window.__ccRaceSummaries){ renderPicks(window.__ccRaceSummaries); if (typeof renderFactsTab === 'function') renderFactsTab(window.__ccRaceSummaries); } } catch(e){ console.error(e); } }
+  try { if (window.__ccRaceSummaries){ try { renderRaceCard(window.__ccRaceSummaries, window.__scratchedCount || 0); } catch(e){ console.error(e); } renderPicks(window.__ccRaceSummaries); if (typeof renderFactsTab === 'function') renderFactsTab(window.__ccRaceSummaries); } } catch(e){ console.error(e); } }
 function rsLeaderNote(rs){
   try {
     const rf = rankedField(rs, []); if (rf.length < 2) return '';
@@ -8736,17 +8737,26 @@ function disagreeCategory(rs){
   if (n <= 8 && a2rank >= 1 && a2rank <= 3) { const third = rf.find(r => r.h !== o2 && r.h !== top); return {cat: 'split', text: `SMALL FIELD, SPLIT: ${lab(top)} and ${lab(o2)} on top${third ? ', with #' + (third.h.post || '?') + ' ' + third.h.horse + ' next' : ''}.`}; }
   return {cat: 'open', text: `SPLIT \u2014 the two methods disagree (${lab(top)} / ${lab(o2)}) and neither has a clear hold on this race.`};
 }
+// v4.60 (Robert, 6 Nov: "make them relevant to the specific situation ... less is best"): when AI(1) and AI(2) rank different horses first, one short panel - the two horses and the
+// one fact that has separated them. Over 62 cards (232 races where they disagreed) class was the only fact that did; AI(2)'s price, rank score, case and pace did not.
+function disagreePanel(rs){
+  try {
+    const o2 = ai2ModelPick(rs); if (!o2) return null; let top = null; try { top = finalSelection(rs); } catch(e){} if (!top) return null; if (o2 === top) return null;
+    const live = (rs.horses || []).filter(h => !isScratchedNow(rs, h)); const t = String((live[0] || {}).ai3RaceType || '').toUpperCase();
+    const nm = h => '#' + (h.post || '?') + ' ' + h.horse; let cls, line, lean;
+    if (['A', 'AO', 'N', 'NO', 'R'].includes(t)){ cls = 'Allowance'; line = 'in past disagreements AI(1) won about 38% and AI(2) about 16%.'; lean = 'Lean AI(1).'; }
+    else if (['M', 'MO'].includes(t)){ cls = 'Maiden claiming'; line = 'AI(1) won about 36% and AI(2) about 9% (small sample).'; lean = 'Lean AI(1).'; }
+    else if (t === 'S'){ cls = 'Maiden special weight'; line = 'AI(1) won about 24% and AI(2) about 12%; the edge was smaller in the later half.'; lean = 'Slight lean to AI(1).'; }
+    else if (['C', 'CO'].includes(t)){ cls = 'Claiming'; line = 'the two have been even, about 22% each.'; lean = 'No edge either way.'; }
+    else { cls = 'This class'; line = 'too few past disagreements to prefer either.'; lean = 'No preference.'; }
+    // v4.61: in a wide-open race (top two hold under 45% of the chance) or one with 10+ runners another horse won 71% to 73% of the disagreements (79% with both).
+    let wide = ''; try { const sh = raceShape(rs); if ((sh && sh.pct < 45) || live.length >= 10) wide = 'WIDE OPEN \u00b7 another horse has won about 7 times in 10 when the two disagreed in races like this.'; } catch(e){}
+    return {title: 'DISAGREEMENT \u2014 AI(1) ' + nm(top) + ' vs AI(2) ' + nm(o2), body: 'CLASS \u00b7 ' + cls + ': ' + line + ' ' + lean, wide};
+  } catch(e){ return null; }
+}
 function disagreeHTML(rs){
-  const d = disagreeCategory(rs); if (!d) return '';
-  let extra = '';
-  // v3.94 (BEL 10/22 R4, Emerald Ember): in a two-horse race, say when AI(2)'s horse is the morning-line favourite
-  if (d.cat === 'two'){
-    const o2 = ai2ModelPick(rs); const rf = rankedField(rs, []); const top = rf.length ? rf[0].h : null;
-    const live = (rs.horses || []).filter(h => !isScratchedNow(rs, h) && h.decimalOdds != null);
-    const fav = live.length ? live.reduce((a, b) => (b.decimalOdds < a.decimalOdds ? b : a)) : null;
-    if (o2 && fav === o2) extra = `<div class="dis-note">AI(2)'s horse #${escHtml(o2.post || '?')} ${escHtml(o2.horse)} is the morning-line favourite \u2014 in small-field races like this it has won more often than our #1, but at a short price.</div>`;
-  }
-  return `<div class="dis dis-${d.cat}">\u2696 ${escHtml(d.text)}${extra}</div>`;
+  const d = disagreePanel(rs); if (!d) return '';
+  return '<div class="dis dis-panel"><b>' + escHtml(d.title) + '</b><div>' + escHtml(d.body) + '</div>' + (d.wide ? '<div>' + escHtml(d.wide) + '</div>' : '') + '</div>';
 }
 
 // v3.90 (Robert, 20 Oct: "the program should be self learning"). Results you record are kept
@@ -10605,7 +10615,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.57 · released 5 November 2026 · build 2026-11-05-h</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.61 · released 6 November 2026 · build 2026-11-06-c</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
