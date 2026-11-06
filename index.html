@@ -3,14 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.61 — Race Card Reader</title>
+<title>Overlay Board v4.62 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
      reporting on iOS. onerror covers the script never arriving at all. -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"
-        crossorigin="anonymous"
-        onerror="window.__obPdfFailed = true;"></script>
 <style>
   :root{
     --board-950:#0F2A20;
@@ -1328,16 +1325,16 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.61</span> · released 6 November 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.62</span> · released 6 November 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
-    <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
+    <p class="tagline">Upload a Brisnet data file (.DRF, .csv or .zip). Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
 
   <main>
     <!-- STEP 1: UPLOAD -->
     <section class="no-print">
       <h2><span class="step-num">1</span> Bring in your data</h2>
-      <div class="upload-grid three-col">
+      <div class="upload-grid">
         <div class="upload-card">
           <h3>Brisnet data file</h3>
           <p>Brisnet’s <b>Single File</b> export, or a <b>multi-part</b> card (the four-file .DRF/.DR2/.DR3/.DR4 set some tracks ship). A <b>.zip</b> is fine and is opened for you — for a multi-part card send the whole zip, since the four files only work as a set. If .drf looks greyed out in the picker, rename it to .csv; the parser reads the contents, not the name.</p>
@@ -1345,28 +1342,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
           <input type="file" id="drfInput" accept=".drf,.dr2,.dr3,.dr4,.csv,.txt,.zip,text/csv,text/plain,text/*,application/zip">
           <div class="status" id="drfStatus"></div>
         </div>
-        <div class="upload-card">
-          <h3>Program PDF</h3>
-          <p>Brisnet-style past-performance sheet. Runs in the browser; if it hangs on a phone, use Paste text instead.</p>
-          <label class="file-btn" for="pdfInput">Choose PDF</label>
-          <input type="file" id="pdfInput" accept=".pdf">
-          <div class="callout callout-amber" id="pdfUnavailable" style="display:none;">
-            <div class="callout-head">PDF reading unavailable here</div>
-            This browser could not load the PDF reader. Use the data file, or open the PDF,
-            select all, copy and use <b>Paste text</b> — it reads the same content.
-          </div>
-          <div class="status" id="pdfStatus"></div>
-        </div>
-        <div class="upload-card">
-          <h3>Paste text</h3>
-          <p>Open the PDF, select all, copy, paste here. Same extraction as the PDF option and works everywhere.</p>
-          <textarea id="pdfPasteText" rows="4" placeholder="Paste program text here…"></textarea>
-          <div class="table-actions" style="margin-top:10px;">
-            <button class="small-btn" id="extractPasteBtn">Extract from pasted text →</button>
-          </div>
-          <div class="status" id="pdfPasteStatus"></div>
-        </div>
-      </div>
+              </div>
       <div class="scratch-panel" style="margin-top:16px;">
         <h3>Apply scratches from the Equibase feed</h3>
         <p>Load the data file above first, then choose the track’s <b>Changes &amp; Scratches</b> feed or paste it below. Scratches are ticked automatically by race and program number. Rider changes are flagged on the card, with the new rider’s meet record where the file has one.</p>
@@ -1450,7 +1426,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
 
       <div class="help-block help-guide">
       <h3>The tabs</h3>
-      <p><b>Decisions</b> — one card per race: the decision and nothing else. <b>Race card</b> — the full field, race by race, with <i>Full field</i> and <i>True contenders only</i> buttons. <b>Race facts</b> — one fold per race: the warnings and the reason for the pick, every horse side by side, contenders vs pretenders, form detail, previous meetings, and where you record the winner. Tap any horse name for its full past performances. <b>Printable page</b> — the card laid out for printing, with a <b>Save as PDF</b> button that makes a clean decision sheet and opens your phone's share sheet.</p>
+      <p><b>Decisions</b> — one card per race: the decision and nothing else. <b>Race card</b> — the full field, race by race, with <i>Full field</i> and <i>True contenders only</i> buttons. <b>Race facts</b> — one fold per race: the warnings and the reason for the pick, every horse side by side, contenders vs pretenders, form detail, and previous meetings. Tap any horse name for its full past performances. <b>Printable page</b> — the card laid out for printing, with a <b>Save as PDF</b> button that makes a clean decision sheet and opens your phone's share sheet.</p>
       <h3>Reading a decision card</h3>
       <p><b>Top row:</b> race number, distance and surface, class, number of runners, and the board's <b>chance</b> for its pick — that horse's share of the field's chance, worked out from the rank score and case score and then adjusted for the warnings (not a win probability or a price). The pick is the board's final selection after the warnings are weighed.</p>
       <p><b>Confidence level:</b> the pick's blended chance — the morning-line price and the board's own chance weighed together, about 2 to 1. HIGH is 45% or more, MODERATE 35% to 45%, LOW under 35%; if AI(2) ranks a different horse first, the level is one step lower. A race with a win bet reads BET RACE. Confidence says how likely the pick is to win; it is not a price check, which is what the bet tiers do.</p>
@@ -1674,20 +1650,6 @@ function __obReport(label, err){
     if (h) h.addEventListener('click', () => { document.getElementById('errBar').style.display = 'none'; });
   });
 })();
-function __obMarkPdfUnavailable(){
-  const note = document.getElementById('pdfUnavailable');
-  if (note) note.style.display = 'block';
-  const btn = document.querySelector('label[for="pdfInput"]');
-  if (btn) btn.setAttribute('title', 'PDF reading is unavailable in this browser');
-}
-if (window.__obPdfFailed) document.addEventListener('DOMContentLoaded', __obMarkPdfUnavailable);
-if (typeof pdfjsLib !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-} else {
-  console.warn('pdf.js did not load — PDF upload will be unavailable, everything else still works.');
-  window.__obPdfFailed = true;
-  document.addEventListener('DOMContentLoaded', __obMarkPdfUnavailable);
-}
 
 let rows = [];
 let rowId = 0;
@@ -2953,45 +2915,6 @@ document.getElementById('applyRssBtn').addEventListener('click', () => {
   }
 });
 
-/* ---------------- PDF ---------------- */
-const pdfInput = document.getElementById('pdfInput');
-const pdfStatus = document.getElementById('pdfStatus');
-
-pdfInput.addEventListener('change', async e => {
-  const file = e.target.files[0];
-  if (!file) return;
-  if (typeof pdfjsLib === 'undefined'){
-    pdfStatus.textContent = 'The PDF reader library did not load (likely a blocked connection to cdnjs.cloudflare.com). Try reloading, or use the CSV upload / manual rows instead.';
-    pdfStatus.className = 'status err';
-    return;
-  }
-  pdfStatus.textContent = 'Reading PDF… this can take a while on a phone since it runs on the main thread — give it a minute before assuming it\'s stuck.';
-  pdfStatus.className = 'status';
-  try{
-    const buf = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({data: buf, disableWorker: true}).promise;
-    let fullText = '';
-    for (let p = 1; p <= pdf.numPages; p++){
-      const page = await pdf.getPage(p);
-      const content = await page.getTextContent();
-      fullText += content.items.map(it => it.str).join('\n') + '\n';
-    }
-    const extracted = extractFromProgramText(fullText);
-    if (!extracted.length){
-      pdfStatus.textContent = 'Read the PDF but could not recognize a program layout. Try CSV instead, or add rows manually.';
-      pdfStatus.className = 'status err';
-      return;
-    }
-    extracted.forEach(h => rows.push(newRow(h)));
-    renderRows();
-    pdfStatus.textContent = `Extracted ${extracted.length} entries across ${new Set(extracted.map(h=>h.race)).size} race(s). Double-check names/odds below — PDF layouts vary.`;
-    pdfStatus.className = 'status ok';
-  } catch(err){
-    pdfStatus.textContent = 'Could not read that PDF: ' + err.message;
-    pdfStatus.className = 'status err';
-  }
-});
-
 function extractFromProgramText(text){
   function classRank(str){
     if (/\bMdn\b|\bMC\d|\bMd\s?\d/.test(str)) return 1;
@@ -3061,25 +2984,6 @@ function extractFromProgramText(text){
   return out;
 }
 
-document.getElementById('extractPasteBtn').addEventListener('click', () => {
-  const statusEl = document.getElementById('pdfPasteStatus');
-  const text = document.getElementById('pdfPasteText').value;
-  if (!text.trim()){
-    statusEl.textContent = 'Paste some program text first.';
-    statusEl.className = 'status err';
-    return;
-  }
-  const extracted = extractFromProgramText(text);
-  if (!extracted.length){
-    statusEl.textContent = 'Could not recognize a program layout in that text. Brisnet-style sheets work best; try including the "Own:" lines.';
-    statusEl.className = 'status err';
-    return;
-  }
-  extracted.forEach(h => rows.push(newRow(h)));
-  renderRows();
-  statusEl.textContent = `Extracted ${extracted.length} entries across ${new Set(extracted.map(h=>h.race)).size} race(s). Check the table below.`;
-  statusEl.className = 'status ok';
-});
 
 /* ---------------- COMPUTE ---------------- */
 function parseOdds(str){
@@ -8766,7 +8670,7 @@ function resultsStore(){ try { return JSON.parse(localStorage.getItem('ob_result
 function resultsSave(o){ try { localStorage.setItem('ob_results', JSON.stringify(o)); } catch(e){} }
 function raceKey(rs){ const h = (rs.horses || [])[0] || {}; return String(h.raceDateYmd || '') + '|' + String(h.trackCode || '') + '|' + String(rs.race).trim(); }
 function myTierRecord(includePool){
-  const R = resultsStore(), out = {};
+  const R = {}, out = {};   // v4.62: results are no longer imported; the tier percentages come from the history in each build
   Object.values(R).forEach(r => { if (!r || !r.tier || (r.inPool && !includePool)) return;   /* v4.27: cards already in the history are not counted twice */ const t = out[r.tier] = out[r.tier] || {n: 0, w: 0}; t.n++; if (r.namedWon) t.w++; });
   return out;
 }
@@ -8833,21 +8737,6 @@ function recordResult(race, post){
   resultsSave(R);
   try { renderPicks(window.__ccRaceSummaries); } catch(e){}
 }
-// v4.27 (Robert: "Yes let's import it"). A results file from Claude: {format:'overlay-results', card, entries:{key: entry}}
-function importResultsFile(input){
-  const f = input.files && input.files[0]; if (!f) return;
-  const rd = new FileReader();
-  rd.onload = () => {
-    try {
-      const J = JSON.parse(rd.result); if (!J || J.format !== 'overlay-results' || !J.entries) throw new Error('not an Overlay Board results file');
-      const R = resultsStore(); let n = 0; Object.entries(J.entries).forEach(([k, v]) => { R[k] = v; n++; }); resultsSave(R);
-      alert('Imported ' + n + ' race results' + (J.card ? ' for ' + J.card : '') + '.');
-      try { if (window.__ccRaceSummaries) renderPicks(window.__ccRaceSummaries); } catch(e){}
-    } catch(e){ alert('Could not import: ' + e.message); }
-    input.value = '';
-  };
-  rd.readAsText(f);
-}
 // v4.57 (Robert, 5 Nov: "remove the section to add the winner and substitute a wagered amount ... only in bet races"): no winner picker; each win-bet race has a wagered and a returned amount,
 // and the board works out your ROI. Stored on this device only (ob_bets).
 function resultPickerHTML(rs){ return ''; }
@@ -8888,19 +8777,6 @@ function betSummaryInner(){
 }
 function betSummaryHTML(){ return '<div class="bet-summary" id="betSummary">' + betSummaryInner() + '</div>'; }
 function updateBetSummary(){ const el = document.getElementById('betSummary'); if (el) el.innerHTML = betSummaryInner(); }
-function scorecardHTML(){
-  const imp = `<label class="sort-btn imp-btn">Import results file<input type="file" accept=".json,application/json" style="display:none" onchange="importResultsFile(this)"></label>`;
-  const R = Object.values(resultsStore()); if (!R.length) return `<div class="scorecard"><b>Your results scorecard</b> \u2014 none recorded yet. Import the results file Claude sends after each card. ${imp}</div>`;
-  const grp = (key, order) => order.map(k => { const x = R.filter(r => r[key] === k); if (!x.length) return ''; const w = x.filter(r => key === 'bet' ? r.betWon : key === 'conf' ? r.topWon : r.namedWon).length; return `<tr><td>${escHtml(String(k))}</td><td>${x.length}</td><td>${w}</td><td>${Math.round(100 * w / x.length)}%</td></tr>`; }).join('');
-  const tierRows = [1,2,3,4,5,6,7].map(t => { const m = myTierRecord(true)[t]; if (!m) return ''; const tp = tierPct(t); const flag = m.n >= 10 && 100 * m.w / m.n < tp.poolPct - 15 ? ' <b class="res-no">\u26a0 running well below its past rate</b>' : ''; return `<tr><td>Tier ${t}</td><td>${m.n}</td><td>${m.w}</td><td>${Math.round(100 * m.w / m.n)}%${flag}</td></tr>`; }).join('');
-  const inList = R.filter(r => r.inList).length; const selW = R.filter(r => r.selectionWon).length; const thrW = R.filter(r => r.winnerListedThreat).length; const withSel = R.filter(r => r.selection != null).length;
-  return `<details class="scorecard"><summary><b>Your results scorecard</b> \u2014 ${R.length} race${R.length === 1 ? '' : 's'} recorded</summary>`
-    + `<table class="sc-t"><tr><th>Tier (named horse)</th><th>Races</th><th>Won</th><th>Rate</th></tr>${tierRows}</table>`
-    + `<table class="sc-t"><tr><th>Bet</th><th>Bets</th><th>Won</th><th>Rate</th></tr>${grp('bet', ['STRONG', 'SOLID', 'BET', 'FIGURE', 'ALLOWANCE', 'VALUE']).replace(/>STRONG</g, '>DEFINITIVE<').replace(/>SOLID</g, '>SOLID PICK<').replace(/>BET</g, '>CONDITIONAL<').replace(/>FIGURE</g, '>FIGURE LEADER<').replace(/>VALUE</g, '>VALUE DROPPER<')}</table>`
-    + (withSel ? `<div class="sc-note"><b>Selection won ${selW} of ${withSel}</b> \u00b7 winner was a listed threat in ${thrW} more.</div>` : '')
-    + `<div class="sc-note">Winner inside the contender list: ${inList} of ${R.length}. Tier percentages blend the history with results from new cards (cards already in the history are not counted twice).</div>`
-    + imp + ` <button type="button" class="sort-btn" onclick="if(confirm('Clear all recorded results?')){resultsSave({});renderPicks(window.__ccRaceSummaries);}">Clear recorded results</button></details>`;
-}
 
 function winTier(rs){
   const pl = racePlan(rs); const v = pl && pl.v; const pr = racePriority(rs); const rf = rankedField(rs, []);
@@ -9846,7 +9722,7 @@ function renderPicks0(raceSummaries){
   // v2.91: the verdicts lead the board on every card, plays or not.
   const __blocks = decisionSortMode() === 'focus' ? __ordered.map(rs => blocks[raceSummaries.indexOf(rs)]) : blocks;
   // v4.17 (Robert, 26 Oct): the race-plans list is removed; the Decision board goes straight to each race's decision
-  list.innerHTML = __sortBar + playsStripHTML(raceSummaries) + betSummaryHTML() + confStripHTML(raceSummaries) + scorecardHTML() + __blocks.join('');   // v3.50: the old summary lists and the old per-race index are retired - the race plans are the one call
+  list.innerHTML = __sortBar + playsStripHTML(raceSummaries) + betSummaryHTML() + confStripHTML(raceSummaries) + __blocks.join('');   // v3.50: the old summary lists and the old per-race index are retired - the race plans are the one call
   document.getElementById('pickCount').textContent = playRaces(raceSummaries).length;
   list.querySelectorAll('.plays-strip .race-chip').forEach(b => b.addEventListener('click', () => { const el = document.getElementById(b.dataset.goto); if (el && el.tagName === 'DETAILS') el.open = true; if (el) el.scrollIntoView({behavior:'smooth', block:'start'}); }));
   bindTapHandlers(list);
@@ -10615,7 +10491,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.61 · released 6 November 2026 · build 2026-11-06-c</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.62 · released 6 November 2026 · build 2026-11-06-d</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
