@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.53 — Race Card Reader</title>
+<title>Overlay Board v4.55 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1324,7 +1324,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.53</span> · released 5 November 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.55</span> · released 5 November 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -1420,7 +1420,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
     <div class="status no-print" id="printStatus"></div>
 
     <div class="tabbar no-print" id="tabbar" style="display:none;">
-      <button data-tab="picks" id="tabPicks" class="on">Decisions<span class="tab-count" id="pickCount" title="races with a win bet: a tier win bet or a figure-leader win bet">0</span></button>
+      <button data-tab="picks" id="tabPicks" class="on">Decisions<span class="tab-count" id="pickCount" title="races with a win bet: a tier win bet, a figure-leader win bet or an allowance win bet">0</span></button>
       <button data-tab="field">Race card</button>
       <button data-tab="facts">Race facts</button>
       <button data-tab="help">Help</button>
@@ -1453,6 +1453,8 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
       <p><b>The plan:</b> PLAY — WIN BET ONLY (the win bet stands, exotics stay off), PLAY, or SKIP, with the reason printed under it. Then the tier line and its tested win percentage (see Tiers and percentages), the value-price line on win bets, the AI(1)/AI(2) line (do the two other methods agree with the pick), a one-line pace note, a race-type chip (how often the board's picks win in that type of race), and warning chips. A chip opens that race's facts.</p>
       <h3>When the pick moves, and when to trust the morning line</h3>
       <p>In a race with no bet, if the second-best chance is within 10 points of the leader and that horse is the morning-line favourite or AI(2)'s top pick, and has not faded late in most of its last three races, the pick moves to it; the card says so. A pick that faded late in most of its last three races drops one confidence step. The chip "Morning line reliable here" or "not reliable here" says whether the favourite has been worth trusting in races of this kind (turf, allowance and stakes, short-priced favourites and fields with no first-time starters, against claiming races, first-time-starter favourites and long-priced favourites). On a bet, the card also notes a poor record on today's surface and a race graded RED. The one exception is a readiness check: there is no win bet on a horse whose last race finished 7th or worse and that has no win in its last 6 starts. In a low-confidence race, Race facts also adds a second look: the next four horses by chance after the pick, with a tag where one is the morning-line favourite, AI(2)'s top pick or the top earner per start. These notes change no other bet. In Race facts each horse also shows, in bold, the signals it carries: AI(2)'s pick, #1 on ability, #1 on readiness, #1 on chance, morning-line favourite, top earner per start, and #1 on rank score. A horse carrying two or more is shown in solid. These tags change no chance, pick, tier or bet. Race facts also say whether the race shapes up as a two-horse race or is wide open, from how much of the chance the top two horses hold.</p>
+      <h3>Where the board makes no win bet</h3>
+      <p>There is no win bet in a maiden special weight race or in a wide-open race (the top two horses hold under 43% of the chance), whatever the tier, and none on a horse whose last race finished 7th or worse with no win in its last 6. Race facts says so on those races. The pick and its confidence are still shown.</p>
       <h3>First-time starters</h3>
       <p>In a lightly raced field a first-time starter is ranked by its morning line, but never above the best horse that has raced: it sits just behind that horse.</p>
       <p>A first-time starter has no past performances to read, so the board never names one as its pick. When one leads the ranking the card says so and gives no pick and no bet; the best horse that has raced is listed in Race facts. In the past performances the <b>Run</b> column shows a past race's running line — positions at the first call, second call, stretch and finish, with the field size — and the early-speed note quotes the last race's running line so the number can be checked against it.</p>
@@ -1500,11 +1502,11 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
         <h3>When the two methods disagree</h3>
         <p>If AI(1) and AI(2) rank different horses first, the race is labelled: <b>SPLIT ON THE ORDER</b> (7 or fewer runners and AI(2)'s horse is AI(1)'s #2); <b>SMALL FIELD, SPLIT</b> (8 or fewer, not a maiden, AI(2)'s horse in AI(1)'s top 3 — use both on top, with the next horse); otherwise <b>SPLIT</b>. Whether the race is a two-horse race or wide open is a separate fact, from how much of the chance the top two horses hold (Shape of the race).</p>
         <h3>Tiers and percentages</h3>
-        <p>Each race shows a tier for its named horse and the share of such horses that won on the cards in the pack: <b>Tier 1</b> DEFINITIVE with a clear #1 in a race that passes the race screen (73%) · <b>Tier 2</b> DEFINITIVE (66%) · <b>Tier 3</b> SOLID PICK (53%) · <b>Tier 4</b> CONDITIONAL, when 2-1 or higher at post (60%) · <b>Tier 5</b> top pick with HIGH confidence, no win bet (69%) · <b>Tier 6</b> top pick with MODERATE confidence, no win bet (52%) · <b>Tier 7</b> top pick with LOW confidence, no win bet (27%). Confidence is the pick's blended chance, the morning-line price and the board's own chance weighed together: HIGH is 45% or more (such picks won 79% of the time), MODERATE 35% to 45% (53%), LOW under 35% (30%). When AI(2) ranks a different horse first the level drops one step. Tiers 1-3 are bets, Tier 4 only at 2-1 or higher; Tiers 5-7 carry no win-bet edge and say so. These are past results on the pack's cards, which the rules were built from; on new cards expect them to run a few points lower. When you record winners on the race cards, the percentages blend in your own results, and the scorecard at the top of the board shows how each tier, bet type and confidence level is doing.</p>
+        <p>Each race shows a tier for its named horse and the share of such horses that won on the cards in the pack: <b>Tier 1</b> DEFINITIVE with a clear #1 in a race that passes the race screen (73%) · <b>Tier 2</b> DEFINITIVE (71%) · <b>Tier 3</b> SOLID PICK (53%) · <b>Tier 4</b> CONDITIONAL, when 2-1 or higher at post (82%) · <b>Tier 5</b> top pick with HIGH confidence, no win bet (72%) · <b>Tier 6</b> top pick with MODERATE confidence, no win bet (51%) · <b>Tier 7</b> top pick with LOW confidence, no win bet (27%). Confidence is the pick's blended chance, the morning-line price and the board's own chance weighed together: HIGH is 45% or more (such picks won 79% of the time), MODERATE 35% to 45% (53%), LOW under 35% (29%). When AI(2) ranks a different horse first the level drops one step. Tiers 1-3 are bets, Tier 4 only at 2-1 or higher; Tiers 5-7 carry no win-bet edge and say so. These are past results on the pack's cards, which the rules were built from; on new cards expect them to run a few points lower. When you record winners on the race cards, the percentages blend in your own results, and the scorecard at the top of the board shows how each tier, bet type and confidence level is doing.</p>
         <h3>BET — SOLID PICK</h3>
         <p>A win bet on the top-ranked horse when neither DEFINITIVE nor CONDITIONAL applies, and either (A) its morning line is 8-5 or shorter, it has the best Prime Power in the field, at most one no-finish trip comment in its last four, and the race is not low priority; or (B) its morning line is 2-1 or shorter, the field has 8 or fewer runners, it has the best last figure in the field, and its case tally is +4 or better.</p>
         <h3>Figure leader and value dropper</h3>
-        <p>Two further win bets, independent of the tiers. <b>FIGURE LEADER</b>: a horse with the best 3-race figure average and a case of +6 or better in a field of 8 or fewer. <b>VALUE DROPPER</b> was retired in v4.29: once the fair-odds comparison was corrected, it no longer paid. Both stand even in races otherwise marked SKIP; exactas in those races stay off.</p>
+        <p>Further win bets, independent of the tiers. <b>ALLOWANCE PICK</b>: the top pick in an allowance race, at 2-1 or higher, when the race has no other bet. <b>FIGURE LEADER</b>: a horse with the best 3-race figure average and a case of +6 or better in a field of 8 or fewer. <b>VALUE DROPPER</b> was retired in v4.29: once the fair-odds comparison was corrected, it no longer paid. Both stand even in races otherwise marked SKIP; exactas in those races stay off.</p>
         <h3>Value price (stake guide)</h3>
         <p>Every Tier 1–4 win bet shows a value price worked out from the board's own chance for the horse. At that price or longer the board suggests a double stake; below it a single stake. On past cards this kept every bet and returned more than flat staking, because the well-priced bets have paid best. The board never names dollar amounts.</p>
         <h3>Downgraded bets</h3>
@@ -8277,6 +8279,16 @@ function readinessVeto(h){
     return 'last race finished ' + f1 + '; no wins in last 6';
   } catch(e){ return ''; }
 }
+// v4.54 (Robert, 5 Nov: "when picks do well create a decision to bet, when wide open no bet"): no win bet in a maiden special weight race or a wide-open race
+// (the top two hold under 43% of the chance). Over the 62 cards the pick won 27.8% in maiden special weight races (return $0.72 per $1) and 20.7% in wide-open ones ($0.69);
+// the board's 22 bets there returned about $0.9. Without them the bets go from 117 to 96 and the return from $1.37 to $1.45, up in both halves.
+function raceVeto(rs){
+  try {
+    const sh = raceShape(rs); if (sh && sh.kind === 'wide') return 'wide-open race: the top two horses hold under 43% of the chance';
+    if (raceTypeOf(rs) === 'S') return 'maiden special weight race';
+  } catch(e){}
+  return '';
+}
 function overbetByData(rs, h){
   try {
     if (!(h.ppRaces || []).length) return false;
@@ -8285,7 +8297,10 @@ function overbetByData(rs, h){
   } catch(e){ return false; }
 }
 let __xbGuard = false;
+function xbWord(x){ return x.type === 'FIGURE' ? 'FIGURE LEADER' : x.type === 'ALLOWANCE' ? 'ALLOWANCE PICK' : 'VALUE DROPPER'; }
+function xbLow(x){ return xbWord(x).toLowerCase(); }
 function extraBets(rs){
+  if (raceVeto(rs)) return [];   // v4.54
   if (__xbGuard) return []; __xbGuard = true;
   try {
     const live = (rs.horses || []).filter(h => !isScratchedNow(rs, h)); const out = [];
@@ -8302,13 +8317,24 @@ function extraBets(rs){
       if (tal >= 6 && /best 3-race figure average/.test(F) && live.length <= 8) out.push({type: 'FIGURE', h, tal});
       // v4.29: VALUE DROPPER retired - with the corrected fair-odds comparison it lost (27 bets, -32%), and it had been unstable before (-16% / +55%)
     });
+    // v4.55 (Robert, 5 Nov: "allowance races should present a bet"): the top pick in an allowance race is a win bet at 2-1 or higher. Over the 62 cards, allowance picks that had no
+    // other bet and a morning line of 2-1 or more won 40.8% and returned $1.37 per $1 (halves $1.25 and $1.46): 71 more bets, about one per card, with the whole bet list still at $1.37.
+    try {
+      const rt = String((live[0] || {}).ai3RaceType || '').toUpperCase();
+      if (!tierH && !out.length && ['A', 'AO', 'N', 'NO', 'R'].includes(rt)){
+        const rp = reviewedPick(rs); const h = rp && rp.h;
+        if (h && (h.ppRaces || []).length && !readinessVeto(h) && h.decimalOdds != null && h.decimalOdds - 1 >= 2) out.push({type: 'ALLOWANCE', h, tal: (m.get(h) || {}).tally || 0});
+      }
+    } catch(e){}
     try { const chm = rscsChances(rs); out.sort((a, b) => ((a.type === 'FIGURE') ? 0 : 1) - ((b.type === 'FIGURE') ? 0 : 1) || ((chm.get(b.h) || -1) - (chm.get(a.h) || -1))); } catch(e){}
     return out;
   } finally { __xbGuard = false; }
 }
 function extraBetsHTML(rs){
   const L = extraBets(rs); if (!L.length) return '';
-  return L.map(x => x.type === 'FIGURE'
+  return L.map(x => x.type === 'ALLOWANCE'
+    ? `<div class="xbet xb-fig"><b>BET \u2014 ALLOWANCE PICK: win #${escHtml(x.h.post || '?')} ${escHtml(x.h.horse)} at 2-1 or higher</b> <span class="conf-why">(the top pick in an allowance race) \u00b7 picks like this won 41%</span></div>`
+    : x.type === 'FIGURE'
     ? `<div class="xbet xb-fig"><b>BET \u2014 FIGURE LEADER: win #${escHtml(x.h.post || '?')} ${escHtml(x.h.horse)} at any price</b> <span class="conf-why">(best 3-race average, case ${x.tal > 0 ? '+' : ''}${x.tal}, small field) \u00b7 picks like this won 44%</span></div>`
     : `<div class="xbet xb-val"><b>BET \u2014 VALUE DROPPER: win #${escHtml(x.h.post || '?')} ${escHtml(x.h.horse)} at any price</b> <span class="conf-why">(dropping in class, fair odds shorter than its morning line) \u00b7 a long-price bet: wins about 1 in 5, but has paid well</span></div>`).join('');
 }
@@ -8419,7 +8445,7 @@ function verdictOf(rs){
     } catch(e){} finally { __downGuard = false; }
   }
   if (v && v.h && ['STRONG', 'SOLID', 'BET'].includes(v.tier)){
-    const __rv = readinessVeto(v.h);
+    const __rv = readinessVeto(v.h) || raceVeto(rs);
     if (__rv) v = {tier: 'PASS', h: null, downFrom: v.tier === 'STRONG' ? 2 : v.tier === 'SOLID' ? 3 : 4, downH: v.h, downWhy: __rv, downN: 1, why: v.why};
   }
   // v4.11 (Robert, GP 10/24 R8 Role Play, ML 7-5): a "2-1 or higher" bet should never depend on the horse
@@ -8695,7 +8721,7 @@ function disagreeHTML(rs){
 
 // v3.90 (Robert, 20 Oct: "the program should be self learning"). Results you record are kept
 // in this browser; tier percentages blend the pack's record with yours.
-const TIER_POOL = {1: [11, 15], 2: [27, 41], 3: [9, 17], 4: [9, 15], 5: [11, 16], 6: [33, 64], 7: [114, 415]};   // v4.49: full history re-run (62 cards, morning-line odds) with first-time starters held behind the best raced horse
+const TIER_POOL = {1: [11, 15], 2: [20, 28], 3: [9, 17], 4: [9, 11], 5: [13, 18], 6: [36, 71], 7: [115, 423]};   // v4.54: full history re-run (62 cards, morning-line odds) with no win bets in maiden special weight or wide-open races
 function resultsStore(){ try { return JSON.parse(localStorage.getItem('ob_results') || '{}'); } catch(e){ return {}; } }
 function resultsSave(o){ try { localStorage.setItem('ob_results', JSON.stringify(o)); } catch(e){} }
 function raceKey(rs){ const h = (rs.horses || [])[0] || {}; return String(h.raceDateYmd || '') + '|' + String(h.trackCode || '') + '|' + String(rs.race).trim(); }
@@ -8754,7 +8780,7 @@ function makeResultEntry(rs, post){
   const ch = rscsChances(rs); const sel = betH || (xb.length ? xb[0].h : ((reviewedPick(rs) || {h: null}).h));
   return {race: String(rs.race).trim(), winner: w ? w.horse : String(post), winnerPost: String(post), tier: t ? t.t : null, named: t ? t.h.horse : null,
     namedWon: !!(t && w && t.h === w), conf: c ? c.level : null, topWon: !!(c && w && c.top === w), cat: d ? d.cat : null,
-    prio: pr.level, cl: (() => { try { const cc = confidenceOf(rs); return cc ? cc.level : null; } catch(e){ return null; } })(), bet: betH ? (pl.v.tier) : (xb.length ? (xb[0].type === 'FIGURE' ? 'FIGURE' : 'VALUE') : null),
+    prio: pr.level, cl: (() => { try { const cc = confidenceOf(rs); return cc ? cc.level : null; } catch(e){ return null; } })(), bet: betH ? (pl.v.tier) : (xb.length ? (xb[0].type === 'FIGURE' ? 'FIGURE' : xb[0].type === 'ALLOWANCE' ? 'ALLOWANCE' : 'VALUE') : null),
     betWon: !!(w && ((betH && betH === w) || (!betH && xb.length && xb[0].h === w))), selection: sel ? sel.horse : null, selectionWon: !!(sel && w && sel === w),
     winnerListedThreat: !!(w && sel !== w && [...ch.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4).some(e => e[0] === w)),
     inList: !!(w && (pr.top3 || []).includes(w)), at: Date.now()};
@@ -8796,7 +8822,7 @@ function scorecardHTML(){
   const inList = R.filter(r => r.inList).length; const selW = R.filter(r => r.selectionWon).length; const thrW = R.filter(r => r.winnerListedThreat).length; const withSel = R.filter(r => r.selection != null).length;
   return `<details class="scorecard"><summary><b>Your results scorecard</b> \u2014 ${R.length} race${R.length === 1 ? '' : 's'} recorded</summary>`
     + `<table class="sc-t"><tr><th>Tier (named horse)</th><th>Races</th><th>Won</th><th>Rate</th></tr>${tierRows}</table>`
-    + `<table class="sc-t"><tr><th>Bet</th><th>Bets</th><th>Won</th><th>Rate</th></tr>${grp('bet', ['STRONG', 'SOLID', 'BET', 'FIGURE', 'VALUE']).replace(/>STRONG</g, '>DEFINITIVE<').replace(/>SOLID</g, '>SOLID PICK<').replace(/>BET</g, '>CONDITIONAL<').replace(/>FIGURE</g, '>FIGURE LEADER<').replace(/>VALUE</g, '>VALUE DROPPER<')}</table>`
+    + `<table class="sc-t"><tr><th>Bet</th><th>Bets</th><th>Won</th><th>Rate</th></tr>${grp('bet', ['STRONG', 'SOLID', 'BET', 'FIGURE', 'ALLOWANCE', 'VALUE']).replace(/>STRONG</g, '>DEFINITIVE<').replace(/>SOLID</g, '>SOLID PICK<').replace(/>BET</g, '>CONDITIONAL<').replace(/>FIGURE</g, '>FIGURE LEADER<').replace(/>VALUE</g, '>VALUE DROPPER<')}</table>`
     + (withSel ? `<div class="sc-note"><b>Selection won ${selW} of ${withSel}</b> \u00b7 winner was a listed threat in ${thrW} more.</div>` : '')
     + `<div class="sc-note">Winner inside the contender list: ${inList} of ${R.length}. Tier percentages blend the history with results from new cards (cards already in the history are not counted twice).</div>`
     + imp + ` <button type="button" class="sort-btn" onclick="if(confirm('Clear all recorded results?')){resultsSave({});renderPicks(window.__ccRaceSummaries);}">Clear recorded results</button></details>`;
@@ -8818,10 +8844,10 @@ function tierHTML(rs){
   const pl0 = racePlan(rs); const exOnly = pl0 && pl0.play && !pl0.winOnly && !pl0.win;
   let xb = extraBets(rs).find(x => x.h === t.h);
   if (!xb && t.t >= 5){ const any = extraBets(rs)[0]; if (any){ xb = any; t = Object.assign({}, t, {h: any.h}); } }
-  if (xb){ t = Object.assign({}, t, {pct: xb.type === 'FIGURE' ? 43 : 18, what: xb.type === 'FIGURE' ? 'FIGURE LEADER' : 'VALUE DROPPER (long price)'}); }
+  if (xb){ t = Object.assign({}, t, {pct: xb.type === 'FIGURE' ? 43 : xb.type === 'ALLOWANCE' ? 41 : 18, what: xb.type === 'FIGURE' ? 'FIGURE LEADER' : xb.type === 'ALLOWANCE' ? 'ALLOWANCE PICK' : 'VALUE DROPPER (long price)'}); }
   // v4.22: with no win bet, the tier line names the same top pick as the summary (the reviewed #1)
   else if (t.t >= 5){ try { const rv = reviewedPick(rs); if (rv && rv.h !== t.h) t = Object.assign({}, t, {h: rv.h, what: t.what ? t.what + ' \u00b7 reviewed top pick' : ''}); } catch(e){} }
-  const act = xb ? 'WIN BET \u2014 ' + (xb.type === 'FIGURE' ? 'FIGURE LEADER' : 'VALUE DROPPER') + ' (see below)' : t.t <= 3 ? 'WIN BET' : t.t === 4 ? 'WIN BET ONLY AT 2-1 OR HIGHER' : exOnly ? 'NO WIN BET' : t.t === 5 ? 'NO WIN-BET EDGE \u2014 exotics or a small bet at most' : 'NO EDGE \u2014 PASS';
+  const act = xb ? 'WIN BET \u2014 ' + xbWord(xb) + ' (see below)' : t.t <= 3 ? 'WIN BET' : t.t === 4 ? 'WIN BET ONLY AT 2-1 OR HIGHER' : exOnly ? 'NO WIN BET' : t.t === 5 ? 'NO WIN-BET EDGE \u2014 exotics or a small bet at most' : 'NO EDGE \u2014 PASS';
   const c = topConfidence(rs); const strongL = c ? c.strong.filter(h => h !== t.h) : []; const sc = strongL.length ? ' \u00b7 strong challengers: ' + strongL.map(h => '#' + (h.post || '?') + ' ' + h.horse).join(', ') : '';
   // v4.04 (ChatGPT review / audit): a win bet on a horse with 2+ Against items is more vulnerable - flag it, keep the bet
   let vul = '';
@@ -8831,7 +8857,7 @@ function tierHTML(rs){
   let __fsT = null; try { __fsT = finalSelection(rs); } catch(e){}
   const whatS = String(t.what || '').replace(/, when 2-1 or higher at post/, '').replace(/^(downgraded from Tier \d+ \([^)]*\): \d+ against)\s.*$/, '$1');
   const tierBox = `<div class="tier tier-${t.t}"><b>Tier ${t.t} \u00b7 ${t.h === __fsT ? '' : '#' + escHtml(t.h.post || '?') + ' ' + escHtml(t.h.horse) + ' \u00b7 '}picks like this won ${t.pct}%${tierPct(t.t).myN ? ' (incl. your ' + tierPct(t.t).myN + ' recorded)' : ''} \u00b7 ${act}</b> ${(whatS + sc).replace(/^[\s\u00b7]+/, '') ? '<span class="conf-why">(' + escHtml((whatS + sc).replace(/^[\s\u00b7]+/, '')) + ')</span>' : ''}</div>`;
-  let tierBox2 = xb ? tierBox.replace(/<b>Tier (\d+) \u00b7 /, (m0, n0) => '<b>' + (xb.type === 'FIGURE' ? 'FIGURE LEADER' : 'VALUE DROPPER') + ' (Tier ' + n0 + ' race) \u00b7 ').replace(/ \(see below\)/, '').replace(/<span class="conf-why">\([^)]*\)<\/span>/, '') : tierBox;
+  let tierBox2 = xb ? tierBox.replace(/<b>Tier (\d+) \u00b7 /, (m0, n0) => '<b>' + xbWord(xb) + ' (Tier ' + n0 + ' race) \u00b7 ').replace(/ \(see below\)/, '').replace(/<span class="conf-why">\([^)]*\)<\/span>/, '') : tierBox;
   const vp = valuePriceHTML(rs, t);
   if (vp) tierBox2 = tierBox2.replace(/<\/div>$/, vp + '</div>');
   return vul ? tierBox2.replace(/<\/div>$/, vul + '</div>') : tierBox2;
@@ -9028,7 +9054,7 @@ function sortedForDecisions(raceSummaries){
   // CONSIDER and LOW races, each in race order
   // v4.21: races with a win bet first (best tier first), then the others by their top pick's chance
   const out = L.map((rs, i) => { let t = 9, c = 0;
-    try { const x = winTier(rs); t = x ? x.t : 9; const xb = extraBets(rs); if (t > 4 && xb.length) t = xb.some(b => b.type === 'FIGURE') ? 4.5 : 4.8; } catch(e){}
+    try { const x = winTier(rs); t = x ? x.t : 9; const xb = extraBets(rs); if (t > 4 && xb.length) t = xb.some(b => b.type === 'FIGURE') ? 4.5 : xb.some(b => b.type === 'ALLOWANCE') ? 4.6 : 4.8; } catch(e){}
     let lv = 0; try { const ch = rscsChances(rs); c = Math.max(0, ...ch.values()); } catch(e){} try { const cf = confidenceOf(rs); if (cf){ c = cf.p; lv = cf.level === 'HIGH' ? 3 : cf.level === 'MODERATE' ? 2 : 1; } } catch(e){}
     return {rs, i, t, c, lv, bet: t <= 4.5}; })   // v4.23: a value-dropper-only race is a long-shot side bet, ordered by the race itself
     // v4.52 (Robert, 5 Nov, Belmont 10/4: a LOW race 4 was listed above a MODERATE race 2): confidence level first, then the blended number. Over the 62 cards the pick won
@@ -9120,7 +9146,7 @@ function playRaces(raceSummaries){
   raceSummaries.forEach(rs => {
     let pl = null, xb = []; try { pl = racePlan(rs); } catch(e){} try { xb = extraBets(rs); } catch(e){}
     const win = !!(pl && pl.win), fig = !win && xb.length > 0;
-    if (win || fig) out.push({rs, kind: win ? 'win bet' : 'figure-leader win bet'});
+    if (win || fig) out.push({rs, kind: win ? 'win bet' : (xb[0].type === 'ALLOWANCE' ? 'allowance win bet' : 'figure-leader win bet')});
   });
   return out;
 }
@@ -9144,7 +9170,7 @@ function confStripHTML(raceSummaries){
       const c = confidenceOf(rs), pl = racePlan(rs), xb = extraBets(rs);
       if (c && c.level === 'HIGH') hi.push(link + ' #' + escHtml(c.h.post || '?') + ' ' + escHtml(c.h.horse));
       if (pl && pl.win && pl.v && pl.v.h) bets.push(link + ' #' + escHtml(pl.v.h.post || '?') + ' ' + escHtml(pl.v.h.horse));
-      xb.forEach(x => bets.push(link + ' #' + escHtml(x.h.post || '?') + ' ' + escHtml(x.h.horse) + ' (' + (x.type === 'FIGURE' ? 'figure leader' : 'value dropper') + ')'));
+      xb.forEach(x => bets.push(link + ' #' + escHtml(x.h.post || '?') + ' ' + escHtml(x.h.horse) + ' (' + xbLow(x) + ')'));
     });
     return '<div class="conf-strip"><div><b>High confidence:</b> ' + (hi.length ? hi.join(' \u00b7 ') : 'none on this card') + '</div><div><b>Win bets:</b> ' + (bets.length ? bets.join(' \u00b7 ') : 'none on this card') + '</div></div>';
   } catch(e){ return ''; }
@@ -9294,7 +9320,7 @@ function selectionSummaryHTML(rs){
   if (pl && pl.win && pl.v) how = pl.v.tier === 'STRONG' ? 'DEFINITIVE: the figure favourite (best figures) meets every extra condition and both ranking methods name it'
     : pl.v.tier === 'SOLID' ? 'SOLID PICK: top-ranked, short morning line, best Prime Power or best last figure, clean recent record'
     : pl.v.tier === 'BET' ? 'CONDITIONAL: figure favourite missing one extra condition' : '';
-  else if (xb.length && xb[0].h === sel) how = xb[0].type === 'FIGURE' ? 'FIGURE LEADER: best 3-race average, case +6 or better, 8 or fewer runners' : 'VALUE DROPPER: dropping in class on dirt, fair odds shorter than its morning line';
+  else if (xb.length && xb[0].h === sel) how = xb[0].type === 'ALLOWANCE' ? 'ALLOWANCE PICK: the top pick in an allowance race, at 2-1 or higher' : xb[0].type === 'FIGURE' ? 'FIGURE LEADER: best 3-race average, case +6 or better, 8 or fewer runners' : 'VALUE DROPPER: dropping in class on dirt, fair odds shorter than its morning line';
   else if (__rp && __rp.from){ how = 'the close call goes to #' + (sel.post || '?') + ' ' + sel.horse + ': it is within 10 points of #' + (__rp.from.post || '?') + ' ' + __rp.from.horse + ' on chance, and it ' + __rp.why; }
   else { const rs1 = rf[0].h; how = sel === rs1 ? 'first on the rank score and still first after weighing the warnings (no win bet)'
       : 'rates best after weighing the warnings (no win bet). Calculated #1 was #' + (rs1.post || '?') + ' ' + rs1.horse + ' on the rank score; the review moved it'; }
@@ -9330,11 +9356,12 @@ function selectionSummaryHTML(rs){
       : `<div class="ss-l ss-warn">\u26a0 #${escHtml(best[0].post || '?')} ${escHtml(best[0].horse)} has a better chance (${pct(best[0])}%) than #${escHtml(sel.post || '?')} ${escHtml(sel.horse)} (${pct(sel)}%).</div>`) : '';
   const selCh = ch.has(sel) ? 'chance ' + pct(sel) + '%' : 'chance not rated (not in the ranked field)';
   const alsoBets = xb.filter(x => x.h !== sel);
-  const alsoHTML = alsoBets.length ? `<div class="ss-l"><b>Also a bet:</b> ${alsoBets.map(x => '#' + escHtml(x.h.post || '?') + ' ' + escHtml(x.h.horse) + ' (' + (x.type === 'FIGURE' ? 'figure leader' : 'value dropper') + ', ' + (ch.has(x.h) ? pct(x.h) + '%' : 'not rated') + ')').join(' \u00b7 ')}</div>` : '';
+  const alsoHTML = alsoBets.length ? `<div class="ss-l"><b>Also a bet:</b> ${alsoBets.map(x => '#' + escHtml(x.h.post || '?') + ' ' + escHtml(x.h.horse) + ' (' + xbLow(x) + ', ' + (ch.has(x.h) ? pct(x.h) + '%' : 'not rated') + ')').join(' \u00b7 ')}</div>` : '';
   return `<div class="selsum"><div class="ss-h">${isBet ? 'BET SELECTION' : 'TOP PICK (no bet)'}: #${escHtml(sel.post || '?')} ${escHtml(sel.horse)} (${escHtml(sel.mlOddsStr || '')}) \u2014 ${selCh}</div>` + alsoHTML + (selDq ? `<div class="ss-l ss-warn">\u26a0 Doubtful: strong figures but ${escHtml(selDq.join(', '))} \u2014 horses like this have won far less than their figures suggest; read the chance as much lower.</div>` : '') + bestNote
     + `<div class="ss-l"><b>Why:</b> ${escHtml(how)}.</div>`
     + `<div class="ss-l"><b>Rank score:</b> ${rsLine ? escHtml(rsLine) + ' (lower is better; figures + Prime Power + morning line + adjustments)' : 'not ranked (too little form to score)'} \u00b7 <b>Case:</b> CS ${v.cs} (${v.tally > 0 ? '+' : ''}${v.tally}: ${(fa.F || []).length} for, ${(fa.A || []).length} against)</div>`
     + shapeLine
+    + (() => { const v = raceVeto(rs); return v ? '<div class="ss-l"><b>No win bet:</b> ' + escHtml(v) + '.</div>' : ''; })()
     + (() => { const sl = secondLook(rs); return sl && sl.list.length ? '<div class="ss-l"><b>Second look:</b> a low-confidence race. After the pick, the next four by chance: ' + escHtml(secondLookText(sl)) + '.</div>' : ''; })()
     + `<div class="ss-l"><b>Threats:</b><ul class="ss-t">${thr}</ul>All other runners together: ${rest}%.</div>`
     + longShotWatchHTML(rs)
@@ -9418,7 +9445,7 @@ function buildVerdictBoard(raceSummaries){
   const num = h => '#' + (h.post || '?');
   const line = r => {
     const go = `<a class="race-jump vb-race" data-goto-pick="${escAttr(r.rs.race)}" href="#">R${escHtml(r.rs.race)}</a>`;
-    if (!r.pl.play) return `<div class="vb-row ${extraBets(r.rs).length ? 'vb-play' : 'vb-pass'}">${go}<span class="vb-tier">${extraBets(r.rs).length ? 'PLAY' : 'SKIP'}</span><span class="vb-why">${extraBets(r.rs).length ? 'Win bet only: ' + extraBets(r.rs).map(x => (x.type === 'FIGURE' ? 'figure leader' : 'value dropper') + ' #' + escHtml(x.h.post || '?') + ' ' + escHtml(x.h.horse)).join(', ') + '. Otherwise ' + escHtml(String(r.pl.why || '').replace(/^UNREADABLE \u2014 /, 'unreadable: ')) : 'No bet \u2014 ' + escHtml(r.pl.why)}</span>${r.pl.top ? `<span class="vb-ticket">Top pick ${num(r.pl.top)} ${escHtml(r.pl.top.horse)} (${escHtml(r.pl.top.oddsStr || '')})${rscsChip(r.rs, r.pl.top)}</span>` : ''}</div>`;
+    if (!r.pl.play) return `<div class="vb-row ${extraBets(r.rs).length ? 'vb-play' : 'vb-pass'}">${go}<span class="vb-tier">${extraBets(r.rs).length ? 'PLAY' : 'SKIP'}</span><span class="vb-why">${extraBets(r.rs).length ? 'Win bet only: ' + extraBets(r.rs).map(x => xbLow(x) + ' #' + escHtml(x.h.post || '?') + ' ' + escHtml(x.h.horse)).join(', ') + '. Otherwise ' + escHtml(String(r.pl.why || '').replace(/^UNREADABLE \u2014 /, 'unreadable: ')) : 'No bet \u2014 ' + escHtml(r.pl.why)}</span>${r.pl.top ? `<span class="vb-ticket">Top pick ${num(r.pl.top)} ${escHtml(r.pl.top.horse)} (${escHtml(r.pl.top.oddsStr || '')})${rscsChip(r.rs, r.pl.top)}</span>` : ''}</div>`;
     if (r.pl.winOnly){ const fa = forAgainst(r.rs, r.pl.v.h);
       return `<div class="vb-row vb-play">${go}<span class="vb-tier">PLAY</span><span class="vb-horse">Win only: #${escHtml(r.pl.v.h.post || '?')} ${escHtml(r.pl.v.h.horse)} (${escHtml(r.pl.v.h.oddsStr || '')})${rscsChip(r.rs, r.pl.v.h)}</span>`
         + `<span class="vb-ticket vb-win">${escHtml(r.pl.win.label)}: ${escHtml(r.pl.win.text)} \u2014 ${escHtml(r.pl.why)}</span>`
@@ -10513,7 +10540,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.53 · released 5 November 2026 · build 2026-11-05-d</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.55 · released 5 November 2026 · build 2026-11-05-f</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
