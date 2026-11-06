@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.56 — Race Card Reader</title>
+<title>Overlay Board v4.57 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -723,6 +723,10 @@
   .pp-link:hover, .pp-link:active{color:var(--amber-dim);}
   /* v4.49 (Robert, 2 Nov: the past-performance panel stopped partway down the screen on the phone and the page showed through underneath): the panel is pinned to the whole
      screen with the dynamic viewport height, scrolls on its own without passing the scroll to the page behind it, and the page behind is locked while it is open. */
+  .bet-ledger{margin:10px 0 4px; font-family:var(--mono); font-size:12px;}
+  .bet-ledger input{width:84px; font-size:14px; padding:4px; margin:0 6px 0 2px;}
+  .bet-summary{margin:8px 0 12px; font-family:var(--mono); font-size:12px; line-height:1.7;}
+  .bet-by{color:var(--ink-soft);}
   .plays-strip{margin:8px 0 12px; font-family:var(--mono); font-size:11px; letter-spacing:.04em; color:var(--ink);}
   .plays-strip b{display:block; margin-bottom:4px;}
   .plays-strip .race-chip{margin:0 6px 6px 0; white-space:normal; text-align:left;}
@@ -1324,7 +1328,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.56</span> · released 5 November 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.57</span> · released 5 November 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a data file or program PDF. Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -8126,6 +8130,7 @@ function hhDecision(html, rs){
     + (tier ? tier.outerHTML : '')
     + (ai ? `<div class="hhd-ai">${escHtml(ai)}</div>` : '')
     + (pace ? `<div class="hhd-pace"><b>PACE</b> \u2014 ${escHtml(pace)}</div>` : '')
+    + betLedgerHTML(rs)
     + `<div class="hhd-foot">${type ? type.outerHTML : ''}${chips.map(c => `<a href="#" class="hhd-flag race-jump" data-goto-facts="${escAttr(race)}">${escHtml(c)}</a>`).join('')}<a href="#" class="hhd-more race-jump" data-goto-facts="${escAttr(race)}">Race facts \u25b8</a></div>`
     + `</div>`;
 }
@@ -8833,15 +8838,49 @@ function importResultsFile(input){
   };
   rd.readAsText(f);
 }
-function resultPickerHTML(rs){
-  const live = (rs.horses || []).filter(h => !isScratchedNow(rs, h)).sort((a, b) => (parseInt(a.post, 10) || 0) - (parseInt(b.post, 10) || 0));
-  const cur = resultsStore()[raceKey(rs)];
-  const opts = ['<option value="">\u2014 not recorded \u2014</option>'].concat(live.map(h => `<option value="${escAttr(h.post)}"${cur && String(cur.winnerPost) === String(h.post) ? ' selected' : ''}>#${escHtml(h.post)} ${escHtml(h.horse)}</option>`));
-  return `<div class="res-pick">Record the winner: <select onchange="recordResult('${escAttr(String(rs.race).trim())}', this.value)">${opts.join('')}</select>${cur ? (cur.namedWon ? ' <b class="res-ok">\u2713 named horse won</b>' : ' <b class="res-no">\u2717 named horse lost</b>') : ''}</div>`;
+// v4.57 (Robert, 5 Nov: "remove the section to add the winner and substitute a wagered amount ... only in bet races"): no winner picker; each win-bet race has a wagered and a returned amount,
+// and the board works out your ROI. Stored on this device only (ob_bets).
+function resultPickerHTML(rs){ return ''; }
+function betStore(){ try { return JSON.parse(localStorage.getItem('ob_bets') || '{}'); } catch(e){ return {}; } }
+function betSave(o){ try { localStorage.setItem('ob_bets', JSON.stringify(o)); } catch(e){} }
+function betKindFor(rs){
+  try {
+    const pl = racePlan(rs); if (pl && pl.win && pl.v){ const t = pl.v.tier; return {kind: t === 'STRONG' ? 'Definitive' : t === 'SOLID' ? 'Solid pick' : 'Conditional', horse: pl.v.h}; }
+    const xb = extraBets(rs); if (xb.length) return {kind: xb[0].type === 'ALLOWANCE' ? 'Allowance pick' : xb[0].type === 'FIGURE' ? 'Figure leader' : 'Value', horse: xb[0].h};
+  } catch(e){}
+  return null;
 }
+function betRoiText(c){ if (!c || !(c.w > 0) || c.r == null) return ''; const p = Math.round((c.r - c.w) / c.w * 100); return (p >= 0 ? '+' : '') + p + '%'; }
+function betLedgerHTML(rs){
+  const b = betKindFor(rs); if (!b) return '';
+  const race = String(rs.race).trim(), cur = betStore()[raceKey(rs)] || {}, roi = betRoiText(cur);
+  return `<div class="bet-ledger" data-race="${escAttr(race)}"><b>MY BET</b> wagered $<input type="number" inputmode="decimal" min="0" step="any" value="${cur.w != null ? cur.w : ''}" onchange="recordBet('${escAttr(race)}','w',this.value)"> returned $<input type="number" inputmode="decimal" min="0" step="any" value="${cur.r != null ? cur.r : ''}" onchange="recordBet('${escAttr(race)}','r',this.value)"> <span class="bet-roi${roi && roi[0] === '-' ? ' res-no' : roi ? ' res-ok' : ''}">${roi ? 'ROI ' + roi : ''}</span></div>`;
+}
+function recordBet(race, field, value){
+  const rs = (window.__ccRaceSummaries || []).find(r => String(r.race).trim() === String(race)); if (!rs) return;
+  const k = raceKey(rs), S = betStore(), b = betKindFor(rs) || {};
+  const cur = S[k] = S[k] || {race: String(race).trim(), kind: b.kind || '', horse: b.horse ? b.horse.horse : '', card: k.split('|').slice(0, 2).join(' ')};
+  const v = value === '' ? null : parseFloat(value); cur[field] = (v == null || isNaN(v)) ? null : Math.max(0, v);
+  if (cur.w == null && cur.r == null) delete S[k]; betSave(S);
+  document.querySelectorAll('.bet-ledger[data-race="' + String(race).replace(/"/g, '') + '"] .bet-roi').forEach(el => { const t = betRoiText(S[k]); el.textContent = t ? 'ROI ' + t : ''; el.className = 'bet-roi' + (t && t[0] === '-' ? ' res-no' : t ? ' res-ok' : ''); });
+  updateBetSummary();
+}
+function betSummaryInner(){
+  const A = Object.values(betStore()).filter(x => x && x.w > 0 && x.r != null);
+  if (!A.length) return '<b>MY BETS:</b> none settled yet. Enter the amount wagered and returned on a win-bet race.';
+  const sum = L => ({n: L.length, w: L.reduce((t, x) => t + x.w, 0), r: L.reduce((t, x) => t + x.r, 0)});
+  const fmt = v => '$' + (Math.round(v * 100) / 100).toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2});
+  const pct = t => { const p = Math.round((t.r - t.w) / t.w * 1000) / 10; return (p >= 0 ? '+' : '') + p + '%'; };
+  const T = sum(A), by = {}; A.forEach(x => { (by[x.kind || 'Other'] = by[x.kind || 'Other'] || []).push(x); });
+  return `<b>MY BETS (${T.n}):</b> wagered ${fmt(T.w)} \u00b7 returned ${fmt(T.r)} \u00b7 profit ${T.r - T.w >= 0 ? '' : '-'}${fmt(Math.abs(T.r - T.w))} \u00b7 <b class="${T.r >= T.w ? 'res-ok' : 'res-no'}">ROI ${pct(T)}</b>`
+    + `<div class="bet-by">${Object.entries(by).map(([k, L]) => { const t = sum(L); return escHtml(k) + ': ' + t.n + ' bet' + (t.n === 1 ? '' : 's') + ', ROI ' + pct(t); }).join(' \u00b7 ')}</div>`
+    + ` <button type="button" class="sort-btn" onclick="if(confirm('Clear all of your recorded bets?')){betSave({});renderPicks(window.__ccRaceSummaries);}">Clear my bets</button>`;
+}
+function betSummaryHTML(){ return '<div class="bet-summary" id="betSummary">' + betSummaryInner() + '</div>'; }
+function updateBetSummary(){ const el = document.getElementById('betSummary'); if (el) el.innerHTML = betSummaryInner(); }
 function scorecardHTML(){
   const imp = `<label class="sort-btn imp-btn">Import results file<input type="file" accept=".json,application/json" style="display:none" onchange="importResultsFile(this)"></label>`;
-  const R = Object.values(resultsStore()); if (!R.length) return `<div class="scorecard"><b>Your results scorecard</b> \u2014 none recorded yet. Import the results file Claude sends after each card, or choose each winner under "Record the winner" on the race cards. ${imp}</div>`;
+  const R = Object.values(resultsStore()); if (!R.length) return `<div class="scorecard"><b>Your results scorecard</b> \u2014 none recorded yet. Import the results file Claude sends after each card. ${imp}</div>`;
   const grp = (key, order) => order.map(k => { const x = R.filter(r => r[key] === k); if (!x.length) return ''; const w = x.filter(r => key === 'bet' ? r.betWon : key === 'conf' ? r.topWon : r.namedWon).length; return `<tr><td>${escHtml(String(k))}</td><td>${x.length}</td><td>${w}</td><td>${Math.round(100 * w / x.length)}%</td></tr>`; }).join('');
   const tierRows = [1,2,3,4,5,6,7].map(t => { const m = myTierRecord(true)[t]; if (!m) return ''; const tp = tierPct(t); const flag = m.n >= 10 && 100 * m.w / m.n < tp.poolPct - 15 ? ' <b class="res-no">\u26a0 running well below its past rate</b>' : ''; return `<tr><td>Tier ${t}</td><td>${m.n}</td><td>${m.w}</td><td>${Math.round(100 * m.w / m.n)}%${flag}</td></tr>`; }).join('');
   const inList = R.filter(r => r.inList).length; const selW = R.filter(r => r.selectionWon).length; const thrW = R.filter(r => r.winnerListedThreat).length; const withSel = R.filter(r => r.selection != null).length;
@@ -9797,7 +9836,7 @@ function renderPicks0(raceSummaries){
   // v2.91: the verdicts lead the board on every card, plays or not.
   const __blocks = decisionSortMode() === 'focus' ? __ordered.map(rs => blocks[raceSummaries.indexOf(rs)]) : blocks;
   // v4.17 (Robert, 26 Oct): the race-plans list is removed; the Decision board goes straight to each race's decision
-  list.innerHTML = __sortBar + playsStripHTML(raceSummaries) + confStripHTML(raceSummaries) + scorecardHTML() + __blocks.join('');   // v3.50: the old summary lists and the old per-race index are retired - the race plans are the one call
+  list.innerHTML = __sortBar + playsStripHTML(raceSummaries) + betSummaryHTML() + confStripHTML(raceSummaries) + scorecardHTML() + __blocks.join('');   // v3.50: the old summary lists and the old per-race index are retired - the race plans are the one call
   document.getElementById('pickCount').textContent = playRaces(raceSummaries).length;
   list.querySelectorAll('.plays-strip .race-chip').forEach(b => b.addEventListener('click', () => { const el = document.getElementById(b.dataset.goto); if (el && el.tagName === 'DETAILS') el.open = true; if (el) el.scrollIntoView({behavior:'smooth', block:'start'}); }));
   bindTapHandlers(list);
@@ -10566,7 +10605,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.56 · released 5 November 2026 · build 2026-11-05-g</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.57 · released 5 November 2026 · build 2026-11-05-h</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
