@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.69 — Race Card Reader</title>
+<title>Overlay Board v4.70 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1343,7 +1343,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.69</span> · released 9 November 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.70</span> · released 9 November 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a Brisnet data file (.DRF, .csv or .zip). Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -8839,7 +8839,8 @@ function tierHTML(rs){
   const c = topConfidence(rs); const strongL = c ? c.strong.filter(h => h !== t.h) : []; const sc = strongL.length ? ' \u00b7 strong challengers: ' + strongL.map(h => '#' + (h.post || '?') + ' ' + h.horse).join(', ') : '';
   // v4.04 (ChatGPT review / audit): a win bet on a horse with 2+ Against items is more vulnerable - flag it, keep the bet
   let vul = '';
-  if (t.t <= 2){ try { const A = forAgainst(rs, t.h).A || []; if (A.length >= 2) vul = `<div class="tier-vul">\u26a0 <b>Vulnerable bet</b> \u2014 ${A.length} against (${escHtml(A.slice(0, 3).join('; '))}${A.length > 3 ? '; \u2026' : ''}). At Tiers 1-2 bets like this have still won and paid on past cards; the tier is unchanged.</div>`; } catch(e){} }
+  // v4.70 (Robert, Belmont 11/8 R1: "bet definitely any price but vulnerable? Which is it?"): the Vulnerable-bet box is gone. A Definitive bet is a bet; its Against items are in Race facts. Over the history Definitive bets with 2+ Against
+  // won 66.7% and returned $1.38 (12 bets) against 76.7% and $1.89 (30 bets) with fewer - still profitable, and the decision is the same.
   // v4.37 (Robert: no redundant information): the pick is named in the heading, the 2-1 rule in the bet line and the Against list in the
   // For / Against fold, so the tier line carries only what is new - the tier, how those picks have done, and the action.
   let __fsT = null; try { __fsT = finalSelection(rs); } catch(e){}
@@ -10535,7 +10536,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.69 · released 9 November 2026 · build 2026-11-09-d</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.70 · released 9 November 2026 · build 2026-11-09-e</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
