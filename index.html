@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.68 — Race Card Reader</title>
+<title>Overlay Board v4.69 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1343,7 +1343,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.68</span> · released 9 November 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.69</span> · released 9 November 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a Brisnet data file (.DRF, .csv or .zip). Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -1502,7 +1502,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
         <h3>When the two methods disagree</h3>
         <p>If AI(1) and AI(2) rank different horses first, one short panel names the two horses and gives the class record of past disagreements, the one fact that has separated them: in allowance and maiden claiming races AI(1) has done much better, in maiden special weight somewhat better, and in claiming races the two have been even. Whether the race is a two-horse race or wide open is a separate fact, from how much of the chance the top two horses hold (Shape of the race).</p>
         <h3>Tiers and percentages</h3>
-        <p>Each race shows a tier for its named horse and the share of such horses that won on the cards in the pack: <b>Tier 1</b> DEFINITIVE with a clear #1 in a race that passes the race screen (73%) · <b>Tier 2</b> DEFINITIVE (72%) · <b>Tier 3</b> SOLID PICK (53%) · <b>Tier 4</b> CONDITIONAL, when 2-1 or higher at post (82%) · <b>Tier 5</b> top pick with HIGH confidence, no win bet (72%) · <b>Tier 6</b> top pick with MODERATE confidence, no win bet (50%) · <b>Tier 7</b> top pick with LOW confidence, no win bet (27%). Confidence is the pick's blended chance, the morning-line price and the board's own chance weighed together: HIGH is 45% or more (such picks won 80% of the time), MODERATE 35% to 45% (52%), LOW under 35% (29%). When AI(2) ranks a different horse first the level drops one step. Tiers 1-3 are bets, Tier 4 only at 2-1 or higher; Tiers 5-7 carry no win-bet edge and say so. These are past results on the pack's cards, which the rules were built from; on new cards expect them to run a few points lower. When you record winners on the race cards, the percentages blend in your own results, and the scorecard at the top of the board shows how each tier, bet type and confidence level is doing.</p>
+        <p>Each race shows a tier for its named horse and the share of such horses that won on the cards in the pack: <b>Tier 1</b> DEFINITIVE with a clear #1 in a race that passes the race screen (79%) · <b>Tier 2</b> DEFINITIVE (72%) · <b>Tier 3</b> SOLID PICK (53%) · <b>Tier 4</b> CONDITIONAL, when 2-1 or higher at post (82%) · <b>Tier 5</b> top pick with HIGH confidence, no win bet (72%) · <b>Tier 6</b> top pick with MODERATE confidence, no win bet (50%) · <b>Tier 7</b> top pick with LOW confidence, no win bet (27%). Confidence is the pick's blended chance, the morning-line price and the board's own chance weighed together: HIGH is 45% or more (such picks won 80% of the time), MODERATE 35% to 45% (52%), LOW under 35% (29%). When AI(2) ranks a different horse first the level drops one step. Tiers 1-3 are bets, Tier 4 only at 2-1 or higher; Tiers 5-7 carry no win-bet edge and say so. These are past results on the pack's cards, which the rules were built from; on new cards expect them to run a few points lower. When you record winners on the race cards, the percentages blend in your own results, and the scorecard at the top of the board shows how each tier, bet type and confidence level is doing.</p>
         <h3>BET — SOLID PICK</h3>
         <p>A win bet on the top-ranked horse when neither DEFINITIVE nor CONDITIONAL applies, and either (A) its morning line is 8-5 or shorter, it has the best Prime Power in the field, at most one no-finish trip comment in its last four, and the race is not low priority; or (B) its morning line is 2-1 or shorter, the field has 8 or fewer runners, it has the best last figure in the field, and its case tally is +4 or better.</p>
         <h3>Figure leader and value dropper</h3>
@@ -8256,7 +8256,7 @@ function extraBets(rs){
       let fa; try { fa = forAgainst(rs, h); } catch(e){ return; }
       const F = (fa.F || []).join(' | '); const Ag = (fa.A || []).join(' | '); const tal = (m.get(h) || {}).tally || 0;
       // v4.12 (GP 10/24 R2 Kinetic Stone): not when the data rates the horse overbet, or it tires late
-      if (overbetByData(rs, h) || readinessVeto(h) || /tires late/.test(Ag)) return;
+      if (overbetByData(rs, h) || readinessVeto(h) || /lost 2\+ lengths in \d+ of last/.test(Ag)) return;
       // v4.22 (BEL 9/30 R1 Foolin): not when its top figure came on another surface - such figure leaders won 3 of 13 (23%), returning 60 cents, both halves under $1
       if (/earned on/.test(Ag)) return;
       if (tal >= 6 && /best 3-race figure average/.test(F) && live.length <= 8) out.push({type: 'FIGURE', h, tal});
@@ -8506,6 +8506,11 @@ const NOFINISH_RX = /outfin|out-fin|outfnsh|no kick|no punch|lacked|weaken|wknd|
 // v4.10 (GP 10/24 R8 Role Play: led at the stretch, 4th by 5 lengths). Ground lost from the stretch call to
 // the finish. Pool: favourites that lost 2+ lengths late in 2 or more of their last 4 won 44 times against 57
 // expected (both halves under), returning 57-60 cents; those with 0-1 such races won 109 against 92.5.
+function claimingPriceMove(h){
+  const px = t => { const m = String(t || '').match(/Clm\s*(\d{4,6})/i); return m ? Number(m[1]) : null; };
+  const last = (h.ppRaces || [])[0]; if (!last) return null; const a = px(last.classTxt), b = px(h.raceClassTxt); if (!a || !b) return null;
+  return {last: a, today: b, up: (b - a) / a};
+}
 function lateFade(h){
   const L = (h.ppRaces || []).slice(0, 4); let n = 0, worst = 0, seen = 0;
   L.forEach(q => { if (q.strPos == null || q.finPos == null || q.strBtn == null || q.finBtn == null) return; seen++;
@@ -8698,7 +8703,7 @@ function disagreeHTML(rs){
 
 // v3.90 (Robert, 20 Oct: "the program should be self learning"). Results you record are kept
 // in this browser; tier percentages blend the pack's record with yours.
-const TIER_POOL = {1: [11, 15], 2: [21, 29], 3: [9, 17], 4: [9, 11], 5: [13, 18], 6: [36, 72], 7: [119, 439]};   // v4.67: full history re-run on 64 cards (the 62 earlier cards plus Belmont 10/30 and 11/8), morning-line odds
+const TIER_POOL = {1: [11, 14], 2: [21, 29], 3: [9, 17], 4: [9, 11], 5: [13, 18], 6: [36, 72], 7: [119, 440]};   // v4.69: full history re-run on 64 cards, morning-line odds, claiming-price class rule
 function resultsStore(){ try { return JSON.parse(localStorage.getItem('ob_results') || '{}'); } catch(e){ return {}; } }
 function resultsSave(o){ try { localStorage.setItem('ob_results', JSON.stringify(o)); } catch(e){} }
 function raceKey(rs){ const h = (rs.horses || [])[0] || {}; return String(h.raceDateYmd || '') + '|' + String(h.trackCode || '') + '|' + String(rs.race).trim(); }
@@ -8914,7 +8919,11 @@ function forAgainst(rs, h){
   const q = h.quirin; if (q != null){ const top = Math.max(...live.map(x => x.quirin || 0)); if (q >= 2 && q === top) F.push(`most early speed (${q} points)`); else if (q >= 2) F.push(`early speed (${q} points)`); else { const rl = (h.ppRaces || [])[0] ? runLineText(h.ppRaces[0]) : ''; A.push(`little early speed (${q} point${q === 1 ? '' : 's'}${rl ? '; last race ' + rl : ''})`); } }
   const rec = (h.ppRaces || []).slice(0, 4); if (rec.length >= 2){ const itm = rec.filter(r => parseInt(r.fin, 10) <= 3).length; if (itm >= 3) F.push(`in the money ${itm} of last ${rec.length}`); else if (itm <= 1) A.push(`in the money only ${itm} of last ${rec.length}`); }
   if ((h.ppRaces || [])[0] && parseInt(h.ppRaces[0].fin, 10) === 1) F.push('won its last start');
-  if (h.todayClassPar != null && h.lastClassPar != null){ const d = h.todayClassPar - h.lastClassPar; if (d <= -2) F.push(`dropping ${Math.abs(d).toFixed(1)} class points`); else if (d >= 2) A.push(`moving up ${d.toFixed(1)} class points`); }
+  // v4.69 (Robert, Belmont 11/8 R2 Twirly: claiming 35,000 to 40,000 was not marked as a step up): claiming to claiming is judged by the claiming price. Over the history, horses up 10%+
+  // in price whose level move was flat or down won 6.2% against a chance of 10.3% (96 horses, -3.9 and -4.1 by half); horses whose level was up 2+ but whose price was flat or down won 21.8% against 10.3%.
+  const __cp = claimingPriceMove(h);
+  if (__cp){ if (__cp.up >= 0.10) A.push(`moving up in claiming price (${__cp.last.toLocaleString('en-US')} to ${__cp.today.toLocaleString('en-US')}, +${Math.round(__cp.up * 100)}%)`); else if (h.todayClassPar != null && h.lastClassPar != null && h.todayClassPar - h.lastClassPar <= -2) F.push(`dropping ${Math.abs(h.todayClassPar - h.lastClassPar).toFixed(1)} class points`); }
+  else if (h.todayClassPar != null && h.lastClassPar != null){ const d = h.todayClassPar - h.lastClassPar; if (d <= -2) F.push(`dropping ${Math.abs(d).toFixed(1)} class points`); else if (d >= 2) A.push(`moving up ${d.toFixed(1)} class points`); }
   if (h.layoffDays != null && h.layoffDays >= 60) A.push(`off ${h.layoffDays} days`);
   // v4.02 (Robert, GP 10/23 R7 Roger That Dana): first start off a claim, and a conditions winner moving into
   // open company. Pool: off-the-claim horses returned 55 cents per dollar; conditions winners moving to open 61 cents.
@@ -8928,7 +8937,7 @@ function forAgainst(rs, h){
     if (L0 && parseInt(L0.fin, 10) === 1 && cond(L0.classTxt) && !cond(h.raceClassTxt)) A.push('won a non-winners race last time; today is open company');
   }
   { const nf = noFinishCount(h); if (nf.n >= 2) A.push(`no finish in ${nf.n} of last ${nf.of} (${nf.words.join(', ')})`); }
-  { const lf = lateFade(h); if (lf.seen >= 3 && lf.n >= 2) A.push(`tires late: lost 2+ lengths from the stretch call to the finish in ${lf.n} of last ${lf.seen} (worst ${Math.round(lf.worst * 4) / 4})`); }
+  { const lf = lateFade(h); if (lf.seen >= 3 && lf.n >= 2) A.push(`beaten farther at the finish than at the stretch call: lost 2+ lengths in ${lf.n} of last ${lf.seen} (worst ${Math.round(lf.worst * 4) / 4})`); }
   { const cl = competitiveAtLevel(h);
     if (cl.lv >= 1 && cl.c >= 1){ const q = cl.closest; F.push(`competitive at today's level or higher in ${cl.c} of last ${cl.n}` + (q ? ` (${ordinal(q.f)}${q.f > 1 && q.lb != null ? ', beaten ' + lengthsTxt(q.lb) : ''})` : '')); }
     else if (cl.lv >= 2 && cl.c === 0){ const q = cl.closest; A.push(`not competitive at today's level in last ${cl.n}` + (q ? ` (closest: ${ordinal(q.f)}${q.lb != null ? ', beaten ' + lengthsTxt(q.lb) : ''})` : '')); } }
@@ -9249,7 +9258,7 @@ function rscsChances(rs){
       const fa = forAgainst(rs, h); const F = (fa.F || []).join(' | '); const A = (fa.A || []).join(' | ');
       doubt = doubtfulFigureHorse(rs, h) ? 1 : 0;
       const mlfav = /morning-line favourite/.test(F);
-      fragile = mlfav && ((v.tally || 0) <= 0 || /no finish in [234]/.test(A) || /tires late/.test(A)) ? 1 : 0;
+      fragile = mlfav && ((v.tally || 0) <= 0 || /no finish in [234]/.test(A) || /lost 2\+ lengths in \d+ of last/.test(A)) ? 1 : 0;
       speedfav = mlfav && /most early speed/.test(F) ? 1 : 0; mlfavF = mlfav ? 1 : 0;
     } catch(e){} finally { __chGuard = false; } }
     return Math.exp(RSCS_W.gap * gap + RSCS_W.rs1 * (v.rs === mn ? 1 : 0) + RSCS_W.cs1 * (v.cs === 1 ? 1 : 0) + RSCS_W.cs2 * (v.cs === 2 ? 1 : 0) + RSCS_W.cs3 * (v.cs === 3 ? 1 : 0) + RSCS_W.tal * tal + RSCS_W.doubt * doubt + RSCS_W.fragile * fragile + RSCS_W.speedfav * speedfav + RSCS_W.mlfav * mlfavF); });
@@ -10526,7 +10535,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.68 · released 9 November 2026 · build 2026-11-09-c</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.69 · released 9 November 2026 · build 2026-11-09-d</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
