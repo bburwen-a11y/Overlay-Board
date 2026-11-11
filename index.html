@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.73 — Race Card Reader</title>
+<title>Overlay Board v4.74 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1350,7 +1350,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.73</span> · released 10 November 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.74</span> · released 11 November 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a Brisnet data file (.DRF, .csv or .zip). Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -9099,11 +9099,11 @@ function sortedForDecisions(raceSummaries){
   const out = L.map((rs, i) => { let t = 9, c = 0;
     try { const x = winTier(rs); t = x ? x.t : 9; const xb = extraBets(rs); if (t > 4 && xb.length) t = xb.some(b => b.type === 'FIGURE') ? 4.5 : xb.some(b => b.type === 'ALLOWANCE') ? 4.6 : 4.8; } catch(e){}
     let lv = 0; try { const ch = rscsChances(rs); c = Math.max(0, ...ch.values()); } catch(e){} try { const cf = confidenceOf(rs); if (cf){ c = cf.p; lv = cf.level === 'HIGH' ? 3 : cf.level === 'MODERATE' ? 2 : 1; } } catch(e){}
-    return {rs, i, t, c, lv, bet: t <= 4.5}; })   // v4.23: a value-dropper-only race is a long-shot side bet, ordered by the race itself
+    return {rs, i, t, c, lv, bet: t <= 4.6}; })   // v4.74 (Robert, 11 Nov: a win bet was ranked below a no-bet race): the allowance pick bet (4.6) counts as a bet in the order   // v4.23: a value-dropper-only race is a long-shot side bet, ordered by the race itself
     // v4.52 (Robert, 5 Nov, Belmont 10/4: a LOW race 4 was listed above a MODERATE race 2): confidence level first, then the blended number. Over the 62 cards the pick won
     // 67.7% in the first race of each card this way (61.3% by the blended number alone, 53.2% by the shown chance).
     .sort((a, b) => (b.bet - a.bet) || (a.bet ? a.t - b.t : 0) || (b.lv - a.lv) || (b.c - a.c) || (a.i - b.i));
-  out.forEach((x, k) => { x.rs.__bestOrder = k + 1; x.rs.__bestLabel = (k === 0 && x.t <= 4.5); });
+  out.forEach((x, k) => { x.rs.__bestOrder = k + 1; x.rs.__bestLabel = (k === 0 && x.bet); });
   return out.map(x => x.rs);
 }
 
@@ -10586,7 +10586,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.73 · released 10 November 2026 · build 2026-11-10-c</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.74 · released 11 November 2026 · build 2026-11-11-a</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
