@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.74 — Race Card Reader</title>
+<title>Overlay Board v4.75 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1350,7 +1350,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.74</span> · released 11 November 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.75</span> · released 12 November 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a Brisnet data file (.DRF, .csv or .zip). Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -5999,6 +5999,8 @@ function potentialInfo(rs){
     const live = (rs.horses || []).filter(h => !isScratchedNow(rs, h)); const n = live.length; if (n < 4) return null;
     const pc = rscsChances(rs).get(top) || 0, sh = ai2ShareOf(rs, top);
     const nm = h => '#' + (h.post || '?') + ' ' + h.horse;
+    // v4.75: a race with a win bet says what that kind of bet has done, so the line never calls a bet "limited". Over 64 cards: Tier 1-4 bets won 70%, figure-leader bets 41%, allowance-pick bets 40%.
+    if (raceHasWinBet(rs)) return null;   // v4.75: the bet banner already states the bet's record; no potential line is added under it
     if (o2 === top){
       const c = Math.round(100 * pc), x = sh != null ? Math.round(100 * sh) : null;
       const f = 'chance ' + c + '%' + (x != null ? ', AI(2) share ' + x + '%' : '');
@@ -6006,6 +6008,15 @@ function potentialInfo(rs){
       if (pc >= 0.35) return {kind: 'good', label: 'GOOD', text: f + '. Picks like this have won nearly half the time.'};
       return {kind: 'limited', label: 'LIMITED', text: f + '. Picks like this have won about 1 in 4, and another horse usually wins.'};
     }
+    // v4.75 (Race 9, CD 9/20: a split in an allowance race with a win bet was described as the pick winning 1 in 5). Over 64 cards when AI(2) leads with a different horse the pick has won:
+    // allowance 37% (AI(2)'s horse 16%), maiden claiming 36% (9%), claiming 22% (20%), maiden special weight 20% (10%); in fields of 10 or more another horse has won about 3 in 4.
+    const t = String((live[0] || {}).ai3RaceType || '').toUpperCase(); const big = n >= 10 ? ' In a ' + n + '-runner field another horse has won about 3 in 4.' : '';
+    let cls = null;
+    if (['A', 'AO', 'N', 'NO', 'R'].includes(t)) cls = ['Allowance', '37%', '16%', 'just under half'];
+    else if (['M', 'MO'].includes(t)) cls = ['Maiden claiming', '36%', '9%', 'over half'];
+    else if (['C', 'CO'].includes(t)) cls = ['Claiming', '22%', '20%', 'about 6 in 10'];
+    else if (t === 'S') cls = ['Maiden special weight', '20%', '10%', 'about 7 in 10'];
+    if (cls) return {kind: 'split', label: 'SPLIT', text: cls[0] + ': when they differ the pick has won about ' + cls[1] + ' and AI(2)\'s horse about ' + cls[2] + '; another horse ' + cls[3] + '.' + big};
     const band = n <= 7 ? ['about 1 in 3', 'just under half'] : n <= 9 ? ['about 1 in 5', 'about 6 in 10'] : ['about 1 in 5', 'about 3 in 4'];
     return {kind: 'split', label: 'SPLIT', text: n + '-runner field. The pick has won ' + band[0] + ' of these; another horse has won ' + band[1] + '.'};
   } catch(e){ return null; }
@@ -8121,7 +8132,7 @@ function hhLayoutFacts(){
           const sf = (typeof speedFacts === 'function') ? speedFacts(rs0, sel) : ''; if (sf){ const sd = document.createElement('div'); sd.className = 'dc-key'; sd.style.marginTop = '2px'; sd.innerHTML = sf; keep.push(sd); } }
       } catch(e){}
       oldRoot.querySelectorAll(':scope > .selsum > .ss-l, :scope > .selsum > details.ss-n').forEach(n => keep.push(n));
-      oldRoot.querySelectorAll('.prio-why').forEach(n => { const d = document.createElement('div'); d.className = 'small-note'; d.textContent = 'Confidence: ' + n.textContent; keep.push(d); });
+      { const __rsb = (window.__ccRaceSummaries || []).find(r => String(r.race).trim() === race); if (!(__rsb && raceHasWinBet(__rsb))) oldRoot.querySelectorAll('.prio-why').forEach(n => { const d = document.createElement('div'); d.className = 'small-note'; d.textContent = 'Confidence: ' + n.textContent; keep.push(d); }); }
       let __ccl = ''; try { const rs0 = (window.__ccRaceSummaries || []).find(r => String(r.race).trim() === race); const c0 = rs0 ? confidenceOf(rs0) : null; if (c0 && c0.close && !/TOO CLOSE TO CALL/i.test(oldRoot.textContent)) __ccl = `<div class="dis dis-split">\u2696 <b>CLOSE CALL</b> \u2014 #${escHtml(c0.riv.post || '?')} ${escHtml(c0.riv.horse)} is within 5 points of the pick on blended chance (${Math.round(100 * c0.rp)}% to ${Math.round(100 * c0.p)}%).</div>`; } catch(e){}
       body += `<div class="hhf-dec">${__ccl}${keep.map(n => hhStripIds(n.cloneNode(true)).outerHTML).join('')}</div>`;
     }
@@ -8684,8 +8695,12 @@ function rsLeaderNote(rs){
     return '<div class="ss-l"><b>Rank-score leader:</b> #' + escHtml(h.post || '?') + ' ' + escHtml(h.horse) + (signs.length ? ' \u2014 ' + signs.length + ' of 3 warning signs: ' + escHtml(signs.join('; ')) : '') + (diff ? '. The pick is #' + escHtml(sel.post || '?') + ' ' + escHtml(sel.horse) : '') + '.</div>';
   } catch(e){ return ''; }
 }
+function raceHasWinBet(rs){   // v4.75 (Robert, 12 Nov: "Maui Strong is bet but you have low confidence?"): a race with a win bet is not shown as a low-confidence second look
+  try { const t = winTier(rs); if (t && t.t <= 4) return true; return extraBets(rs).some(b => b.type === 'FIGURE' || b.type === 'ALLOWANCE'); } catch(e){ return false; }
+}
 function secondLook(rs){
   if (winnerOnly()) return null;
+  if (raceHasWinBet(rs)) return null;
   try {
     const t = winTier(rs); if (!t || t.t !== 7) return null;
     const sel = finalSelection(rs); const ch = rscsChances(rs); const live = (rs.horses || []).filter(x => !isScratchedNow(rs, x));
@@ -8896,7 +8911,7 @@ function tierHTML(rs){
   let __fsT = null; try { __fsT = finalSelection(rs); } catch(e){}
   const whatS = String(t.what || '').replace(/, when 2-1 or higher at post/, '').replace(/^(downgraded from Tier \d+ \([^)]*\): \d+ against)\s.*$/, '$1');
   const tierBox = `<div class="tier tier-${t.t}"><b>Tier ${t.t} \u00b7 ${t.h === __fsT ? '' : '#' + escHtml(t.h.post || '?') + ' ' + escHtml(t.h.horse) + ' \u00b7 '}${act}</b> ${(whatS + sc).replace(/^[\s\u00b7]+/, '') ? '<span class="conf-why">(' + escHtml((whatS + sc).replace(/^[\s\u00b7]+/, '')) + ')</span>' : ''}</div>`;
-  let tierBox2 = xb ? tierBox.replace(/<b>Tier (\d+) \u00b7 /, (m0, n0) => '<b>' + xbWord(xb) + ' (Tier ' + n0 + ' race) \u00b7 ').replace(/ \(see below\)/, '').replace(/<span class="conf-why">\([^)]*\)<\/span>/, '') : tierBox;
+  let tierBox2 = xb ? '' : tierBox;   // v4.75: a race with an extra win bet shows only the green bet banner (no red "Tier 7 race" box under it)
   const vp = valuePriceHTML(rs, t);
   if (vp) tierBox2 = tierBox2.replace(/<\/div>$/, vp + '</div>');
   return vul ? tierBox2.replace(/<\/div>$/, vul + '</div>') : tierBox2;
@@ -9481,7 +9496,7 @@ function verdictBanner0(rs){
   const topShown = pl.win ? pl.key : (finalSelection(rs) || pl.key);
   return `<div class="vd vd-play"><div class="vd-tier">${pl.win ? 'PLAY \u2014 WIN BET' : (extraBets(rs).length ? 'WIN BET BELOW' : 'NO WIN BET \u2014 contenders only')}${pl.wide ? ' \u00b7 WIDE FIELD' : ''}</div>`
     + rivalsNote(rs, topShown)
-    + (pl.win ? `<div class="vd-win"><b>${escHtml(pl.win.label)}</b> \u00b7 ${escHtml(pl.win.text)}${pl.v.h !== pl.key ? ` <span class="vd-diff">\u2014 win bet is ${horseLabel(pl.v.h)}${rscsChip(rs, pl.v.h)}; the top pick ${horseLabel(pl.key)} is next best</span>` : ''}</div>` + forAgainstHTML(rs, pl.v.h) : `<div class="vd-why">${extraBets(rs).length ? 'No tier bet in this race; the figure-leader win bet is shown below.' : 'No win bet in this race.'}</div>` + forAgainstHTML(rs, finalSelection(rs) || pl.key))
+    + (pl.win ? `<div class="vd-win"><b>${escHtml(pl.win.label)}</b> \u00b7 ${escHtml(pl.win.text)}${pl.v.h !== pl.key ? ` <span class="vd-diff">\u2014 win bet is ${horseLabel(pl.v.h)}${rscsChip(rs, pl.v.h)}; the top pick ${horseLabel(pl.key)} is next best</span>` : ''}</div>` + forAgainstHTML(rs, pl.v.h) : `<div class="vd-why">${extraBets(rs).length ? 'No tier bet in this race; the ' + (extraBets(rs).some(b => b.type === 'FIGURE') ? 'figure-leader' : extraBets(rs).some(b => b.type === 'ALLOWANCE') ? 'allowance-pick' : 'value-dropper') + ' win bet is shown below.' : 'No win bet in this race.'}</div>` + forAgainstHTML(rs, finalSelection(rs) || pl.key))
     + `</div>`;
 }
 function buildVerdictBoard(raceSummaries){
@@ -10586,7 +10601,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.74 · released 11 November 2026 · build 2026-11-11-a</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.75 · released 12 November 2026 · build 2026-11-12-a</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
