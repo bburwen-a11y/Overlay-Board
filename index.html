@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.78 — Race Card Reader</title>
+<title>Overlay Board v4.79 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1324,6 +1324,8 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
 <style id="v438">.conf-strip{background:#eef4ea;border:1px solid #1F5A33;border-radius:5px;padding:8px 10px;margin:0 0 10px;font-size:13.5px;line-height:1.5;color:#173f26}.conf-strip a{font-weight:700}</style><style id="v437">
 .ss-riv{font-size:13.5px}.cc-line{margin-top:4px;font-size:13px}
 .rf-wrap{background:#f6f0e2}
+.hhd-checks{font-size:12.5px;line-height:1.45;margin:6px 0;padding:5px 8px;border-radius:6px;background:#eef3ee;color:#1f3a2c}
+.hhd-checks-fail{background:#f8e6df;color:#6e2a1d}
 .hhd .dc-key-name{display:none;}
 .hhd .dc-key-name + *{}
 /* v4.72 (Robert, 10 Nov: make the pick larger, not small) */
@@ -1350,7 +1352,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.78</span> · released 14 November 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.79</span> · released 15 November 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a Brisnet data file (.DRF, .csv or .zip). Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -1513,7 +1515,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
         <h3>BET — SOLID PICK</h3>
         <p>A win bet on the top-ranked horse when neither DEFINITIVE nor CONDITIONAL applies, and either (A) its morning line is 8-5 or shorter, it has the best Prime Power in the field, at most one no-finish trip comment in its last four, and the race is not low priority; or (B) its morning line is 2-1 or shorter, the field has 8 or fewer runners, it has the best last figure in the field, and its case tally is +4 or better.</p>
         <h3>Figure leader and value dropper</h3>
-        <p>Further win bets, independent of the tiers. <b>BOTH ENGINES</b>: AI(1) and AI(2) pick the same horse, the board's chance is 35% or more and AI(2)'s share is 65% or more, when the race has no other bet. <b>ALLOWANCE PICK</b>: the top pick in an allowance race, at 2-1 or higher, when the race has no other bet. <b>VALUE DROPPER</b> was retired in v4.29: once the fair-odds comparison was corrected, it no longer paid. Both stand even in races otherwise marked SKIP; exactas in those races stay off.</p>
+        <p><b>PRE-BET CHECKS</b>: before any win bet the horse is checked five ways: is its chance below its morning-line share; does AI(2) pick another horse; are there 9 or more runners; does it carry 3 or more Against items; is the race a maiden special weight or claiming race. With 2 or more checks failed the win bet is held. Further win bets, independent of the tiers. <b>BOTH ENGINES</b>: AI(1) and AI(2) pick the same horse, the board's chance is 35% or more and AI(2)'s share is 65% or more, when the race has no other bet. <b>ALLOWANCE PICK</b>: the top pick in an allowance race, at 2-1 or higher, when the race has no other bet. <b>VALUE DROPPER</b> was retired in v4.29: once the fair-odds comparison was corrected, it no longer paid. Both stand even in races otherwise marked SKIP; exactas in those races stay off.</p>
         <h3>Value price (stake guide)</h3>
         <p>Every Tier 1–4 win bet shows a value price worked out from the board's own chance for the horse. At that price or longer the board suggests a double stake; below it a single stake. On past cards this kept every bet and returned more than flat staking, because the well-priced bets have paid best. The board never names dollar amounts.</p>
         <h3>Downgraded bets</h3>
@@ -8100,11 +8102,19 @@ function hhDecision(html, rs){
     + (isFts ? `<div class="hhd-act"><b>NO PICK, NO BET</b></div><div class="hhd-why">A first-time starter has no past performances to read. The best horse that has raced is in Race facts.</div>` : act ? `<div class="hhd-act"><b>${escHtml(livePass ? 'PASS \u2014 no bet at this price' : act)}</b></div>` + (why ? `<div class="hhd-why">${escHtml(why)}</div>` : '') : '')
     + (win ? `<div class="hhd-bet${livePass ? ' hhd-pass' : ''}">${escHtml(win)}</div>` : '') + (liveNote ? `<div class="hhd-bet${livePass ? ' hhd-pass' : ''}">${escHtml(liveNote)}</div>` : '') + xb
     + (tier ? tier.outerHTML : '')
+    + checksLineHTML(rs)
     + (ai ? `<div class="hhd-ai">${escHtml(ai)}</div>` : '')
     + (pace ? `<div class="hhd-pace"><b>PACE</b> \u2014 ${escHtml(pace)}</div>` : '')
     + betLedgerHTML(rs)
     + `<div class="hhd-foot">${type ? type.outerHTML : ''}${chips.map(c => `<a href="#" class="hhd-flag race-jump" data-goto-facts="${escAttr(race)}">${escHtml(c)}</a>`).join('')}<a href="#" class="hhd-more race-jump" data-goto-facts="${escAttr(race)}">Race facts \u25b8</a></div>`
     + `</div>`;
+}
+function checksLineHTML(rs){
+  let h = null; try { h = finalSelection(rs); } catch(e){} if (!h || !(h.ppRaces || []).length) return '';
+  const c = preBetChecks(rs, h); if (!c) return '';
+  const held = !!(rs.__heldTier || (rs.__heldXb && rs.__heldXb.length));
+  const body = c.failed.length ? c.failed.length + ' of 5 failed: ' + c.failed.join(' \u00b7 ') : 'all 5 passed';
+  return `<div class="hhd-checks${c.hold ? ' hhd-checks-fail' : ''}"><b>PRE-BET CHECKS</b> \u00b7 ${escHtml(body)}${held ? ' \u2014 <b>WIN BET HELD</b>' : ''}</div>`;
 }
 function hhStripIds(node){ node.querySelectorAll('[id]').forEach(e => e.removeAttribute('id')); return node; }
 function hhLayoutFacts(){
@@ -8328,7 +8338,8 @@ function extraBets(rs){
       }
     } catch(e){}
     try { const chm = rscsChances(rs); out.sort((a, b) => ((a.type === 'FIGURE') ? 0 : 1) - ((b.type === 'FIGURE') ? 0 : 1) || ((chm.get(b.h) || -1) - (chm.get(a.h) || -1))); } catch(e){}
-    return out;
+    const kept = out.filter(x => { const c = preBetChecks(rs, x.h); return !(c && c.hold); }); rs.__heldXb = out.length > kept.length ? out.filter(x => !kept.includes(x)) : null;
+    return kept;
   } finally { __xbGuard = false; }
 }
 function extraBetsHTML(rs){
@@ -8356,9 +8367,33 @@ function raceUnreadable(rs){
   if (fav != null && fav >= 3) why.push('no standout (favourite ' + (h => h.mlOddsStr || '')(live.find(h => h.decimalOdds - 1 === fav) || {}) + ')');
   return {unreadable: why.length > 0, why};
 }
+// v4.79 (Robert, 15 Nov: "another layer of checks before picking"). Five race-day checks on the horse to be bet: its chance is below its morning-line share, AI(2) picks another horse,
+// 9 or more runners, 3 or more Against items, a maiden special weight or claiming race. Over 63 cards the pick won 49% when 0-1 failed and 20% when 3+ failed; win bets with 2+ failed
+// returned $0.81 per $1 (later 15 cards $0.31) against $1.46 with 0-1 failed, so a bet with 2 or more failed checks is held. Horse-level clues (works, head-to-head, surface,
+// figure improvement, class change, layoff) added nothing beyond the board's chance when tested one by one and all together.
+let __chkGuard = false;
+function preBetChecks(rs, h){
+  if (!rs || !h || __chkGuard) return null;
+  const a2r = (typeof ai2Ready === 'function' && ai2Ready()) ? 1 : 0;
+  const live = (rs.horses || []).filter(x => !isScratchedNow(rs, x));
+  const key = String(h.horse) + '|' + a2r + '|' + live.length; rs.__chk = rs.__chk || {}; if (rs.__chk[key]) return rs.__chk[key];
+  __chkGuard = true; const failed = [];
+  try {
+    const lm = live.filter(x => x.decimalOdds); const tot = lm.reduce((t, x) => t + 1 / x.decimalOdds, 0);
+    const mk = (h.decimalOdds && tot) ? (1 / h.decimalOdds) / tot : null; const pc = rscsChances(rs).get(h);
+    if (mk != null && pc != null && pc < mk) failed.push('chance below its morning-line share');
+    if (a2r){ const o2 = ai2ModelPick(rs); if (o2 && o2 !== h) failed.push('AI(2) picks #' + (o2.post || '?') + ' ' + o2.horse); }
+    if (live.length >= 9) failed.push(live.length + ' runners');
+    const A = (forAgainst(rs, h).A || []); if (A.length >= 3) failed.push(A.length + ' Against items');
+    const t = String((live[0] || {}).ai3RaceType || '').toUpperCase(); if (t === 'S') failed.push('maiden special weight'); else if (['C', 'CO'].includes(t)) failed.push('claiming race');
+  } catch(e){} finally { __chkGuard = false; }
+  const out = {failed, hold: failed.length >= 2}; rs.__chk[key] = out; return out;
+}
 function racePlan(rs){
-  const pl = racePlan0(rs);
+  let pl = racePlan0(rs);
   if (pl && pl.play && !pl.win && !pl.winOnly){ const r = raceUnreadable(rs); if (r.unreadable) return Object.assign({}, pl, {play: false, unreadable: true, why: 'UNREADABLE \u2014 ' + r.why.join('; ') + '. Races like this are too hard to call from the data or the odds.'}); }
+  rs.__heldTier = null;
+  if (pl && pl.win && pl.v && pl.v.h){ const c = preBetChecks(rs, pl.v.h); if (c && c.hold){ rs.__heldTier = {h: pl.v.h, failed: c.failed}; pl = Object.assign({}, pl, {win: null, winOnly: false, v: Object.assign({}, pl.v, {tier: 'HELD', downFrom: null}), checkHeld: {h: pl.v.h, failed: c.failed}}); } }
   return pl;
 }
 function racePlan0(rs){
@@ -8901,6 +8936,7 @@ function winTier(rs){
   if (!rf.length) return null;
   const top = rf[0].h; const gap = rf.length > 1 ? rf[1].score - rf[0].score : 99;
   if (v && v.h && v.tier === 'STRONG') return pr.level === 'FOCUS' && gap >= 4 ? {t: 1, pct: tierPct(1).pct, h: v.h, what: 'DEFINITIVE with a clear #1 in a race that passes the race screen'} : {t: 2, pct: tierPct(2).pct, h: v.h, what: 'DEFINITIVE'};
+  if (v && v.tier === 'HELD' && pl.checkHeld) return noBetTier(rs, pl.checkHeld.h, 'win bet held by the pre-bet checks', true);
   if (v && v.h && v.tier === 'SOLID') return {t: 3, pct: tierPct(3).pct, h: v.h, what: 'SOLID PICK'};
   if (v && v.downFrom === 3) return {t: 4, pct: tierPct(4).pct, h: v.h, what: 'downgraded from Tier 3 (SOLID PICK): ' + v.downN + ' against \u2014 ' + v.downWhy, down: true};
   if (v && v.downFrom === 4) return noBetTier(rs, v.downH, 'downgraded from Tier 4 (CONDITIONAL): ' + (v.downMsg || (v.downN + ' against \u2014 ' + v.downWhy)), true);
@@ -9502,6 +9538,7 @@ function finalSelection(rs){
     const pl = racePlan(rs), xb = extraBets(rs);
     if (pl && pl.win && pl.v && pl.v.h) return pl.v.h;
     if (xb.length) return xb[0].h;
+    if (pl && pl.checkHeld) return pl.checkHeld.h;
     const rp = reviewedPick(rs); if (rp) return rp.h;
     const rf = rankedField(rs, []); return rf.length ? rf[0].h : null;
   } catch(e){ return null; } finally { __fsGuard = false; }
@@ -10621,7 +10658,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.78 · released 14 November 2026 · build 2026-11-14-a</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.79 · released 15 November 2026 · build 2026-11-15-a</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
