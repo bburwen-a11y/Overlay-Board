@@ -8126,14 +8126,17 @@ function hhDecision(html, rs){
   const __dp = root.querySelector('.dis-panel'); if (__dp) ai = [...__dp.children].map(e => e.textContent.replace(/\s+/g, ' ').trim()).join(' \u00b7 ');
   const tier = q('.tier'); const xb = [...root.querySelectorAll(':scope .xbet')].map(e => e.outerHTML).join('');
   const type = q('.dc-type'); const nm = m[3];
+  // v4.82 (Robert: "you have no win bet twice"): with no bet, the label carries the tier and the separate no-bet lines are dropped
+  const __noBet = !isFts && !livePass && /^NO WIN BET/.test(act) && !xb;
+  let __tN = ''; try { const t0 = winTier(rs); if (t0 && __noBet) __tN = String(t0.t); } catch(e){}
   return `<div class="hhd hhd-${cls}${isFts ? ' hhd-fts' : ''}${livePass ? ' hhd-livepass' : ''} race-anchor-target" id="pick-r${escAttr(race)}">`
     + `<div class="hhd-r1"><span class="hhd-chip">RACE ${escHtml(race)}</span><span class="hhd-sub">${escHtml(sub)}</span><div class="hhd-share">${isFts ? '<b>\u2014</b><small>no record</small>' : `<b>${escHtml(m[5])}%</b><small>chance</small>`}</div></div>`
     + attentionLine(rs, isBet)
     + `<div class="hhd-pick"><span class="hhd-no">#${escHtml(m[2])}</span><a href="#" class="pp-link hhd-name" data-pp-race="${escAttr(race)}" data-pp-horse="${escAttr(nm)}">${escHtml(nm)}</a><span class="hhd-ml">${escHtml(m[4])}</span></div>`
-    + `<div class="hhd-lab">${isFts ? 'FIRST-TIME STARTER LEADS THE RANKING \u00b7 NO RECORD TO READ' : escHtml(m[1]) + (prioTxt ? ' \u00b7 ' + escHtml(prioTxt) : '')}</div>`
-    + (isFts ? `<div class="hhd-act"><b>NO PICK, NO BET</b></div><div class="hhd-why">A first-time starter has no past performances to read. The best horse that has raced is in Race facts.</div>` : act ? `<div class="hhd-act"><b>${escHtml(livePass ? 'PASS \u2014 no bet at this price' : act)}</b></div>` + (why ? `<div class="hhd-why">${escHtml(why)}</div>` : '') : '')
+    + `<div class="hhd-lab">${isFts ? 'FIRST-TIME STARTER LEADS THE RANKING \u00b7 NO RECORD TO READ' : (__noBet ? 'TOP PICK \u00b7 NO BET' + (__tN ? ' \u00b7 TIER ' + __tN : '') : escHtml(m[1])) + (prioTxt ? ' \u00b7 ' + escHtml(prioTxt) : '')}</div>`
+    + (isFts ? `<div class="hhd-act"><b>NO PICK, NO BET</b></div><div class="hhd-why">A first-time starter has no past performances to read. The best horse that has raced is in Race facts.</div>` : (act && !__noBet) ? `<div class="hhd-act"><b>${escHtml(livePass ? 'PASS \u2014 no bet at this price' : act)}</b></div>` + (why ? `<div class="hhd-why">${escHtml(why)}</div>` : '') : '')
     + (win ? `<div class="hhd-bet${livePass ? ' hhd-pass' : ''}">${escHtml(win)}</div>` : '') + (liveNote ? `<div class="hhd-bet${livePass ? ' hhd-pass' : ''}">${escHtml(liveNote)}</div>` : '') + xb
-    + (tier ? tier.outerHTML : '')
+    + (tier && !__noBet ? tier.outerHTML : '')
     + checksLineHTML(rs)
     + (ai ? `<div class="hhd-ai">${escHtml(ai)}</div>` : '')
     + (pace ? `<div class="hhd-pace"><b>PACE</b> \u2014 ${escHtml(pace)}</div>` : '')
@@ -8895,8 +8898,8 @@ function confidenceFor(rs, h){
 function confidenceOf(rs){ let h = null; try { h = finalSelection(rs); } catch(e){} return confidenceFor(rs, h); }
 // races with no win bet: the tier follows the confidence level (5 HIGH, 6 MODERATE, 7 LOW) - the tier numbers are kept so recorded results still line up
 function noBetTier(rs, h0, what, down){
-  let hh = h0; try { const x = extraBets(rs)[0]; if (x) hh = x.h; else { const cp = down ? cleanFigurePick(rs) : null; if (cp) hh = cp; else { const rp = reviewedPick(rs); if (rp) hh = rp.h; } } } catch(e){}
-  if (hh && h0 && hh !== h0 && what) what = what.replace(/^win bet held/, `win bet on #${h0.post || '?'} ${h0.horse} held`) + '; the figure Pick stands';
+  let hh = h0; try { const x = extraBets(rs)[0]; if (x) hh = x.h; else { const cp = figurePickOf(rs); if (cp) hh = cp; else { const rp = reviewedPick(rs); if (rp) hh = rp.h; } } } catch(e){}
+  if (hh && h0 && hh !== h0 && what) what = what.replace(/^win bet held/, `win bet on #${h0.post || '?'} ${h0.horse} held`);
   const c = confidenceFor(rs, hh || h0); const L = c ? c.level : 'LOW'; const t = L === 'HIGH' ? 5 : L === 'MODERATE' ? 6 : 7;
   return {t, pct: tierPct(t).pct, h: (hh || h0), what: what || '', down: !!down, level: L};
 }
@@ -9461,7 +9464,8 @@ function selectionSummaryHTML(rs){
   const __rp = reviewedPick(rs); const reviewed = __rp ? [__rp.h, ch.get(__rp.h)] : undefined;
   // v4.16: with no win bet, the top pick is the horse that rates best after the review (tested: the reviewed #1 won
   // 31.2% against 28.4% for the rank-score #1 in the later cards, 36.4% against 35.7% in the earlier ones)
-  const sel = (pl && pl.win && pl.v && pl.v.h) ? pl.v.h : (xb.length ? xb[0].h : (reviewed ? reviewed[0] : rf[0].h));
+  const __fp = figurePickOf(rs);
+  const sel = (pl && pl.win && pl.v && pl.v.h) ? pl.v.h : (xb.length ? xb[0].h : (__fp || (reviewed ? reviewed[0] : rf[0].h)));
   const pct = h => Math.round(100 * (ch.get(h) || 0));
   const top = rf[0];
   const v = m.get(sel) || {}; const fa = forAgainst(rs, sel);
@@ -9470,6 +9474,7 @@ function selectionSummaryHTML(rs){
     : pl.v.tier === 'SOLID' ? 'SOLID PICK: top-ranked, short morning line, best Prime Power or best last figure, clean recent record'
     : pl.v.tier === 'BET' ? 'CONDITIONAL: figure favourite missing one extra condition' : '';
   else if (xb.length && xb[0].h === sel) how = xb[0].type === 'BOTH' ? 'BOTH ENGINES: AI(1) and AI(2) pick the same horse, chance 35% or more and AI(2) share 65% or more' : xb[0].type === 'ALLOWANCE' ? 'ALLOWANCE PICK: the top pick in an allowance race, at 2-1 or higher' : xb[0].type === 'FIGURE' ? 'FIGURE LEADER: best 3-race average, case +6 or better, 8 or fewer runners' : 'VALUE DROPPER: dropping in class on dirt, fair odds shorter than its morning line';
+  else if (__fp && sel === __fp) how = 'the figure Pick: the morning-line favourite with the best three-race average (no win bet)';
   else if (__rp && __rp.from){ how = 'the close call goes to #' + (sel.post || '?') + ' ' + sel.horse + ': it is within 10 points of #' + (__rp.from.post || '?') + ' ' + __rp.from.horse + ' on chance, and it ' + __rp.why; }
   else { const rs1 = rf[0].h; how = sel === rs1 ? 'first on the rank score and still first after weighing the warnings (no win bet)'
       : 'rates best after weighing the warnings (no win bet). Calculated #1 was #' + (rs1.post || '?') + ' ' + rs1.horse + ' on the rank score; the review moved it'; }
@@ -9568,16 +9573,12 @@ function mlReliability(rs){
 }
 let __fsGuard = false;
 
-// v4.82 (Robert, 18 Nov: "What's your pick? Chaplin or Kinetic Stone?"). When the tier bet is held by
-// the pre-bet checks, or there is no win bet at all, the race's named horse is the figure Pick if that Pick is clean (no PASS flag and
-// at most one loss sign), not the horse whose win bet was held. One horse is named on every tab.
-function cleanFigurePick(rs){
-  try {
-    const p = pickFor(rs);
-    if (!p || p.none || p.line !== 'primary' || !p.h || isScratchedNow(rs, p.h)) return null;
-    if ((pickPassReasons(p.h) || []).length) return null;
-    return pickWarnings(rs, p.h).length <= 1 ? p.h : null;
-  } catch(e){ return null; }
+// v4.82 (Robert, 18 Nov: "What's your pick? Chaplin or Kinetic Stone?"). With no win bet, the race names ONE
+// horse on every tab: the figure Pick (the favourite with the best three-race average) when there is one. Where
+// the blended-chance leader is a different horse neither has been reliable, so the Pick is named and the other
+// horse is shown once as the alternative.
+function figurePickOf(rs){
+  try { const p = pickFor(rs); return (p && !p.none && p.line === 'primary' && p.h && !isScratchedNow(rs, p.h)) ? p.h : null; } catch(e){ return null; }
 }
 function finalSelection(rs){
   if (__fsGuard) return null; __fsGuard = true;
@@ -9585,7 +9586,7 @@ function finalSelection(rs){
     const pl = racePlan(rs), xb = extraBets(rs);
     if (pl && pl.win && pl.v && pl.v.h) return pl.v.h;
     if (xb.length) return xb[0].h;
-    const cp = cleanFigurePick(rs); if (cp) return cp;
+    const cp = figurePickOf(rs); if (cp) return cp;
     if (pl && pl.checkHeld) return pl.checkHeld.h;
     const rp = reviewedPick(rs); if (rp) return rp.h;
     const rf = rankedField(rs, []); return rf.length ? rf[0].h : null;
