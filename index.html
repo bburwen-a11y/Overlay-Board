@@ -8898,7 +8898,7 @@ function confidenceFor(rs, h){
 function confidenceOf(rs){ let h = null; try { h = finalSelection(rs); } catch(e){} return confidenceFor(rs, h); }
 // races with no win bet: the tier follows the confidence level (5 HIGH, 6 MODERATE, 7 LOW) - the tier numbers are kept so recorded results still line up
 function noBetTier(rs, h0, what, down){
-  let hh = h0; try { const x = extraBets(rs)[0]; if (x) hh = x.h; else { const cp = figurePickOf(rs); if (cp) hh = cp; else { const rp = reviewedPick(rs); if (rp) hh = rp.h; } } } catch(e){}
+  let hh = h0; try { const x = extraBets(rs)[0]; if (x) hh = x.h; else { let cp = null; try { cp = finalSelection(rs); } catch(e){} if (cp) hh = cp; else { const rp = reviewedPick(rs); if (rp) hh = rp.h; } } } catch(e){}
   if (hh && h0 && hh !== h0 && what) what = what.replace(/^win bet held/, `win bet on #${h0.post || '?'} ${h0.horse} held`);
   const c = confidenceFor(rs, hh || h0); const L = c ? c.level : 'LOW'; const t = L === 'HIGH' ? 5 : L === 'MODERATE' ? 6 : 7;
   return {t, pct: tierPct(t).pct, h: (hh || h0), what: what || '', down: !!down, level: L};
@@ -9465,7 +9465,9 @@ function selectionSummaryHTML(rs){
   // v4.16: with no win bet, the top pick is the horse that rates best after the review (tested: the reviewed #1 won
   // 31.2% against 28.4% for the rank-score #1 in the later cards, 36.4% against 35.7% in the earlier ones)
   const __fp = figurePickOf(rs);
-  const sel = (pl && pl.win && pl.v && pl.v.h) ? pl.v.h : (xb.length ? xb[0].h : (__fp || (reviewed ? reviewed[0] : rf[0].h)));
+  // v4.82: with no bet, the named horse comes from finalSelection, the same source as the Race facts header and the tier line
+  let __fs = null; try { __fs = finalSelection(rs); } catch(e){}
+  const sel = (pl && pl.win && pl.v && pl.v.h) ? pl.v.h : (xb.length ? xb[0].h : (__fs || __fp || (reviewed ? reviewed[0] : rf[0].h)));
   const pct = h => Math.round(100 * (ch.get(h) || 0));
   const top = rf[0];
   const v = m.get(sel) || {}; const fa = forAgainst(rs, sel);
@@ -9474,6 +9476,7 @@ function selectionSummaryHTML(rs){
     : pl.v.tier === 'SOLID' ? 'SOLID PICK: top-ranked, short morning line, best Prime Power or best last figure, clean recent record'
     : pl.v.tier === 'BET' ? 'CONDITIONAL: figure favourite missing one extra condition' : '';
   else if (xb.length && xb[0].h === sel) how = xb[0].type === 'BOTH' ? 'BOTH ENGINES: AI(1) and AI(2) pick the same horse, chance 35% or more and AI(2) share 65% or more' : xb[0].type === 'ALLOWANCE' ? 'ALLOWANCE PICK: the top pick in an allowance race, at 2-1 or higher' : xb[0].type === 'FIGURE' ? 'FIGURE LEADER: best 3-race average, case +6 or better, 8 or fewer runners' : 'VALUE DROPPER: dropping in class on dirt, fair odds shorter than its morning line';
+  else if (pl && pl.checkHeld && sel === pl.checkHeld.h) how = 'top pick; its win bet was held by the pre-bet checks (no win bet)';
   else if (__fp && sel === __fp) how = 'the figure Pick: the morning-line favourite with the best three-race average (no win bet)';
   else if (__rp && __rp.from){ how = 'the close call goes to #' + (sel.post || '?') + ' ' + sel.horse + ': it is within 10 points of #' + (__rp.from.post || '?') + ' ' + __rp.from.horse + ' on chance, and it ' + __rp.why; }
   else { const rs1 = rf[0].h; how = sel === rs1 ? 'first on the rank score and still first after weighing the warnings (no win bet)'
@@ -10707,7 +10710,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.82 · released 18 November 2026 · build 2026-11-18-b</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.82 · released 18 November 2026 · build 2026-11-18-c</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
