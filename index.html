@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.80 — Race Card Reader</title>
+<title>Overlay Board v4.81 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1352,7 +1352,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.80</span> · released 16 November 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.81</span> · released 18 November 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a Brisnet data file (.DRF, .csv or .zip). Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -6919,6 +6919,36 @@ function suggestedPlayLine(rs, h){
     + ` Rebuild the card after scratches before betting.</div>`;
 }
 
+// PICK LOSS SIGNS (Robert: "looking at every time a pick loses, are there any
+// conditions that show up consistently"). Five race-and-record conditions that
+// kept turning up beside losing Picks in both chronological halves of the pool.
+// Each one present is listed by fact; the count is shown beside the Pick. The
+// more of them a Pick carries, the more it behaves like an ordinary favourite.
+// Display only: it changes no Pick, no ranking and no bet line.
+function pickWarnings(rs, h){
+  const out = [];
+  if (!h) return out;
+  const rec = (h.ppRaces || []).slice(0, 4).filter(p => p.fin != null && !isNaN(parseInt(p.fin, 10)));
+  const itm = rec.filter(p => { const f = parseInt(p.fin, 10); return f >= 1 && f <= 3; }).length;
+  if (rec.length && itm / rec.length < 0.6) out.push(`in the money in ${itm} of its last ${rec.length}`);
+  const live = (rs.horses || []).filter(x => !x.scratched);
+  const lr = rankIn(live, h, x => x.lastSpd);
+  if (!lr || lr.rank !== 1 || lr.tied) out.push(lr ? `last figure ranks #${lr.rank}${lr.tied ? ' tied' : ''}, not top alone` : 'no last figure to compare');
+  const a = live.map(x => ({x, v: avg3Of(x)})).filter(t => t.v != null).sort((p, q) => q.v - p.v);
+  if (a.length >= 2 && a[0].x === h && a[0].v - a[1].v <= 1)
+    out.push(`three-race average leads ${a[1].x.horse} by only ${(a[0].v - a[1].v).toFixed(2)}`);
+  const ml = parseOdds(h.mlOddsStr);
+  if (ml != null && ml >= 4.5) out.push(`morning line ${h.mlOddsStr}, 7-2 or longer`);
+  if (h.layoffDays != null && h.layoffDays > 90) out.push(`off ${h.layoffDays} days`);
+  return out;
+}
+function pickWarningsLine(rs, h){
+  const w = pickWarnings(rs, h);
+  if (!w.length) return `<div class="dc-box b-play"><b>Loss signs: 0 of 5</b> — none of the five losing-pick conditions present.</div>`;
+  return `<div class="dc-box ${w.length >= 2 ? 'b-flag' : 'b-noplay'}"><b>Loss signs: ${w.length} of 5</b> — ${escHtml(w.join('; '))}.`
+    + (w.length >= 2 ? ' Two or more: this Pick reads as an ordinary favourite.' : '') + `</div>`;
+}
+
 // RACE FACTS (v2.46, Robert: "be my full eyes ... showing the support
 // documentation in the context of the decisions"). One table per race with
 // every fact we read for the horses that matter, side by side, so a clue like
@@ -7298,6 +7328,7 @@ function buildPick0(rs){
     + keyLine(selH || h)
     + `<div class="dc-type">${raceTypeTag(rs)}</div>`
     + decision
+    + (p.line === 'primary' ? pickWarningsLine(rs, h) : '')
     + (p.line === 'primary' ? pickSeparationBlock(rs, h) : (h2hThreat(rs, h) ? `<div class="dc-box b-flag">${h2hThreatLine(rs, h)}</div>` : ''))
     + fold(`All ranked horses, in rank-score order (${rankedField(rs, [h]).length})`, pickContenders(rs, h))
     + fold('Concurrence \u2014 AI(1) / AI(2)', crossCheckBlockHTML(rs))   // v2.70: moved here from the race card
@@ -7341,7 +7372,7 @@ function buildPickLegacy(rs){
       <span class="pick-horse"><span class="pick-post">#${escHtml(h.post || '?')}</span>${escHtml(h.horse)}</span>
       ${(() => { const st = surfaceTag(rs.horses || []); return st ? `<span class="badge ${st.cls}">${st.label}</span>` : ''; })()}
       <span class="race-metric"><a class="race-jump" data-jump="${escAttr(rs.race)}" title="Tap to see every runner in this race">Race ${escHtml(rs.race)}</a>${(() => { const d = raceDateOf(rs.horses); return d ? ' · ' + escHtml(d) : ''; })()} · ${escHtml(h.oddsStr)} · ${pct(h.marketProb)} of the pool</span>
-    </div>${p.line === 'primary' ? pickPassBanner(h) : ''}${h2hThreatLine(rs, h)}${p.line === 'primary' ? suggestedPlayLine(rs, h) : ''}${thinDataNote(rs)}${coreConfirmLine(rs, h)}${raceTypeLine(rs)}${paceLineFor(rs, h)}${raceFactsTable(rs, [h])}`;
+    </div>${p.line === 'primary' ? pickPassBanner(h) : ''}${h2hThreatLine(rs, h)}${p.line === 'primary' ? suggestedPlayLine(rs, h) : ''}${p.line === 'primary' ? pickWarningsLine(rs, h) : ''}${thinDataNote(rs)}${coreConfirmLine(rs, h)}${raceTypeLine(rs)}${paceLineFor(rs, h)}${raceFactsTable(rs, [h])}`;
 
 
   if (p.line === 'primary'){
@@ -8081,6 +8112,7 @@ function hhDecision(html, rs){
         const vh = (rs.horses || []).filter(x => !isScratchedNow(rs, x) && x !== fsh && readinessVeto(x)).find(x => /best 3-race figure average/.test((forAgainst(rs, x).F || []).join('|')));
         if (vh) chips.push('\u2298 No bet on #' + (vh.post || '?') + ' ' + vh.horse + ' (best 3-race average): ' + readinessVeto(vh));
       } catch(e){}
+      try { const p0 = pickFor(rs); if (!p0.none && p0.line === 'primary' && p0.h === fsh){ const w0 = pickWarnings(rs, fsh); chips.unshift(w0.length ? `\u26a0 Loss signs ${w0.length} of 5: ${w0.join('; ')}` : '\u2713 Loss signs 0 of 5'); } } catch(e){}
       const ml0 = mlReliability(rs); if (ml0 && ml0.level !== 'mixed') chips.push((ml0.level === 'reliable' ? '\u2713 Morning line reliable here: ' : '\u26a0 Morning line not reliable here: ') + ml0.why.join(', '));
       let pm0 = null; try { pm0 = paceMajorityFor(fsh); } catch(e){}
       if (pm0 && pm0.faded === true) chips.push('\u2296 Faded late in ' + pm0.fadedCount + ' of its last ' + pm0.shapes.length + ' races');
@@ -10660,7 +10692,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.80 · released 16 November 2026 · build 2026-11-16-a</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.81 · released 18 November 2026 · build 2026-11-18-a</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
