@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.82 — Race Card Reader</title>
+<title>Overlay Board v4.83 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1352,7 +1352,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.82</span> · released 18 November 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.83</span> · released 18 November 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a Brisnet data file (.DRF, .csv or .zip). Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -6942,11 +6942,23 @@ function pickWarnings(rs, h){
   if (h.layoffDays != null && h.layoffDays > 90) out.push(`off ${h.layoffDays} days`);
   return out;
 }
+
+// v4.83: small-field allowance (Robert asked whether AI(2)'s revisions held anything useful; this one did).
+// Allowance, allowance-optional or starter-allowance race with 8 or fewer starters: Picks there won clearly
+// more often in both chronological halves, inside both loss-sign groups. Display only.
+function pickStrongSign(rs){
+  try {
+    const rt = String(raceTypeOf(rs) || '').toUpperCase();
+    const n = (rs.horses || []).filter(x => !isScratchedNow(rs, x)).length;
+    return (['A', 'AO', 'R'].includes(rt) && n > 0 && n <= 8) ? `allowance race, ${n} starters` : '';
+  } catch(e){ return ''; }
+}
 function pickWarningsLine(rs, h){
   const w = pickWarnings(rs, h);
-  if (!w.length) return `<div class="dc-box b-play"><b>Loss signs: 0 of 5</b> — none of the five losing-pick conditions present.</div>`;
+  const sg = pickStrongSign(rs); const sgTxt = sg ? ` <b>Strong sign:</b> ${escHtml(sg)}.` : '';
+  if (!w.length) return `<div class="dc-box b-play"><b>Loss signs: 0 of 5</b> — none of the five losing-pick conditions present.${sgTxt}</div>`;
   return `<div class="dc-box ${w.length >= 2 ? 'b-flag' : 'b-noplay'}"><b>Loss signs: ${w.length} of 5</b> — ${escHtml(w.join('; '))}.`
-    + (w.length >= 2 ? ' Two or more: this Pick reads as an ordinary favourite.' : '') + `</div>`;
+    + (w.length >= 2 ? ' Two or more: this Pick reads as an ordinary favourite.' : '') + sgTxt + `</div>`;
 }
 
 // RACE FACTS (v2.46, Robert: "be my full eyes ... showing the support
@@ -8112,7 +8124,7 @@ function hhDecision(html, rs){
         const vh = (rs.horses || []).filter(x => !isScratchedNow(rs, x) && x !== fsh && readinessVeto(x)).find(x => /best 3-race figure average/.test((forAgainst(rs, x).F || []).join('|')));
         if (vh) chips.push('\u2298 No bet on #' + (vh.post || '?') + ' ' + vh.horse + ' (best 3-race average): ' + readinessVeto(vh));
       } catch(e){}
-      try { const p0 = pickFor(rs); if (!p0.none && p0.line === 'primary' && p0.h === fsh){ const w0 = pickWarnings(rs, fsh); chips.unshift(w0.length ? `\u26a0 Loss signs ${w0.length} of 5: ${w0.join('; ')}` : '\u2713 Loss signs 0 of 5'); } } catch(e){}
+      try { const p0 = pickFor(rs); if (!p0.none && p0.line === 'primary' && p0.h === fsh){ const w0 = pickWarnings(rs, fsh); chips.unshift(w0.length ? `\u26a0 Loss signs ${w0.length} of 5: ${w0.join('; ')}` : '\u2713 Loss signs 0 of 5');  const sg0 = pickStrongSign(rs); if (sg0) chips.unshift('\u2605 Strong sign: ' + sg0); } } catch(e){}
       const ml0 = mlReliability(rs); if (ml0 && ml0.level !== 'mixed') chips.push((ml0.level === 'reliable' ? '\u2713 Morning line reliable here: ' : '\u26a0 Morning line not reliable here: ') + ml0.why.join(', '));
       let pm0 = null; try { pm0 = paceMajorityFor(fsh); } catch(e){}
       if (pm0 && pm0.faded === true) chips.push('\u2296 Faded late in ' + pm0.fadedCount + ' of its last ' + pm0.shapes.length + ' races');
@@ -10710,7 +10722,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.82 · released 18 November 2026 · build 2026-11-18-c</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.83 · released 18 November 2026 · build 2026-11-18-d</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
