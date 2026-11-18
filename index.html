@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.81 — Race Card Reader</title>
+<title>Overlay Board v4.82 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1352,7 +1352,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.81</span> · released 18 November 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.82</span> · released 18 November 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a Brisnet data file (.DRF, .csv or .zip). Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -8895,7 +8895,8 @@ function confidenceFor(rs, h){
 function confidenceOf(rs){ let h = null; try { h = finalSelection(rs); } catch(e){} return confidenceFor(rs, h); }
 // races with no win bet: the tier follows the confidence level (5 HIGH, 6 MODERATE, 7 LOW) - the tier numbers are kept so recorded results still line up
 function noBetTier(rs, h0, what, down){
-  let hh = h0; try { const x = extraBets(rs)[0]; if (x) hh = x.h; else { const rp = reviewedPick(rs); if (rp) hh = rp.h; } } catch(e){}
+  let hh = h0; try { const x = extraBets(rs)[0]; if (x) hh = x.h; else { const cp = down ? cleanFigurePick(rs) : null; if (cp) hh = cp; else { const rp = reviewedPick(rs); if (rp) hh = rp.h; } } } catch(e){}
+  if (hh && h0 && hh !== h0 && what) what = what.replace(/^win bet held/, `win bet on #${h0.post || '?'} ${h0.horse} held`) + '; the figure Pick stands';
   const c = confidenceFor(rs, hh || h0); const L = c ? c.level : 'LOW'; const t = L === 'HIGH' ? 5 : L === 'MODERATE' ? 6 : 7;
   return {t, pct: tierPct(t).pct, h: (hh || h0), what: what || '', down: !!down, level: L};
 }
@@ -9566,12 +9567,25 @@ function mlReliability(rs){
   } catch(e){ return null; }
 }
 let __fsGuard = false;
+
+// v4.82 (Robert, 18 Nov: "What's your pick? Chaplin or Kinetic Stone?"). When the tier bet is held by
+// the pre-bet checks, or there is no win bet at all, the race's named horse is the figure Pick if that Pick is clean (no PASS flag and
+// at most one loss sign), not the horse whose win bet was held. One horse is named on every tab.
+function cleanFigurePick(rs){
+  try {
+    const p = pickFor(rs);
+    if (!p || p.none || p.line !== 'primary' || !p.h || isScratchedNow(rs, p.h)) return null;
+    if ((pickPassReasons(p.h) || []).length) return null;
+    return pickWarnings(rs, p.h).length <= 1 ? p.h : null;
+  } catch(e){ return null; }
+}
 function finalSelection(rs){
   if (__fsGuard) return null; __fsGuard = true;
   try {
     const pl = racePlan(rs), xb = extraBets(rs);
     if (pl && pl.win && pl.v && pl.v.h) return pl.v.h;
     if (xb.length) return xb[0].h;
+    const cp = cleanFigurePick(rs); if (cp) return cp;
     if (pl && pl.checkHeld) return pl.checkHeld.h;
     const rp = reviewedPick(rs); if (rp) return rp.h;
     const rf = rankedField(rs, []); return rf.length ? rf[0].h : null;
@@ -10692,7 +10706,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.81 · released 18 November 2026 · build 2026-11-18-a</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.82 · released 18 November 2026 · build 2026-11-18-b</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
