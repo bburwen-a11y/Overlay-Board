@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.83 — Race Card Reader</title>
+<title>Overlay Board v4.84 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1296,6 +1296,20 @@
 .hh-note{margin:0 0 8px;color:#5b5240;font-size:13px}
 .hhd{border:2px solid #c9a24a;border-radius:12px;background:#fffdf6;padding:10px 12px;margin:0 0 12px}
 .hhd-bet{border-color:#1F5A33;background:#f1f7f2}.hhd-high{border-color:#4b8a5c;background:#f7fbf7}.hhd-mod{border-color:#c9a24a;background:#fffbf0}.hhd-low{border-color:#b98a80;background:#fdf5f3}
+.hhd-badge{font-family:var(--mono);font-size:13px;font-weight:900;letter-spacing:.06em;border-radius:8px;padding:3px 12px;margin-left:auto;order:3}
+.hhd-badge-bet{background:#dcefe2;color:#1d5a35}
+.hhd-badge-pass{background:#f6e3df;color:#9a2f22}
+.hhd-over{font-size:14px;color:#5d5a4f;margin:0 0 4px;letter-spacing:.02em}
+.hhd-cmpbtn{display:inline-block;margin:10px 0 2px;padding:9px 14px;border:1.5px solid #2e5d43;border-radius:10px;font-weight:800;text-decoration:none;color:#173a2a;background:#f3f8f4}
+.cmp{margin:10px 0 12px;border-left:4px solid #2e5d43;padding-left:8px}
+.cmp-h{font-weight:800;font-size:13px;margin-bottom:6px}
+.cmp-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.cmp-t{border-collapse:collapse;font-size:12.5px;min-width:100%}
+.cmp-t th{background:#173a2a;color:#f2ead6;font-family:var(--mono);font-size:11px;text-align:left;padding:6px 8px;vertical-align:bottom;white-space:nowrap}
+.cmp-t td{padding:6px 8px;border-bottom:1px solid #ddd6c4;white-space:nowrap}
+.cmp-t td:first-child{white-space:normal;color:#4a473e;min-width:96px}
+.cmp-t td.cmp-best{font-weight:800;color:#1d5a35}
+.cmp-n{font-size:12px;margin-top:6px;color:#4a473e}
 .hhd-r1{display:flex;align-items:flex-start;gap:8px;justify-content:space-between}
 .hhd-chip{font-family:var(--mono);font-size:11px;font-weight:800;border:1px solid #8a8168;border-radius:999px;padding:2px 8px;background:#fff;white-space:nowrap}
 .hhd-sub{flex:1;font-size:11.5px;color:#6b6250;padding-top:3px}
@@ -1352,7 +1366,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.83</span> · released 18 November 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.84</span> · released 20 November 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a Brisnet data file (.DRF, .csv or .zip). Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -8096,6 +8110,67 @@ function hhRC(rc, h){
     return `<td>${rk || '\u2014'}</td><td>${c}%</td>`;
   } catch(e){ return '<td>\u2014</td><td>\u2014</td>'; }
 }
+
+// v4.84 (Robert: "clear BET or PASS badge, then 'Over #1 Aysia Princess'... from decision use a race facts full
+// comparison... if 3 or more horses rather than 1 challenger show each"). Challengers = every rival within 5 points
+// of the named horse on blended chance, plus the three-race-average leader if it is not the named horse; if none
+// qualify, the next horse on chance. Facts only.
+function chanceOf(rs){
+  const live = (rs.horses || []).filter(x => !isScratchedNow(rs, x));
+  let ch = null; try { ch = rscsChances(rs); } catch(e){}
+  const tot = ch ? live.reduce((a, h) => a + (ch.get(h) || 0), 0) : 0;
+  return h => (ch && tot) ? (ch.get(h) || 0) / tot : null;
+}
+function challengersOf(rs, sel){
+  if (!sel) return [];
+  const live = (rs.horses || []).filter(x => !isScratchedNow(rs, x));
+  const pc = chanceOf(rs);
+  const others = live.filter(x => x !== sel).sort((a, b) => (pc(b) || 0) - (pc(a) || 0));
+  if (!others.length) return [];
+  const cs = pc(sel) || 0;
+  let out = others.filter(x => (pc(x) || 0) >= cs - 0.05);
+  const a = live.map(x => ({x, v: avg3Of(x)})).filter(t => t.v != null).sort((p, q) => q.v - p.v);
+  if (a.length && a[0].x !== sel && !out.includes(a[0].x)) out.push(a[0].x);
+  if (!out.length) out = [others[0]];
+  return out.slice(0, 4);
+}
+function overLineHTML(rs, sel){
+  const c = challengersOf(rs, sel); if (!c.length) return '';
+  return `<div class="hhd-over">Over ${c.map(h => `#${escHtml(h.post || '?')} ${escHtml(h.horse)}`).join(' \u00b7 ')}</div>`;
+}
+function compareTableHTML(rs, sel){
+  if (!sel) return '';
+  const c = challengersOf(rs, sel); if (!c.length) return '';
+  const cols = [sel, ...c];
+  const live = (rs.horses || []).filter(x => !isScratchedNow(rs, x));
+  const pc = chanceOf(rs);
+  const rk = (h, fn) => { const r = rankIn(live, h, fn); return r ? ` (#${r.rank}${r.tied ? '=' : ''})` : ''; };
+  const itm = h => { const rec = (h.ppRaces || []).slice(0, 4).filter(q => q.fin != null && !isNaN(parseInt(q.fin, 10))); return rec.length ? {v: rec.filter(q => parseInt(q.fin, 10) <= 3).length / rec.length, t: rec.filter(q => parseInt(q.fin, 10) <= 3).length + ' of ' + rec.length} : {v: null, t: 'no starts'}; };
+  const signs = h => { try { return pickWarnings(rs, h); } catch(e){ return []; } };
+  // [label, value-for-best (higher better unless low), text]
+  const rows = [
+    ['Morning line', h => { const o = parseOdds(h.mlOddsStr); return o != null ? -o : null; }, h => h.mlOddsStr || '\u2014'],
+    ['Board chance', h => pc(h), h => pc(h) != null ? Math.round(pc(h) * 100) + '%' : '\u2014'],
+    ['3-race average', h => avg3Of(h), h => avg3Of(h) != null ? avg3Of(h).toFixed(1) + rk(h, y => avg3Of(y)) : '\u2014'],
+    ['Last figure', h => h.lastSpd, h => h.lastSpd != null ? Math.round(h.lastSpd) + rk(h, y => y.lastSpd) : '\u2014'],
+    ['Prime Power', h => { const r = rankIn(live, h, y => y.rawPP); return r ? -r.rank : null; }, h => { const r = rankIn(live, h, y => y.rawPP); return r ? '#' + r.rank + (r.tied ? '=' : '') : '\u2014'; }],
+    ['In the money, last 4', h => itm(h).v, h => itm(h).t],
+    ['Days since last race', null, h => h.layoffDays != null ? String(h.layoffDays) : 'debut'],
+    ['Loss signs', h => -signs(h).length, h => signs(h).length + ' of 5'],
+  ];
+  const head = `<tr><th></th>${cols.map((h, i) => `<th>${i === 0 ? 'PICK' : 'CHALLENGER'}<br>#${escHtml(h.post || '?')} ${escHtml(h.horse)}</th>`).join('')}</tr>`;
+  const body = rows.map(([lab, val, txt]) => {
+    let best = null; if (val){ const vs = cols.map(h => val(h)).filter(v => v != null && !isNaN(v)); if (vs.length > 1) best = Math.max(...vs); }
+    return `<tr><td>${escHtml(lab)}</td>${cols.map(h => { const v = val ? val(h) : null; const b = best != null && v === best && cols.filter(x => val(x) === best).length < cols.length; return `<td${b ? ' class="cmp-best"' : ''}>${escHtml(txt(h))}</td>`; }).join('')}</tr>`;
+  }).join('');
+  const notes = cols.map(h => { const w = signs(h); return w.length ? `#${escHtml(h.post || '?')} ${escHtml(h.horse)}: ${escHtml(w.join('; '))}` : ''; }).filter(Boolean);
+  const sg = (typeof pickStrongSign === 'function') ? pickStrongSign(rs) : '';
+  return `<div class="cmp"><div class="cmp-h">FULL COMPARISON \u00b7 #${escHtml(sel.post || '?')} ${escHtml(sel.horse)} over ${c.map(h => '#' + escHtml(h.post || '?') + ' ' + escHtml(h.horse)).join(', ')}</div>`
+    + `<div class="cmp-wrap"><table class="cmp-t">${head}${body}</table></div>`
+    + (notes.length ? `<div class="cmp-n"><b>Loss signs:</b> ${notes.join(' \u00b7 ')}</div>` : '')
+    + (sg ? `<div class="cmp-n"><b>\u2605 Strong sign:</b> ${escHtml(sg)}</div>` : '')
+    + `</div>`;
+}
 function hhDecision(html, rs){
   const t = document.createElement('template'); t.innerHTML = html; const root = t.content.firstElementChild;
   if (!root || !/^pick-r/.test(root.id || '')) return html;
@@ -8141,10 +8216,12 @@ function hhDecision(html, rs){
   // v4.82 (Robert: "you have no win bet twice"): with no bet, the label carries the tier and the separate no-bet lines are dropped
   const __noBet = !isFts && !livePass && /^NO WIN BET/.test(act) && !xb;
   let __tN = ''; try { const t0 = winTier(rs); if (t0 && __noBet) __tN = String(t0.t); } catch(e){}
+  const __betNow = !isFts && !livePass && (isBet || !!xb);
   return `<div class="hhd hhd-${cls}${isFts ? ' hhd-fts' : ''}${livePass ? ' hhd-livepass' : ''} race-anchor-target" id="pick-r${escAttr(race)}">`
-    + `<div class="hhd-r1"><span class="hhd-chip">RACE ${escHtml(race)}</span><span class="hhd-sub">${escHtml(sub)}</span><div class="hhd-share">${isFts ? '<b>\u2014</b><small>no record</small>' : `<b>${escHtml(m[5])}%</b><small>chance</small>`}</div></div>`
+    + `<div class="hhd-r1"><span class="hhd-chip">RACE ${escHtml(race)}</span><span class="hhd-badge ${__betNow ? 'hhd-badge-bet' : 'hhd-badge-pass'}">${__betNow ? 'BET' : 'PASS'}</span><span class="hhd-sub">${escHtml(sub)}</span><div class="hhd-share">${isFts ? '<b>\u2014</b><small>no record</small>' : `<b>${escHtml(m[5])}%</b><small>chance</small>`}</div></div>`
     + attentionLine(rs, isBet)
     + `<div class="hhd-pick"><span class="hhd-no">#${escHtml(m[2])}</span><a href="#" class="pp-link hhd-name" data-pp-race="${escAttr(race)}" data-pp-horse="${escAttr(nm)}">${escHtml(nm)}</a><span class="hhd-ml">${escHtml(m[4])}</span></div>`
+    + (fsh && !isFts ? overLineHTML(rs, fsh) : '')
     + `<div class="hhd-lab">${isFts ? 'FIRST-TIME STARTER LEADS THE RANKING \u00b7 NO RECORD TO READ' : (__noBet ? 'TOP PICK \u00b7 NO BET' + (__tN ? ' \u00b7 TIER ' + __tN : '') : escHtml(m[1])) + (prioTxt ? ' \u00b7 ' + escHtml(prioTxt) : '')}</div>`
     + (isFts ? `<div class="hhd-act"><b>NO PICK, NO BET</b></div><div class="hhd-why">A first-time starter has no past performances to read. The best horse that has raced is in Race facts.</div>` : (act && !__noBet) ? `<div class="hhd-act"><b>${escHtml(livePass ? 'PASS \u2014 no bet at this price' : act)}</b></div>` + (why ? `<div class="hhd-why">${escHtml(why)}</div>` : '') : '')
     + (win ? `<div class="hhd-bet${livePass ? ' hhd-pass' : ''}">${escHtml(win)}</div>` : '') + (liveNote ? `<div class="hhd-bet${livePass ? ' hhd-pass' : ''}">${escHtml(liveNote)}</div>` : '') + xb
@@ -8153,7 +8230,8 @@ function hhDecision(html, rs){
     + (ai ? `<div class="hhd-ai">${escHtml(ai)}</div>` : '')
     + (pace ? `<div class="hhd-pace"><b>PACE</b> \u2014 ${escHtml(pace)}</div>` : '')
     + betLedgerHTML(rs)
-    + `<div class="hhd-foot">${type ? type.outerHTML : ''}${chips.map(c => `<a href="#" class="hhd-flag race-jump" data-goto-facts="${escAttr(race)}">${escHtml(c)}</a>`).join('')}<a href="#" class="hhd-more race-jump" data-goto-facts="${escAttr(race)}">Race facts \u25b8</a></div>`
+    + `<div class="hhd-foot">${type ? type.outerHTML : ''}${chips.map(c => `<a href="#" class="hhd-flag race-jump" data-goto-facts="${escAttr(race)}">${escHtml(c)}</a>`).join('')}</div>`
+    + `<a href="#" class="hhd-cmpbtn race-jump" data-goto-facts="${escAttr(race)}">Race Facts \u00b7 Full comparison \u25b8</a>`
     + `</div>`;
 }
 function checksLineHTML(rs){
@@ -8178,6 +8256,7 @@ function hhLayoutFacts(){
     let body = `<div class="hhf-body"><div class="hhf-head">${rl ? escHtml(rl.textContent.replace(/\s+/g, ' ').replace(/\s*\u00b7?\s*Board pick.*$/, '')) : 'Race ' + escHtml(race)}</div>`
       + (el.querySelector('.dc-type') ? el.querySelector('.dc-type').outerHTML : '')
       + `<div class="hhf-links"><a href="#" class="race-jump" data-goto-pick="${escAttr(race)}">\u25c2 Decision</a> <a href="#" class="race-jump" data-goto-card="${escAttr(race)}">Full field \u25b8</a></div>`;
+    try { const rsC = (window.__ccRaceSummaries || []).find(r => String(r.race).trim() === race); const selC = rsC ? finalSelection(rsC) : null; if (selC && (selC.ppRaces || []).length) body += compareTableHTML(rsC, selC); } catch(e){}
     let oldRoot = null; if (old[race]){ const t = document.createElement('template'); t.innerHTML = old[race]; oldRoot = t.content.firstElementChild; }
     if (oldRoot){
       const keep = [];
@@ -10722,7 +10801,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.83 · released 18 November 2026 · build 2026-11-18-d</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.84 · released 20 November 2026 · build 2026-11-20-a</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
