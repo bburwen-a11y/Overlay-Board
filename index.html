@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.86 — Race Card Reader</title>
+<title>Overlay Board v4.87 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1368,7 +1368,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.86</span> · released 20 November 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.87</span> · released 20 November 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a Brisnet data file (.DRF, .csv or .zip). Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -2373,7 +2373,7 @@ function parseBrisnetSingleFile(text){
       // v2.69: fields 65 and 70 are the records at TODAY'S DISTANCE and TODAY'S
       // TRACK (checked against the past lines), not dirt and wet. The file has no
       // separate lifetime dirt record, so dirt is counted from the past lines.
-      dirtRec: dirtRecFromLines(ppRaces), distRec: surfRec(65), trackRec: surfRec(70), turfRec: surfRec(75),
+      dirtRec: dirtRecFromLines(ppRaces), distRec: surfRec(65), trackRec: surfRec(70), turfRec: surfRec(75), careerRec: surfRec(97),
       trnYr: yearRec(1147), trnPrev: yearRec(1152),
       jkyYr: yearRec(1157), jkyPrev: yearRec(1162),
       // BREEDING. Names only — this file carries no progeny statistics for a
@@ -3210,7 +3210,7 @@ document.getElementById('computeBtn').addEventListener('click', () => {
       weight: r.weight != null ? r.weight : null, medCode: r.medCode || '', pedTurf: r.pedTurf || '', pedDirt: r.pedDirt || '', lastJockey: r.lastJockey || '',
       claimedLastRace: !!r.claimedLastRace, sharpWork: r.sharpWork || null, recentWorks: r.recentWorks || [],
       equipChange: r.equipChange || '',   // v2.90: carried through so the first-blinkers fade signal can fire
-      dirtRec: r.dirtRec || null, distRec: r.distRec || null, trackRec: r.trackRec || null, turfRec: r.turfRec || null,
+      dirtRec: r.dirtRec || null, distRec: r.distRec || null, trackRec: r.trackRec || null, turfRec: r.turfRec || null, careerRec: r.careerRec || null,
       trnYr: r.trnYr || null, trnPrev: r.trnPrev || null,
       jkyYr: r.jkyYr || null, jkyPrev: r.jkyPrev || null,
       sire: r.sire || '', sireSire: r.sireSire || '', dam: r.dam || '',
@@ -8174,6 +8174,8 @@ function compareTableHTML(rs, sel){
     ['Last figure', h => h.lastSpd, h => h.lastSpd != null ? Math.round(h.lastSpd) + rk(h, y => y.lastSpd) : '\u2014'],
     ['Prime Power', h => { const r = rankIn(live, h, y => y.rawPP); return r ? -r.rank : null; }, h => { const r = rankIn(live, h, y => y.rawPP); return r ? '#' + r.rank + (r.tied ? '=' : '') : '\u2014'; }],
     ['In the money, last 4', h => itm(h).v, h => itm(h).t],
+    // v4.87 (Robert): career in-the-money, shown beside recent form. Display only.
+    ['Career ITM', h => { const c = h.careerRec; return (c && c.starts) ? ((c.wins || 0) + (c.places || 0) + (c.shows || 0)) / c.starts : null; }, h => { const c = h.careerRec; if (!c || !c.starts) return 'debut'; const n = (c.wins || 0) + (c.places || 0) + (c.shows || 0); return `${Math.round(n / c.starts * 100)}% (${n} of ${c.starts})`; }],
     ['Days since last race', null, h => h.layoffDays != null ? String(h.layoffDays) : 'debut'],
     ['Sharp recent work', h => h.sharpWork ? 1 : 0, h => h.sharpWork ? `${h.sharpWork.dist} ${h.sharpWork.time} ${h.sharpWork.desc} \u00b7 ${h.sharpWork.rank} of ${h.sharpWork.of} \u00b7 ${h.sharpWork.days}d ago` : '\u2014'],
     ['Loss signs', h => -signs(h).length, h => signs(h).length + ' of 5'],
@@ -10832,7 +10834,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.86 · released 20 November 2026 · build 2026-11-20-c</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.87 · released 20 November 2026 · build 2026-11-20-d</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
