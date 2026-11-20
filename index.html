@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.87 — Race Card Reader</title>
+<title>Overlay Board v4.88 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1368,7 +1368,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.87</span> · released 20 November 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.88</span> · released 20 November 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a Brisnet data file (.DRF, .csv or .zip). Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -6975,16 +6975,25 @@ function pickWarnings(rs, h){
 // v4.83: small-field allowance (Robert asked whether AI(2)'s revisions held anything useful; this one did).
 // Allowance, allowance-optional or starter-allowance race with 8 or fewer starters: Picks there won clearly
 // more often in both chronological halves, inside both loss-sign groups. Display only.
-function pickStrongSign(rs){
+function pickStrongSign(rs, h){
+  const out = [];
   try {
     const rt = String(raceTypeOf(rs) || '').toUpperCase();
-    const n = (rs.horses || []).filter(x => !isScratchedNow(rs, x)).length;
-    return (['A', 'AO', 'R'].includes(rt) && n > 0 && n <= 8) ? `allowance race, ${n} starters` : '';
-  } catch(e){ return ''; }
+    const live = (rs.horses || []).filter(x => !isScratchedNow(rs, x));
+    const n = live.length;
+    if (['A', 'AO', 'R'].includes(rt) && n > 0 && n <= 8) out.push(`allowance race, ${n} starters`);
+    // v4.88 (Robert, 20 Nov: "anything that helps"): the figure Pick is also Prime Power #1 and carries 0-1 loss
+    // signs. Picks like that won clearly more often than other Picks in both halves of the pool. Display only.
+    if (h && typeof figurePickOf === 'function' && figurePickOf(rs) === h){
+      const r = rankIn(live, h, y => y.rawPP);
+      if (r && r.rank === 1 && pickWarnings(rs, h).length <= 1) out.push('Prime Power #1 with 0\u20131 loss signs');
+    }
+  } catch(e){}
+  return out.join(' \u00b7 ');
 }
 function pickWarningsLine(rs, h){
   const w = pickWarnings(rs, h);
-  const sg = pickStrongSign(rs); const sgTxt = sg ? ` <b>Strong sign:</b> ${escHtml(sg)}.` : '';
+  const sg = pickStrongSign(rs, h); const sgTxt = sg ? ` <b>Strong sign:</b> ${escHtml(sg)}.` : '';
   if (!w.length) return `<div class="dc-box b-play"><b>Loss signs: 0 of 5</b> — none of the five losing-pick conditions present.${sgTxt}</div>`;
   return `<div class="dc-box ${w.length >= 2 ? 'b-flag' : 'b-noplay'}"><b>Loss signs: ${w.length} of 5</b> — ${escHtml(w.join('; '))}.`
     + (w.length >= 2 ? ' Two or more: this Pick reads as an ordinary favourite.' : '') + sgTxt + `</div>`;
@@ -8186,7 +8195,7 @@ function compareTableHTML(rs, sel){
     return `<tr><td>${escHtml(lab)}</td>${cols.map(h => { const v = val ? val(h) : null; const b = best != null && v === best && cols.filter(x => val(x) === best).length < cols.length; return `<td${b ? ' class="cmp-best"' : ''}>${escHtml(txt(h))}</td>`; }).join('')}</tr>`;
   }).join('');
   const notes = cols.map(h => { const w = signs(h); return w.length ? `#${escHtml(h.post || '?')} ${escHtml(h.horse)}: ${escHtml(w.join('; '))}` : ''; }).filter(Boolean);
-  const sg = (typeof pickStrongSign === 'function') ? pickStrongSign(rs) : '';
+  const sg = (typeof pickStrongSign === 'function') ? pickStrongSign(rs, sel) : '';
   return `<div class="cmp"><div class="cmp-h">FULL COMPARISON \u00b7 #${escHtml(sel.post || '?')} ${escHtml(sel.horse)} over ${c.map(h => '#' + escHtml(h.post || '?') + ' ' + escHtml(h.horse)).join(', ')}</div>`
     + `<div class="cmp-wrap"><table class="cmp-t">${head}${body}</table></div>`
     + (notes.length ? `<div class="cmp-n"><b>Loss signs:</b> ${notes.join(' \u00b7 ')}</div>` : '')
@@ -8221,7 +8230,7 @@ function hhDecision(html, rs){
         const vh = (rs.horses || []).filter(x => !isScratchedNow(rs, x) && x !== fsh && readinessVeto(x)).find(x => /best 3-race figure average/.test((forAgainst(rs, x).F || []).join('|')));
         if (vh) chips.push('\u2298 No bet on #' + (vh.post || '?') + ' ' + vh.horse + ' (best 3-race average): ' + readinessVeto(vh));
       } catch(e){}
-      try { const p0 = pickFor(rs); if (!p0.none && p0.line === 'primary' && p0.h === fsh){ const w0 = pickWarnings(rs, fsh); chips.unshift(w0.length ? `\u26a0 Loss signs ${w0.length} of 5: ${w0.join('; ')}` : '\u2713 Loss signs 0 of 5');  const sg0 = pickStrongSign(rs); if (sg0) chips.unshift('\u2605 Strong sign: ' + sg0); } } catch(e){}
+      try { const p0 = pickFor(rs); if (!p0.none && p0.line === 'primary' && p0.h === fsh){ const w0 = pickWarnings(rs, fsh); chips.unshift(w0.length ? `\u26a0 Loss signs ${w0.length} of 5: ${w0.join('; ')}` : '\u2713 Loss signs 0 of 5');  const sg0 = pickStrongSign(rs, fsh); if (sg0) chips.unshift('\u2605 Strong sign: ' + sg0); } } catch(e){}
       const ml0 = mlReliability(rs); if (ml0 && ml0.level !== 'mixed') chips.push((ml0.level === 'reliable' ? '\u2713 Morning line reliable here: ' : '\u26a0 Morning line not reliable here: ') + ml0.why.join(', '));
       let pm0 = null; try { pm0 = paceMajorityFor(fsh); } catch(e){}
       if (pm0 && pm0.faded === true) chips.push('\u2296 Faded late in ' + pm0.fadedCount + ' of its last ' + pm0.shapes.length + ' races');
@@ -8252,7 +8261,7 @@ function hhDecision(html, rs){
     else if (rv) __why = rv;
     else __why = 'no qualifying win bet' + (__tN ? ' (tier ' + __tN + ')' : '');
   }
-  let __sg = ''; try { __sg = pickStrongSign(rs); } catch(e){}
+  let __sg = ''; try { __sg = pickStrongSign(rs, fsh); } catch(e){}
   return `<div class="hhd hhd-${cls}${isFts ? ' hhd-fts' : ''}${livePass ? ' hhd-livepass' : ''} race-anchor-target" id="pick-r${escAttr(race)}">`
     + `<div class="hhd-r1"><span class="hhd-chip">RACE ${escHtml(race)}</span><span class="hhd-sub">${escHtml(sub)}</span><span class="hhd-badge ${__betNow ? 'hhd-badge-bet' : 'hhd-badge-pass'}">${__betNow ? 'BET' : 'PASS'}</span></div>`
     + `<div class="hhd-lab">${__betNow ? 'BET SELECTION' : 'TOP PICK'}</div>`
@@ -10834,7 +10843,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.87 · released 20 November 2026 · build 2026-11-20-d</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.88 · released 20 November 2026 · build 2026-11-20-e</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
