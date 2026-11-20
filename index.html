@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.84 — Race Card Reader</title>
+<title>Overlay Board v4.85 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1310,6 +1310,8 @@
 .cmp-t td:first-child{white-space:normal;color:#4a473e;min-width:96px}
 .cmp-t td.cmp-best{font-weight:800;color:#1d5a35}
 .cmp-n{font-size:12px;margin-top:6px;color:#4a473e}
+.hhd-reason{font-size:14px;margin:6px 0 2px;line-height:1.45}
+.hhd-sg{font-size:13px;margin:4px 0;color:#1d5a35}
 .hhd-r1{display:flex;align-items:flex-start;gap:8px;justify-content:space-between}
 .hhd-chip{font-family:var(--mono);font-size:11px;font-weight:800;border:1px solid #8a8168;border-radius:999px;padding:2px 8px;background:#fff;white-space:nowrap}
 .hhd-sub{flex:1;font-size:11.5px;color:#6b6250;padding-top:3px}
@@ -1366,7 +1368,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.84</span> · released 20 November 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.85</span> · released 20 November 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a Brisnet data file (.DRF, .csv or .zip). Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -8217,21 +8219,29 @@ function hhDecision(html, rs){
   const __noBet = !isFts && !livePass && /^NO WIN BET/.test(act) && !xb;
   let __tN = ''; try { const t0 = winTier(rs); if (t0 && __noBet) __tN = String(t0.t); } catch(e){}
   const __betNow = !isFts && !livePass && (isBet || !!xb);
+  // v4.85 (Robert: "follow chat's format for decisions"): badge, the horse, who it is over, one reason line, the strong
+  // sign when present, and the comparison button. Everything else lives in Race facts.
+  let __why = '';
+  if (__betNow) __why = win || act || 'win bet approved';
+  else if (isFts) __why = 'a first-time starter leads the ranking and has no record to read';
+  else if (livePass) __why = liveNote;
+  else {
+    let c0 = null; try { c0 = fsh ? preBetChecks(rs, fsh) : null; } catch(e){}
+    let rv = ''; try { rv = fsh ? readinessVeto(fsh) : ''; } catch(e){}
+    if (c0 && c0.hold) __why = c0.failed.join(' · ');
+    else if (rv) __why = rv;
+    else __why = 'no qualifying win bet' + (__tN ? ' (tier ' + __tN + ')' : '');
+  }
+  let __sg = ''; try { __sg = pickStrongSign(rs); } catch(e){}
   return `<div class="hhd hhd-${cls}${isFts ? ' hhd-fts' : ''}${livePass ? ' hhd-livepass' : ''} race-anchor-target" id="pick-r${escAttr(race)}">`
-    + `<div class="hhd-r1"><span class="hhd-chip">RACE ${escHtml(race)}</span><span class="hhd-badge ${__betNow ? 'hhd-badge-bet' : 'hhd-badge-pass'}">${__betNow ? 'BET' : 'PASS'}</span><span class="hhd-sub">${escHtml(sub)}</span><div class="hhd-share">${isFts ? '<b>\u2014</b><small>no record</small>' : `<b>${escHtml(m[5])}%</b><small>chance</small>`}</div></div>`
-    + attentionLine(rs, isBet)
+    + `<div class="hhd-r1"><span class="hhd-chip">RACE ${escHtml(race)}</span><span class="hhd-sub">${escHtml(sub)}</span><span class="hhd-badge ${__betNow ? 'hhd-badge-bet' : 'hhd-badge-pass'}">${__betNow ? 'BET' : 'PASS'}</span></div>`
+    + `<div class="hhd-lab">${__betNow ? 'BET SELECTION' : 'TOP PICK'}</div>`
     + `<div class="hhd-pick"><span class="hhd-no">#${escHtml(m[2])}</span><a href="#" class="pp-link hhd-name" data-pp-race="${escAttr(race)}" data-pp-horse="${escAttr(nm)}">${escHtml(nm)}</a><span class="hhd-ml">${escHtml(m[4])}</span></div>`
     + (fsh && !isFts ? overLineHTML(rs, fsh) : '')
-    + `<div class="hhd-lab">${isFts ? 'FIRST-TIME STARTER LEADS THE RANKING \u00b7 NO RECORD TO READ' : (__noBet ? 'TOP PICK \u00b7 NO BET' + (__tN ? ' \u00b7 TIER ' + __tN : '') : escHtml(m[1])) + (prioTxt ? ' \u00b7 ' + escHtml(prioTxt) : '')}</div>`
-    + (isFts ? `<div class="hhd-act"><b>NO PICK, NO BET</b></div><div class="hhd-why">A first-time starter has no past performances to read. The best horse that has raced is in Race facts.</div>` : (act && !__noBet) ? `<div class="hhd-act"><b>${escHtml(livePass ? 'PASS \u2014 no bet at this price' : act)}</b></div>` + (why ? `<div class="hhd-why">${escHtml(why)}</div>` : '') : '')
-    + (win ? `<div class="hhd-bet${livePass ? ' hhd-pass' : ''}">${escHtml(win)}</div>` : '') + (liveNote ? `<div class="hhd-bet${livePass ? ' hhd-pass' : ''}">${escHtml(liveNote)}</div>` : '') + xb
-    + (tier && !__noBet ? tier.outerHTML : '')
-    + checksLineHTML(rs)
-    + (ai ? `<div class="hhd-ai">${escHtml(ai)}</div>` : '')
-    + (pace ? `<div class="hhd-pace"><b>PACE</b> \u2014 ${escHtml(pace)}</div>` : '')
-    + betLedgerHTML(rs)
-    + `<div class="hhd-foot">${type ? type.outerHTML : ''}${chips.map(c => `<a href="#" class="hhd-flag race-jump" data-goto-facts="${escAttr(race)}">${escHtml(c)}</a>`).join('')}</div>`
-    + `<a href="#" class="hhd-cmpbtn race-jump" data-goto-facts="${escAttr(race)}">Race Facts \u00b7 Full comparison \u25b8</a>`
+    + `<div class="hhd-reason"><b>${__betNow ? 'Wager support' : 'Why no win bet'}:</b> ${escHtml(__why)}</div>`
+    + (__betNow ? xb : '')
+    + (__sg ? `<div class="hhd-sg"><b>★ Strong sign:</b> ${escHtml(__sg)}</div>` : '')
+    + `<a href="#" class="hhd-cmpbtn race-jump" data-goto-facts="${escAttr(race)}">Race Facts · Full comparison ▸</a>`
     + `</div>`;
 }
 function checksLineHTML(rs){
@@ -8513,7 +8523,10 @@ function preBetChecks(rs, h){
     const A = (forAgainst(rs, h).A || []); if (A.length >= 3) failed.push(A.length + ' Against items');
     const t = String((live[0] || {}).ai3RaceType || '').toUpperCase(); if (t === 'S') failed.push('maiden special weight'); else if (['C', 'CO'].includes(t)) failed.push('claiming race');
   } catch(e){} finally { __chkGuard = false; }
-  const out = {failed, hold: failed.length >= 2}; rs.__chk[key] = out; return out;
+  // v4.85 (Robert, 20 Nov: Sum of Success at 4-5 "too low to bet"): a morning line under 3-2 holds the win bet on its own.
+  // Picks at that price won often but lost money in both halves of the pool; 3-2 or longer returned a profit.
+  let short = false; try { const o = parseOdds(h.mlOddsStr); if (o != null && o < 2.5){ short = true; failed.unshift('morning line ' + h.mlOddsStr + ', under 3-2'); } } catch(e){}
+  const out = {failed, hold: short || failed.length >= 2}; rs.__chk[key] = out; return out;
 }
 function racePlan(rs){
   let pl = racePlan0(rs);
@@ -10032,7 +10045,7 @@ function renderPicks0(raceSummaries){
   // v2.91: the verdicts lead the board on every card, plays or not.
   const __blocks = decisionSortMode() === 'focus' ? __ordered.map(rs => blocks[raceSummaries.indexOf(rs)]) : blocks;
   // v4.17 (Robert, 26 Oct): the race-plans list is removed; the Decision board goes straight to each race's decision
-  list.innerHTML = __sortBar + playsStripHTML(raceSummaries) + betSummaryHTML() + confStripHTML(raceSummaries) + __blocks.join('');   // v3.50: the old summary lists and the old per-race index are retired - the race plans are the one call
+  list.innerHTML = __sortBar + playsStripHTML(raceSummaries) + confStripHTML(raceSummaries) + __blocks.join('');   // v3.50: the old summary lists and the old per-race index are retired - the race plans are the one call
   document.getElementById('pickCount').textContent = playRaces(raceSummaries).length;
   list.querySelectorAll('.plays-strip .race-chip').forEach(b => b.addEventListener('click', () => { const el = document.getElementById(b.dataset.goto); if (el && el.tagName === 'DETAILS') el.open = true; if (el) el.scrollIntoView({behavior:'smooth', block:'start'}); }));
   bindTapHandlers(list);
@@ -10801,7 +10814,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.84 · released 20 November 2026 · build 2026-11-20-a</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.85 · released 20 November 2026 · build 2026-11-20-b</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
