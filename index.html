@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.85 — Race Card Reader</title>
+<title>Overlay Board v4.86 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1368,7 +1368,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.85</span> · released 20 November 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.86</span> · released 20 November 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a Brisnet data file (.DRF, .csv or .zip). Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -2100,6 +2100,19 @@ function parseBrisnetSingleFile(text){
       const isHandilyBreezy = /^B|^H/i.test(wDesc.trim());
       recentWorks.push({date: wDate, track: wTrack, isBullet, isHandilyBreezy, desc: get(162+i)});
     }
+    // v4.86 (Robert, GP 11/15 R2 Capture The Time): sharp recent work = ranked in the top 30% of 8 or more works at
+    // that distance that morning, within 14 days, among the last three works at any track.
+    let sharpWork = null;
+    for (let i = 0; i < 3; i++){
+      const wd = get(102+i); if (!wd) continue;
+      const n = parseInt(get(186+i), 10), rk = parseInt(get(198+i), 10), wo = parseCYMD(wd);
+      const days = (raceDate && wo) ? Math.round((raceDate - wo) / 86400000) : null;
+      if (n >= 8 && rk >= 1 && days != null && days <= 14 && rk / n <= 0.3){
+        const yd = parseInt(get(138+i), 10); const fur = yd ? (Math.round(yd / 220 * 2) / 2) : null;
+        sharpWork = {date: wd, track: get(126+i), rank: rk, of: n, days, dist: fur ? fur + 'f' : '', time: get(114+i).replace(/^-/, ''), desc: get(162+i)};
+        break;
+      }
+    }
     const todayDistYds = num(6);
     const claimedLastRace = get(1046).toLowerCase() === 'c';
     // Same trap as above: a winner's margin is not a beaten margin. Left
@@ -2402,7 +2415,7 @@ function parseBrisnetSingleFile(text){
       claimedLastRace,
       lastFinComment,
       hadTrouble,
-      recentWorks,
+      recentWorks, sharpWork,
       lastSpd, bestSpd, avgSpd3,
       todayClaim, firstTimeTagged, claimDropRatio, layoffDays, classFit, classFitWon, classSeen,
       classTxtToday: get(11),
@@ -3195,7 +3208,7 @@ document.getElementById('computeBtn').addEventListener('click', () => {
       jkyPlaces: r.jkyPlaces, jkyShows: r.jkyShows,
       trainer: r.trainer || '', trnStarts: r.trnStarts, trnWins: r.trnWins,
       weight: r.weight != null ? r.weight : null, medCode: r.medCode || '', pedTurf: r.pedTurf || '', pedDirt: r.pedDirt || '', lastJockey: r.lastJockey || '',
-      claimedLastRace: !!r.claimedLastRace, recentWorks: r.recentWorks || [],
+      claimedLastRace: !!r.claimedLastRace, sharpWork: r.sharpWork || null, recentWorks: r.recentWorks || [],
       equipChange: r.equipChange || '',   // v2.90: carried through so the first-blinkers fade signal can fire
       dirtRec: r.dirtRec || null, distRec: r.distRec || null, trackRec: r.trackRec || null, turfRec: r.turfRec || null,
       trnYr: r.trnYr || null, trnPrev: r.trnPrev || null,
@@ -3212,7 +3225,7 @@ document.getElementById('computeBtn').addEventListener('click', () => {
       claimedLastRace: !!r.claimedLastRace,
       lastFinComment: r.lastFinComment || '',
       hadTrouble: !!r.hadTrouble,
-      recentWorks: r.recentWorks || [],
+      sharpWork: r.sharpWork || null, recentWorks: r.recentWorks || [],
       ltStarts: r.ltStarts, ltWins: r.ltWins, ltPlaces: r.ltPlaces,
       ltShows: r.ltShows, ltEarn: r.ltEarn,
       ppRaces: r.ppRaces || [], offTurf: !!r.offTurf,
@@ -8134,6 +8147,10 @@ function challengersOf(rs, sel){
   const a = live.map(x => ({x, v: avg3Of(x)})).filter(t => t.v != null).sort((p, q) => q.v - p.v);
   if (a.length && a[0].x !== sel && !out.includes(a[0].x)) out.push(a[0].x);
   if (!out.length) out = [others[0]];
+  // v4.86: the third horse on board chance joins when it has a sharp recent work. Third-choice horses with one won
+  // clearly more often than third-choice horses without, in both halves, and the board chance underrated them.
+  const ranked = live.slice().sort((a, b) => (pc(b) || 0) - (pc(a) || 0));
+  const third = ranked[2]; if (third && third !== sel && third.sharpWork && !out.includes(third)) out.push(third);
   return out.slice(0, 4);
 }
 function overLineHTML(rs, sel){
@@ -8158,6 +8175,7 @@ function compareTableHTML(rs, sel){
     ['Prime Power', h => { const r = rankIn(live, h, y => y.rawPP); return r ? -r.rank : null; }, h => { const r = rankIn(live, h, y => y.rawPP); return r ? '#' + r.rank + (r.tied ? '=' : '') : '\u2014'; }],
     ['In the money, last 4', h => itm(h).v, h => itm(h).t],
     ['Days since last race', null, h => h.layoffDays != null ? String(h.layoffDays) : 'debut'],
+    ['Sharp recent work', h => h.sharpWork ? 1 : 0, h => h.sharpWork ? `${h.sharpWork.dist} ${h.sharpWork.time} ${h.sharpWork.desc} \u00b7 ${h.sharpWork.rank} of ${h.sharpWork.of} \u00b7 ${h.sharpWork.days}d ago` : '\u2014'],
     ['Loss signs', h => -signs(h).length, h => signs(h).length + ' of 5'],
   ];
   const head = `<tr><th></th>${cols.map((h, i) => `<th>${i === 0 ? 'PICK' : 'CHALLENGER'}<br>#${escHtml(h.post || '?')} ${escHtml(h.horse)}</th>`).join('')}</tr>`;
@@ -10814,7 +10832,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.85 · released 20 November 2026 · build 2026-11-20-b</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.86 · released 20 November 2026 · build 2026-11-20-c</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
