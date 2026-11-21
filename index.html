@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.89 — Race Card Reader</title>
+<title>Overlay Board v4.90 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1374,7 +1374,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.89</span> · released 20 November 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.90</span> · released 21 November 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a Brisnet data file (.DRF, .csv or .zip). Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -8167,6 +8167,9 @@ function compareTableHTML(rs, sel){
   const rows = [
     ['Morning line', h => { const o = parseOdds(h.mlOddsStr); return o != null ? -o : null; }, h => h.mlOddsStr || '\u2014'],
     ['Board chance', h => pc(h), h => pc(h) != null ? Math.round(pc(h) * 100) + '%' : '\u2014'],
+    // v4.90: the morning-line share of the field (takeout removed), beside the board's own chance. A horse the board rates
+    // well above its market share is the case worth a second look; display only.
+    ['Market %', h => { const o = parseOdds(h.mlOddsStr); const tot = live.reduce((a, x) => { const q = parseOdds(x.mlOddsStr); return a + (q ? 1 / q : 0); }, 0); return (o && tot) ? -(1 / o) / tot : null; }, h => { const o = parseOdds(h.mlOddsStr); const tot = live.reduce((a, x) => { const q = parseOdds(x.mlOddsStr); return a + (q ? 1 / q : 0); }, 0); if (!o || !tot) return '\u2014'; const m = (1 / o) / tot; const b = pc(h); const gap = b != null ? Math.round((b - m) * 100) : null; return Math.round(m * 100) + '%' + (gap != null && gap >= 5 ? ` (board +${gap})` : ''); }],
     ['3-race average', h => avg3Of(h), h => avg3Of(h) != null ? avg3Of(h).toFixed(1) + rk(h, y => avg3Of(y)) : '\u2014'],
     ['Last figure', h => h.lastSpd, h => h.lastSpd != null ? Math.round(h.lastSpd) + rk(h, y => y.lastSpd) : '\u2014'],
     ['Prime Power', h => { const r = rankIn(live, h, y => y.rawPP); return r ? -r.rank : null; }, h => { const r = rankIn(live, h, y => y.rawPP); return r ? '#' + r.rank + (r.tied ? '=' : '') : '\u2014'; }],
@@ -10834,7 +10837,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.89 · released 20 November 2026 · build 2026-11-20-f</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.90 · released 21 November 2026 · build 2026-11-21-a</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
