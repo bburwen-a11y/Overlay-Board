@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.91 — Race Card Reader</title>
+<title>Overlay Board v4.92 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1374,7 +1374,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.91</span> · released 21 November 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.92</span> · released 22 November 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a Brisnet data file (.DRF, .csv or .zip). Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -6920,13 +6920,16 @@ function suggestedPlay(rs, h){
     .sort((a, b) => (parseInt(a.post, 10) || 99) - (parseInt(b.post, 10) || 99));
   return {win: `#${h.post || '?'}`, top: `#${h.post || '?'}`, under: under.map(x => `#${x.post || '?'}`), n: under.length};
 }
+// v4.92 (Robert: "instead of bet definitive, cautious bet - fragile favourite"): when the fragile-favourite warning
+// names the bet horse itself, the bet is labelled CAUTIOUS. The bet itself is unchanged.
+function fragileOn(rs, h){ try { return !!h && fragileFavHTML(rs).includes(escHtml(h.horse)); } catch(e){ return false; } }
 function suggestedPlayLine(rs, h){
   if (!playTier(rs, h).ok){
     return `<div class="play" style="border-color:#8A6A26;background:rgba(217,167,59,.08)"><b class="pl" style="color:#8A6A26">BET \u2014 CONDITIONAL</b> Figure favourite, not definitive: ${escHtml(playMissingText(rs, h))}.</div>`;
   }
   const p = suggestedPlay(rs, h);
   if (!p) return '';
-  return `<div class="play"><b class="pl">BET \u2014 DEFINITIVE</b> Win ${escHtml(p.win)}`
+  return `<div class="play"><b class="pl">${fragileOn(rs, h) ? 'CAUTIOUS BET \u2014 FRAGILE FAVOURITE' : 'BET \u2014 DEFINITIVE'}</b> Win ${escHtml(p.win)}`
     + (p.n ? `, and exacta ${escHtml(p.top)} on top of ${escHtml(p.under.join(', '))}. Same stake on the win and on each exacta combination: ${p.n} combination${p.n === 1 ? '' : 's'}, ${p.n + 1} stakes in all.` : `. No exacta: no other contender.`)
     + ` Rebuild the card after scratches before betting.</div>`;
 }
@@ -8256,7 +8259,7 @@ function hhDecision(html, rs){
   let __sg = ''; try { __sg = pickStrongSign(rs, fsh); } catch(e){}
   return `<div class="hhd hhd-${cls}${isFts ? ' hhd-fts' : ''}${livePass ? ' hhd-livepass' : ''} race-anchor-target" id="pick-r${escAttr(race)}">`
     + `<div class="hhd-r1"><span class="hhd-chip">RACE ${escHtml(race)}</span><span class="hhd-sub">${escHtml(sub)}</span><span class="hhd-badge ${__betNow ? 'hhd-badge-bet' : 'hhd-badge-pass'}">${__betNow ? 'BET' : 'PASS'}</span></div>`
-    + `<div class="hhd-lab">${__betNow ? 'BET SELECTION' : 'TOP PICK'}</div>`
+    + `<div class="hhd-lab">${__betNow ? (fragileOn(rs, fsh) ? 'CAUTIOUS BET \u00b7 FRAGILE FAVOURITE' : 'BET SELECTION') : 'TOP PICK'}</div>`
     + `<div class="hhd-pick"><span class="hhd-no">#${escHtml(m[2])}</span><a href="#" class="pp-link hhd-name" data-pp-race="${escAttr(race)}" data-pp-horse="${escAttr(nm)}">${escHtml(nm)}</a><span class="hhd-ml">${escHtml(m[4])}</span></div>`
     + (fsh && !isFts ? overLineHTML(rs, fsh) : '')
     + `<div class="hhd-reason"><b>${__betNow ? 'Wager support' : 'Why no win bet'}:</b> ${escHtml(__why)}</div>`
@@ -8594,7 +8597,7 @@ function racePlan0(rs){
   const wide = n >= 9;
   const key = rf[0].h, use = rf.slice(1, wide ? 5 : 4).map(r => r.h);
   let win = null;
-  if (v.h && ['STRONG', 'BET', 'VALUE', 'THREAT', 'CONC', 'SOLID'].includes(v.tier)) win = {label: vLabel(v), text: verdictTicket(v).split(' \u00b7 ')[0]};
+  if (v.h && ['STRONG', 'BET', 'VALUE', 'THREAT', 'CONC', 'SOLID'].includes(v.tier)) win = {label: fragileOn(rs, v.h) ? 'CAUTIOUS BET \u2014 FRAGILE FAVOURITE' : vLabel(v), text: verdictTicket(v).split(' \u00b7 ')[0]};
   return {play: true, key, use, wide, n, win, v};
 }
 function planTickets(pl){
@@ -9470,7 +9473,7 @@ function defWarnings(rs, h){
 function winLabel(rs, v){
   if (v.tier !== 'STRONG' || !v.h) return vLabel(v);
   const w = defWarnings(rs, v.h);
-  return `BET \u2014 DEFINITIVE: ${w.length} warning${w.length === 1 ? '' : 's'} \u00b7 #${v.h.post || '?'}` + (w.length ? ` (${w.join('; ')})` : '');
+  return `${fragileOn(rs, v.h) ? 'CAUTIOUS BET \u2014 FRAGILE FAVOURITE' : 'BET \u2014 DEFINITIVE'}: ${w.length} warning${w.length === 1 ? '' : 's'} \u00b7 #${v.h.post || '?'}` + (w.length ? ` (${w.join('; ')})` : '');
 }
 
 function challengers(rs){
@@ -10838,7 +10841,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.91 · released 21 November 2026 · build 2026-11-21-b</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.92 · released 22 November 2026 · build 2026-11-22-a</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
