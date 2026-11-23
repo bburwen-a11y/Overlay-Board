@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.95 — Race Card Reader</title>
+<title>Overlay Board v4.96 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1378,7 +1378,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.95</span> · released 23 November 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.96</span> · released 23 November 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a Brisnet data file (.DRF, .csv or .zip). Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -8155,7 +8155,13 @@ function challengersOf(rs, sel){
   // clearly more often than third-choice horses without, in both halves, and the board chance underrated them.
   const ranked = live.slice().sort((a, b) => (pc(b) || 0) - (pc(a) || 0));
   const third = ranked[2]; if (third && third !== sel && third.sharpWork && !out.includes(third)) out.push(third);
-  return out.slice(0, 4);
+  // v4.96 (Robert, GP 11/21 R9 Sorokin): drop challengers at 8% Market % or less. They beat the Pick about 1 time in 7
+  // and rarely won. If that leaves none, keep the strongest rival above 8%, else the next horse on chance.
+  const tot = live.reduce((a, x) => { const q = parseOdds(x.mlOddsStr); return a + (q ? 1 / q : 0); }, 0);
+  const mk = x => { const q = parseOdds(x.mlOddsStr); return (q && tot) ? (1 / q) / tot : null; };
+  let kept = out.filter(x => { const m = mk(x); return m == null || m > 0.08; });
+  if (!kept.length){ const alt = others.find(x => { const m = mk(x); return m != null && m > 0.08; }); kept = [alt || others[0]]; }
+  return kept.slice(0, 4);
 }
 function overLineHTML(rs, sel){
   const c = challengersOf(rs, sel); if (!c.length) return '';
@@ -10854,7 +10860,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.95 · released 23 November 2026 · build 2026-11-23-c</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.96 · released 23 November 2026 · build 2026-11-23-d</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
