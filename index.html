@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.96 — Race Card Reader</title>
+<title>Overlay Board v4.97 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1378,7 +1378,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.96</span> · released 23 November 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.97</span> · released 23 November 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a Brisnet data file (.DRF, .csv or .zip). Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -7229,7 +7229,9 @@ function raceFactsTable0(rs, extra, label){
       + `<td${cls(f.pr && f.pr.rank === 1 ? 'best' : '')}>${rk(f.pr)}</td>`
       + `<td${cls(!lr.starts && (h.ltStarts || f.pp.length) ? 'warn' : (winPct != null && winPct > 0 && winPct === bestPct ? 'best' : ''))}>${escHtml(surf)}</td>`
       + `<td>${escHtml(sd)}</td>`
-      + `<td class="rf-cls${cmWarn ? ' rf-bold' : ''}">${pastClassCode(l) ? `${escHtml(pastClassCode(l))} \u2192 ${escHtml(todayClassCode(rs, true))}<br>` : ''}${h.todayClassPar != null && h.lastClassPar != null ? `level ${Math.round(h.lastClassPar)} \u2192 ${Math.round(h.todayClassPar)} (${h.todayClassPar - h.lastClassPar > 0 ? '+' : ''}${(h.todayClassPar - h.lastClassPar).toFixed(1)}) \u00b7 ` : ''}${escHtml(cm)} vs last race${f.cd ? ` \u00b7 today's tag is ${f.cd.pct}% of its highest in the last 4` : ''}</td>`
+      + `<td class="rf-cls${cmWarn ? ' rf-bold' : ''}">${pastClassCode(l) ? `${escHtml(pastClassCode(l))} \u2192 ${escHtml(todayClassCode(rs, true))}<br>` : ''}${h.todayClassPar != null && h.lastClassPar != null ? `level ${Math.round(h.lastClassPar)} \u2192 ${Math.round(h.todayClassPar)} (${h.todayClassPar - h.lastClassPar > 0 ? '+' : ''}${(h.todayClassPar - h.lastClassPar).toFixed(1)}) \u00b7 ` : ''}${(() => { const lt = parseFloat(l && l.claim) || null, tt = h.todayClaim || null; const td = (lt && tt) ? (tt < lt * 0.95 ? 'down' : tt > lt * 1.05 ? 'up' : 'same') : null; const lvWord = /up/i.test(cm) ? 'up' : /down|drop/i.test(cm) ? 'down' : null;
+        // v4.97 (Robert, GP 11/21 R3 Lucky Twist: 'is this really up? $12,500 to $10,000'): say both - the tag and the class level
+        return (td && lvWord && td !== 'same' && td !== lvWord) ? escHtml(`claiming tag ${td} ($${Math.round(lt).toLocaleString()} \u2192 $${Math.round(tt).toLocaleString()}) but class level ${lvWord}`) + (l && l.track && l.track !== h.trackCode ? escHtml(` (${l.track} \u2192 ${h.trackCode})`) : '') : escHtml(cm) + ' vs last race'; })()}${f.cd ? ` \u00b7 today's tag is ${f.cd.pct}% of its highest in the last 4` : ''}</td>`
       + `<td>${lastTxt}</td>`
       + `<td class="rf-h2h">${escHtml(h2hCell(h, rows.map(x => x.h)))}${(() => { const ra = rivalsAhead(rs, h); return ra.length ? `<div class="rf-weak">Head-to-head, a weak indicator (it repeats about 1 time in 3): ${ra.map(x => '#' + (x.h.post || '?') + ' ' + escHtml(x.h.horse) + ' (' + escHtml(x.why) + ')').join(', ')}</div>` : ''; })()}</td>`
       + `<td${cls(f.er && f.er.rank === 1 ? 'best' : '')}>${f.eps != null ? money(Math.round(f.eps)) + ' ' + rk(f.er) : '—'}</td>`
@@ -10860,7 +10862,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.96 · released 23 November 2026 · build 2026-11-23-d</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.97 · released 23 November 2026 · build 2026-11-23-e</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
