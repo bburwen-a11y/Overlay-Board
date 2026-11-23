@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.93 — Race Card Reader</title>
+<title>Overlay Board v4.94 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1374,7 +1374,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.93</span> · released 23 November 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.94</span> · released 23 November 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a Brisnet data file (.DRF, .csv or .zip). Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -8544,7 +8544,7 @@ function preBetChecks(rs, h){
     if (mk != null && pc != null && pc < mk) failed.push('chance below its morning-line share');
     if (a2r){ const o2 = ai2ModelPick(rs); if (o2 && o2 !== h) failed.push('AI(2) picks #' + (o2.post || '?') + ' ' + o2.horse); }
     if (live.length >= 9) failed.push(live.length + ' runners');
-    const A = (forAgainst(rs, h).A || []); if (A.length >= 3) failed.push(A.length + ' Against items');
+    const A = (forAgainst(rs, h).A || []); if (A.length >= 3) failed.push(A.length + ' against items (' + A.join('; ') + ')');   // v4.94: name them, so they are not confused with the loss signs
     const t = String((live[0] || {}).ai3RaceType || '').toUpperCase(); if (t === 'S') failed.push('maiden special weight'); else if (['C', 'CO'].includes(t)) failed.push('claiming race');
   } catch(e){} finally { __chkGuard = false; }
   // v4.85 (Robert, 20 Nov: Sum of Success at 4-5 "too low to bet"): a morning line under 3-2 holds the win bet on its own.
@@ -10842,7 +10842,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.93 · released 23 November 2026 · build 2026-11-23-a</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.94 · released 23 November 2026 · build 2026-11-23-b</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
