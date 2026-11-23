@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.92 — Race Card Reader</title>
+<title>Overlay Board v4.93 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1374,7 +1374,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.92</span> · released 22 November 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.93</span> · released 23 November 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a Brisnet data file (.DRF, .csv or .zip). Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -8487,7 +8487,7 @@ function extraBets(rs){
       }
     } catch(e){}
     // v4.76 (Robert, 12 Nov: "both engines resolve the no-bet races so a selection is worthy of a bet"): when AI(1) and AI(2) pick the SAME horse and both rate it strongly - the board's chance 35%+ and
-    // AI(2)'s share 65%+ - it is a win bet at any price. In races the board passed, 48 such picks over 48 cards won 52% and returned $1.10 per $1 (halves $1.08 and $1.14).
+    // AI(2)'s share 65%+ - it is a win bet. In races the board passed, 48 such picks over 48 cards won 52% and returned $1.10 per $1 (halves $1.08 and $1.14).
     try {
       if (!tierH && !out.length && typeof ai2Ready === 'function' && ai2Ready()){
         const rp = reviewedPick(rs); const h = rp && rp.h; const o2 = ai2ModelPick(rs);
@@ -8505,12 +8505,12 @@ function extraBets(rs){
 function extraBetsHTML(rs){
   const L = extraBets(rs); if (!L.length) return '';
   return L.map(x => x.type === 'BOTH'
-    ? `<div class="xbet xb-fig"><b>BET \u2014 BOTH ENGINES: win #${escHtml(x.h.post || '?')} ${escHtml(x.h.horse)} at any price</b> <span class="conf-why">(AI(1) and AI(2) pick the same horse: chance ${Math.round(100 * x.pc)}%, AI(2) share ${Math.round(100 * x.sh)}%) \u00b7 picks like this won about half the time</span></div>`
+    ? `<div class="xbet xb-fig"><b>BET \u2014 BOTH ENGINES: win #${escHtml(x.h.post || '?')} ${escHtml(x.h.horse)}</b> <span class="conf-why">(AI(1) and AI(2) pick the same horse: chance ${Math.round(100 * x.pc)}%, AI(2) share ${Math.round(100 * x.sh)}%) \u00b7 picks like this won about half the time</span></div>`
     : x.type === 'ALLOWANCE'
     ? `<div class="xbet xb-fig"><b>BET \u2014 ALLOWANCE PICK: win #${escHtml(x.h.post || '?')} ${escHtml(x.h.horse)} at 2-1 or higher</b> <span class="conf-why">(the top pick in an allowance race) \u00b7 picks like this won 41%</span></div>`
     : x.type === 'FIGURE'
-    ? `<div class="xbet xb-fig"><b>BET \u2014 FIGURE LEADER: win #${escHtml(x.h.post || '?')} ${escHtml(x.h.horse)} at any price</b> <span class="conf-why">(best 3-race average, case ${x.tal > 0 ? '+' : ''}${x.tal}, small field) \u00b7 picks like this won 44%</span></div>`
-    : `<div class="xbet xb-val"><b>BET \u2014 VALUE DROPPER: win #${escHtml(x.h.post || '?')} ${escHtml(x.h.horse)} at any price</b> <span class="conf-why">(dropping in class, fair odds shorter than its morning line) \u00b7 a long-price bet: wins about 1 in 5, but has paid well</span></div>`).join('');
+    ? `<div class="xbet xb-fig"><b>BET \u2014 FIGURE LEADER: win #${escHtml(x.h.post || '?')} ${escHtml(x.h.horse)}</b> <span class="conf-why">(best 3-race average, case ${x.tal > 0 ? '+' : ''}${x.tal}, small field) \u00b7 picks like this won 44%</span></div>`
+    : `<div class="xbet xb-val"><b>BET \u2014 VALUE DROPPER: win #${escHtml(x.h.post || '?')} ${escHtml(x.h.horse)}</b> <span class="conf-why">(dropping in class, fair odds shorter than its morning line) \u00b7 a long-price bet: wins about 1 in 5, but has paid well</span></div>`).join('');
 }
 
 function raceUnreadable(rs){
@@ -8718,13 +8718,13 @@ function verdictTicket(v){
   const num = h => '#' + (h.post || '?');
   const under = (v.under || []).map(num).join(', ');
   // v2.94 (Robert bets ahead by conditional wager): NORMAL win bets carry an odds
-  // condition; DEFINITIVE is bet at any price.
-  if (v.tier === 'STRONG') return `Win ${num(v.h)} at any price \u00b7 Exacta ${num(v.h)} over ${under}`;
+  // condition. v4.93 (Robert): no 'at any price' wording - every bet is subject to the morning-line checks.
+  if (v.tier === 'STRONG') return `Win ${num(v.h)} \u00b7 Exacta ${num(v.h)} over ${under}`;
   if (v.tier === 'BET') return `Conditional win #${(v.h.post || '?')}: only if the morning line is 2-1 or higher`;
-  if (v.tier === 'VALUE') return v.fav ? `Conditional win #${(v.h.post || '?')}: only if the morning line is 2-1 or higher` : `Win ${num(v.h)} at any price`;
-  if (v.tier === 'THREAT') return `Win ${num(v.h)} at any price (the Main Threat)`;
+  if (v.tier === 'VALUE') return v.fav ? `Conditional win #${(v.h.post || '?')}: only if the morning line is 2-1 or higher` : `Win ${num(v.h)}`;
+  if (v.tier === 'THREAT') return `Win ${num(v.h)} (the Main Threat)`;
   if (v.tier === 'CONC') return `Conditional win #${(v.h.post || '?')}: only if the morning line is 2-1 or higher`;
-  if (v.tier === 'SOLID') return `Win ${num(v.h)} at any price`;
+  if (v.tier === 'SOLID') return `Win ${num(v.h)}`;
   if (v.tier === 'EXOTICS') return `Exacta ${num(v.h)} over ${under} \u2014 no win bet`;
   return '';
 }
@@ -9473,7 +9473,8 @@ function defWarnings(rs, h){
 function winLabel(rs, v){
   if (v.tier !== 'STRONG' || !v.h) return vLabel(v);
   const w = defWarnings(rs, v.h);
-  return `${fragileOn(rs, v.h) ? 'CAUTIOUS BET \u2014 FRAGILE FAVOURITE' : 'BET \u2014 DEFINITIVE'}: ${w.length} warning${w.length === 1 ? '' : 's'} \u00b7 #${v.h.post || '?'}` + (w.length ? ` (${w.join('; ')})` : '');
+  if (fragileOn(rs, v.h)){ const m = (fragileFavHTML(rs).replace(/<[^>]+>/g, '').match(/\) has ([^.]*)\./) || [])[1]; return `CAUTIOUS BET \u2014 FRAGILE FAVOURITE \u00b7 #${v.h.post || '?'}` + (m ? ` (${m})` : ''); }
+  return `BET \u2014 DEFINITIVE: ${w.length} warning${w.length === 1 ? '' : 's'} \u00b7 #${v.h.post || '?'}` + (w.length ? ` (${w.join('; ')})` : '');
 }
 
 function challengers(rs){
@@ -10841,7 +10842,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.92 · released 22 November 2026 · build 2026-11-22-a</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.93 · released 23 November 2026 · build 2026-11-23-a</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
