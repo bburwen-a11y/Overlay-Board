@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.94 — Race Card Reader</title>
+<title>Overlay Board v4.95 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1318,6 +1318,10 @@
 .ls-h{font-weight:800;font-size:15px;margin-bottom:4px}
 .ls-ul{margin:4px 0 6px 18px;padding:0;font-size:14px;line-height:1.5}
 .ls-sg{margin-top:8px;border-left:4px solid #2e6b45;background:#e9f4ec;color:#1d5a35;padding:7px 10px;border-radius:6px;font-size:14px}
+.hhd-agree{font-family:var(--serif,inherit);font-weight:900;font-size:24px;letter-spacing:.01em;margin:6px 0 4px;color:#173a2a}
+.hhd-agree.ag-no{color:#7a3b1f}
+.hhd-eng{font-size:14px;color:#4a473e;line-height:1.6;margin:6px 0 2px}
+.hhd-supp{font-size:13px;color:#2e5d43;margin:4px 0}
 .hhd-r1{display:flex;align-items:flex-start;gap:8px;justify-content:space-between}
 .hhd-chip{font-family:var(--mono);font-size:11px;font-weight:800;border:1px solid #8a8168;border-radius:999px;padding:2px 8px;background:#fff;white-space:nowrap}
 .hhd-sub{flex:1;font-size:11.5px;color:#6b6250;padding-top:3px}
@@ -1374,7 +1378,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.94</span> · released 23 November 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.95</span> · released 23 November 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a Brisnet data file (.DRF, .csv or .zip). Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -8243,6 +8247,8 @@ function hhDecision(html, rs){
   const __noBet = !isFts && !livePass && /^NO WIN BET/.test(act) && !xb;
   let __tN = ''; try { const t0 = winTier(rs); if (t0 && __noBet) __tN = String(t0.t); } catch(e){}
   const __betNow = !isFts && !livePass && (isBet || !!xb);
+  // v4.95 (Robert: AI(2)'s decision card 'easily understandable - let's add'): agreement heading and the AI(1)/AI(2)/approved-bet lines
+  const __a2on = (typeof ai2Ready === 'function') && ai2Ready(); let __a2 = null; try { __a2 = __a2on ? ai2ModelPick(rs) : null; } catch(e){}
   // v4.85 (Robert: "follow chat's format for decisions"): badge, the horse, who it is over, one reason line, the strong
   // sign when present, and the comparison button. Everything else lives in Race facts.
   let __why = '';
@@ -8259,10 +8265,16 @@ function hhDecision(html, rs){
   let __sg = ''; try { __sg = pickStrongSign(rs, fsh); } catch(e){}
   return `<div class="hhd hhd-${cls}${isFts ? ' hhd-fts' : ''}${livePass ? ' hhd-livepass' : ''} race-anchor-target" id="pick-r${escAttr(race)}">`
     + `<div class="hhd-r1"><span class="hhd-chip">RACE ${escHtml(race)}</span><span class="hhd-sub">${escHtml(sub)}</span><span class="hhd-badge ${__betNow ? 'hhd-badge-bet' : 'hhd-badge-pass'}">${__betNow ? 'BET' : 'PASS'}</span></div>`
+    + (__a2on && fsh && !isFts ? `<div class="hhd-agree ${__a2 === fsh ? 'ag-yes' : 'ag-no'}">${__a2 === fsh ? 'AGREEMENT' : 'DISAGREEMENT'} \u2014 ${__betNow ? 'BET' : 'PASS'}</div>` : '')
     + `<div class="hhd-lab">${__betNow ? (fragileOn(rs, fsh) ? 'CAUTIOUS BET \u00b7 FRAGILE FAVOURITE' : 'BET SELECTION') : 'TOP PICK'}</div>`
     + `<div class="hhd-pick"><span class="hhd-no">#${escHtml(m[2])}</span><a href="#" class="pp-link hhd-name" data-pp-race="${escAttr(race)}" data-pp-horse="${escAttr(nm)}">${escHtml(nm)}</a><span class="hhd-ml">${escHtml(m[4])}</span></div>`
     + (fsh && !isFts ? overLineHTML(rs, fsh) : '')
+    + (fsh && !isFts ? `<div class="hhd-eng"><div><b>AI(1):</b> #${escHtml(fsh.post || '?')} ${escHtml(fsh.horse)} \u00b7 ${__betNow ? 'BET' : 'PASS'}</div>`
+        + `<div><b>AI(2):</b> ${__a2on ? (__a2 ? '#' + escHtml(__a2.post || '?') + ' ' + escHtml(__a2.horse) : 'no pick') : 'not loaded'}</div>`
+        + `<div>${__betNow ? '<b>Approved bet:</b> #' + escHtml(fsh.post || '?') + ' ' + escHtml(fsh.horse) : '<b>No approved win bet.</b>'}</div></div>` : '')
     + `<div class="hhd-reason"><b>${__betNow ? 'Wager support' : 'Why no win bet'}:</b> ${escHtml(__why)}</div>`
+    + (fsh && !isFts ? (() => { try { const pc = chanceOf(rs)(fsh); const lv = (rs.horses || []).filter(x => !isScratchedNow(rs, x)); const tot = lv.reduce((a, x) => { const q = parseOdds(x.mlOddsStr); return a + (q ? 1 / q : 0); }, 0); const o = parseOdds(fsh.mlOddsStr); const mk = (o && tot) ? (1 / o) / tot : null;
+        return `<div class="hhd-supp">Chance ${pc != null ? Math.round(pc * 100) + '%' : '\u2014'} \u00b7 Market ${mk != null ? Math.round(mk * 100) + '%' : '\u2014'}${__a2on ? (__a2 === fsh ? ' \u00b7 AI(2) #1' : ' \u00b7 AI(2) prefers #' + escHtml((__a2 && __a2.post) || '?')) : ''}</div>`; } catch(e){ return ''; } })() : '')
     + (__betNow ? xb : '')
     + `<a href="#" class="hhd-cmpbtn race-jump" data-goto-facts="${escAttr(race)}">Race Facts · Full comparison ▸</a>`
     + (fsh && !isFts && figurePickOf(rs) === fsh ? lossBoxHTML(rs, fsh) : (__sg ? `<div class="hhd-sg"><b>★ Strong sign:</b> ${escHtml(__sg)}</div>` : ''))
@@ -10842,7 +10854,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.94 · released 23 November 2026 · build 2026-11-23-b</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.95 · released 23 November 2026 · build 2026-11-23-c</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
