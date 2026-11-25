@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.97 — Race Card Reader</title>
+<title>Overlay Board v4.98 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1378,7 +1378,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.97</span> · released 23 November 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v4.98</span> · released 25 November 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a Brisnet data file (.DRF, .csv or .zip). Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -1541,7 +1541,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
         <h3>BET — SOLID PICK</h3>
         <p>A win bet on the top-ranked horse when neither DEFINITIVE nor CONDITIONAL applies, and either (A) its morning line is 8-5 or shorter, it has the best Prime Power in the field, at most one no-finish trip comment in its last four, and the race is not low priority; or (B) its morning line is 2-1 or shorter, the field has 8 or fewer runners, it has the best last figure in the field, and its case tally is +4 or better.</p>
         <h3>Figure leader and value dropper</h3>
-        <p><b>PRE-BET CHECKS</b>: before any win bet the horse is checked five ways: is its chance below its morning-line share; does AI(2) pick another horse; are there 9 or more runners; does it carry 3 or more Against items; is the race a maiden special weight or claiming race. With 2 or more checks failed the win bet is held. Further win bets, independent of the tiers. <b>BOTH ENGINES</b>: AI(1) and AI(2) pick the same horse, the board's chance is 35% or more and AI(2)'s share is 65% or more, when the race has no other bet. <b>ALLOWANCE PICK</b>: the top pick in an allowance race, at 2-1 or higher, when the race has no other bet. <b>VALUE DROPPER</b> was retired in v4.29: once the fair-odds comparison was corrected, it no longer paid. Both stand even in races otherwise marked SKIP; exactas in those races stay off.</p>
+        <p><b>PRE-BET CHECKS</b>: before any win bet the horse is checked four ways: is its chance below its morning-line share; are there 9 or more runners; does it carry 3 or more Against items; is the race a maiden special weight or claiming race. With 2 or more checks failed the win bet is held, and a morning line under 3-2 holds it on its own. AI(2) disagreeing is shown on the card but does not hold a bet. Further win bets, independent of the tiers. <b>BOTH ENGINES</b>: AI(1) and AI(2) pick the same horse, the board's chance is 35% or more and AI(2)'s share is 65% or more, when the race has no other bet. <b>ALLOWANCE PICK</b>: the top pick in an allowance race, at 2-1 or higher, when the race has no other bet. <b>VALUE DROPPER</b> was retired in v4.29: once the fair-odds comparison was corrected, it no longer paid. Both stand even in races otherwise marked SKIP; exactas in those races stay off.</p>
         <h3>Value price (stake guide)</h3>
         <p>Every Tier 1–4 win bet shows a value price worked out from the board's own chance for the horse. At that price or longer the board suggests a double stake; below it a single stake. On past cards this kept every bet and returned more than flat staking, because the well-priced bets have paid best. The board never names dollar amounts.</p>
         <h3>Downgraded bets</h3>
@@ -8562,7 +8562,9 @@ function preBetChecks(rs, h){
     const lm = live.filter(x => x.decimalOdds); const tot = lm.reduce((t, x) => t + 1 / x.decimalOdds, 0);
     const mk = (h.decimalOdds && tot) ? (1 / h.decimalOdds) / tot : null; const pc = rscsChances(rs).get(h);
     if (mk != null && pc != null && pc < mk) failed.push('chance below its morning-line share');
-    if (a2r){ const o2 = ai2ModelPick(rs); if (o2 && o2 !== h) failed.push('AI(2) picks #' + (o2.post || '?') + ' ' + o2.horse); }
+    // v4.98: AI(2) disagreeing is no longer a pre-bet check. Across AI(2)'s 593-race replay, AI(1)'s win plays did as well
+    // when AI(2) disagreed as when it agreed, in both halves, and AI(1)'s pick beat AI(2)'s in most disagreements.
+    // The disagreement is still shown on the Decisions card.
     if (live.length >= 9) failed.push(live.length + ' runners');
     const A = (forAgainst(rs, h).A || []); if (A.length >= 3) failed.push(A.length + ' against items (' + A.join('; ') + ')');   // v4.94: name them, so they are not confused with the loss signs
     const t = String((live[0] || {}).ai3RaceType || '').toUpperCase(); if (t === 'S') failed.push('maiden special weight'); else if (['C', 'CO'].includes(t)) failed.push('claiming race');
@@ -10862,7 +10864,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.97 · released 23 November 2026 · build 2026-11-23-e</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.98 · released 25 November 2026 · build 2026-11-25-a</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
