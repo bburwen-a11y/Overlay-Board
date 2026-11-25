@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v4.98 — Race Card Reader</title>
+<title>Overlay Board v5.00 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1378,7 +1378,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v4.98</span> · released 25 November 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v5.00</span> · released 25 November 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a Brisnet data file (.DRF, .csv or .zip). Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -1541,7 +1541,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
         <h3>BET — SOLID PICK</h3>
         <p>A win bet on the top-ranked horse when neither DEFINITIVE nor CONDITIONAL applies, and either (A) its morning line is 8-5 or shorter, it has the best Prime Power in the field, at most one no-finish trip comment in its last four, and the race is not low priority; or (B) its morning line is 2-1 or shorter, the field has 8 or fewer runners, it has the best last figure in the field, and its case tally is +4 or better.</p>
         <h3>Figure leader and value dropper</h3>
-        <p><b>PRE-BET CHECKS</b>: before any win bet the horse is checked four ways: is its chance below its morning-line share; are there 9 or more runners; does it carry 3 or more Against items; is the race a maiden special weight or claiming race. With 2 or more checks failed the win bet is held, and a morning line under 3-2 holds it on its own. AI(2) disagreeing is shown on the card but does not hold a bet. Further win bets, independent of the tiers. <b>BOTH ENGINES</b>: AI(1) and AI(2) pick the same horse, the board's chance is 35% or more and AI(2)'s share is 65% or more, when the race has no other bet. <b>ALLOWANCE PICK</b>: the top pick in an allowance race, at 2-1 or higher, when the race has no other bet. <b>VALUE DROPPER</b> was retired in v4.29: once the fair-odds comparison was corrected, it no longer paid. Both stand even in races otherwise marked SKIP; exactas in those races stay off.</p>
+        <p><b>PRE-BET CHECKS</b>: before any win bet the horse is checked four ways: is its chance below its morning-line share; are there 9 or more runners; does it carry 3 or more Against items; is the race a maiden special weight or claiming race. With 2 or more checks failed the win bet is held, and a morning line under 3-2 holds it on its own. AI(2) disagreeing is shown on the card but does not hold a bet. Further win bets, independent of the tiers. <b>BOTH ENGINES</b>: AI(1) and AI(2) pick the same horse, the board's chance is 35% or more and AI(2)'s share is 65% or more, when the race has no other bet. <b>ALLOWANCE PICK</b>: the top pick in an allowance race, at 2-1 or higher, when the race has no other bet. <b>CLEAR LEADER</b>: the board's top chance, ahead of the next horse by 30 points or more, at 3-2 or longer, when the race has no other bet. <b>VALUE DROPPER</b> was retired in v4.29: once the fair-odds comparison was corrected, it no longer paid. Both stand even in races otherwise marked SKIP; exactas in those races stay off.</p>
         <h3>Value price (stake guide)</h3>
         <p>Every Tier 1–4 win bet shows a value price worked out from the board's own chance for the horse. At that price or longer the board suggests a double stake; below it a single stake. On past cards this kept every bet and returned more than flat staking, because the well-priced bets have paid best. The board never names dollar amounts.</p>
         <h3>Downgraded bets</h3>
@@ -8282,7 +8282,12 @@ function hhDecision(html, rs){
         + `<div>${__betNow ? '<b>Approved bet:</b> #' + escHtml(fsh.post || '?') + ' ' + escHtml(fsh.horse) : '<b>No approved win bet.</b>'}</div></div>` : '')
     + `<div class="hhd-reason"><b>${__betNow ? 'Wager support' : 'Why no win bet'}:</b> ${escHtml(__why)}</div>`
     + (fsh && !isFts ? (() => { try { const pc = chanceOf(rs)(fsh); const lv = (rs.horses || []).filter(x => !isScratchedNow(rs, x)); const tot = lv.reduce((a, x) => { const q = parseOdds(x.mlOddsStr); return a + (q ? 1 / q : 0); }, 0); const o = parseOdds(fsh.mlOddsStr); const mk = (o && tot) ? (1 / o) / tot : null;
-        return `<div class="hhd-supp">Chance ${pc != null ? Math.round(pc * 100) + '%' : '\u2014'} \u00b7 Market ${mk != null ? Math.round(mk * 100) + '%' : '\u2014'}${__a2on ? (__a2 === fsh ? ' \u00b7 AI(2) #1' : ' \u00b7 AI(2) prefers #' + escHtml((__a2 && __a2.post) || '?')) : ''}</div>`; } catch(e){ return ''; } })() : '')
+        // v4.99 (Robert: "AI(1) chance #1 vs #2 as useful information"): the gap between the board's top two chances.
+        // Under 10 points the top two have won about equally often; 20+ points and the top horse has won about half its races.
+        const fn = chanceOf(rs); const byC = lv.slice().sort((a, b) => (fn(b) || 0) - (fn(a) || 0)); const c1 = byC[0], c2 = byC[1];
+        const gp = (c1 && c2 && fn(c1) != null && fn(c2) != null) ? Math.round((fn(c1) - fn(c2)) * 100) : null;
+        const gapTxt = gp == null ? '' : ` \u00b7 Chance #1 vs #2: ${Math.round(fn(c1) * 100)}% vs ${Math.round(fn(c2) * 100)}% (#${escHtml((c2 === fsh ? c1 : c2).post || '?')} ${escHtml((c2 === fsh ? c1 : c2).horse)}), gap ${gp} \u2014 ${gp < 10 ? 'close' : gp < 20 ? 'moderate' : 'clear'}`;
+        return `<div class="hhd-supp">Chance ${pc != null ? Math.round(pc * 100) + '%' : '\u2014'} \u00b7 Market ${mk != null ? Math.round(mk * 100) + '%' : '\u2014'}${__a2on ? (__a2 === fsh ? ' \u00b7 AI(2) #1' : ' \u00b7 AI(2) prefers #' + escHtml((__a2 && __a2.post) || '?')) : ''}${gapTxt}</div>`; } catch(e){ return ''; } })() : '')
     + (__betNow ? xb : '')
     + `<a href="#" class="hhd-cmpbtn race-jump" data-goto-facts="${escAttr(race)}">Race Facts · Full comparison ▸</a>`
     + (fsh && !isFts && figurePickOf(rs) === fsh ? lossBoxHTML(rs, fsh) : (__sg ? `<div class="hhd-sg"><b>★ Strong sign:</b> ${escHtml(__sg)}</div>` : ''))
@@ -8475,7 +8480,7 @@ function overbetByData(rs, h){
   } catch(e){ return false; }
 }
 let __xbGuard = false;
-function xbWord(x){ return x.type === 'FIGURE' ? 'FIGURE LEADER' : x.type === 'ALLOWANCE' ? 'ALLOWANCE PICK' : x.type === 'BOTH' ? 'BOTH ENGINES' : 'VALUE DROPPER'; }
+function xbWord(x){ return x.type === 'FIGURE' ? 'FIGURE LEADER' : x.type === 'ALLOWANCE' ? 'ALLOWANCE PICK' : x.type === 'BOTH' ? 'BOTH ENGINES' : x.type === 'CLEAR' ? 'CLEAR LEADER' : 'VALUE DROPPER'; }
 function xbLow(x){ return xbWord(x).toLowerCase(); }
 function extraBets(rs){
   // v4.54: no extra bets in a vetoed race. v4.76: except that a maiden special weight race may carry the both-engine bet (strong two-engine picks there won 52%, 21 races, $1.10; maiden special weight picks overall win 27%)
@@ -8517,6 +8522,18 @@ function extraBets(rs){
         }
       }
     } catch(e){}
+    // v5.00 (Robert, 25 Nov: test the chance #1 vs #2 gap): in a race with no other bet, the board's #1 on chance is a win bet when it leads #2 by
+    // 30 points or more and its morning line is 3-2 or longer. Pool: 80 such races, won 46%, both halves profitable. Shorter prices won more often but lost money.
+    try {
+      if (!__mswOnly && !tierH && !out.length){
+        const chm = rscsChances(rs); const by = live.slice().sort((a, b) => (chm.get(b) || 0) - (chm.get(a) || 0));
+        const h = by[0], h2 = by[1];
+        if (h && h2 && (h.ppRaces || []).length && !readinessVeto(h) && h.decimalOdds != null && h.decimalOdds >= 2.5){
+          const tot = live.reduce((a, x) => a + (chm.get(x) || 0), 0) || 1; const gap = ((chm.get(h) || 0) - (chm.get(h2) || 0)) / tot;
+          if (gap >= 0.30) out.push({type: 'CLEAR', h, tal: (m.get(h) || {}).tally || 0, gap});
+        }
+      }
+    } catch(e){}
     try { const chm = rscsChances(rs); out.sort((a, b) => ((a.type === 'FIGURE') ? 0 : 1) - ((b.type === 'FIGURE') ? 0 : 1) || ((chm.get(b.h) || -1) - (chm.get(a.h) || -1))); } catch(e){}
     const kept = out.filter(x => { const c = preBetChecks(rs, x.h); return !(c && c.hold); }); rs.__heldXb = out.length > kept.length ? out.filter(x => !kept.includes(x)) : null;
     return kept;
@@ -8526,6 +8543,8 @@ function extraBetsHTML(rs){
   const L = extraBets(rs); if (!L.length) return '';
   return L.map(x => x.type === 'BOTH'
     ? `<div class="xbet xb-fig"><b>BET \u2014 BOTH ENGINES: win #${escHtml(x.h.post || '?')} ${escHtml(x.h.horse)}</b> <span class="conf-why">(AI(1) and AI(2) pick the same horse: chance ${Math.round(100 * x.pc)}%, AI(2) share ${Math.round(100 * x.sh)}%) \u00b7 picks like this won about half the time</span></div>`
+    : x.type === 'CLEAR'
+    ? `<div class="xbet xb-fig"><b>BET \u2014 CLEAR LEADER: win #${escHtml(x.h.post || '?')} ${escHtml(x.h.horse)}</b> <span class="conf-why">(the board's top chance by ${Math.round(100 * x.gap)} points over the next horse)</span></div>`
     : x.type === 'ALLOWANCE'
     ? `<div class="xbet xb-fig"><b>BET \u2014 ALLOWANCE PICK: win #${escHtml(x.h.post || '?')} ${escHtml(x.h.horse)} at 2-1 or higher</b> <span class="conf-why">(the top pick in an allowance race) \u00b7 picks like this won 41%</span></div>`
     : x.type === 'FIGURE'
@@ -8936,7 +8955,7 @@ function rsLeaderNote(rs){
   } catch(e){ return ''; }
 }
 function raceHasWinBet(rs){   // v4.75 (Robert, 12 Nov: "Maui Strong is bet but you have low confidence?"): a race with a win bet is not shown as a low-confidence second look
-  try { const t = winTier(rs); if (t && t.t <= 4) return true; return extraBets(rs).some(b => b.type === 'FIGURE' || b.type === 'ALLOWANCE' || b.type === 'BOTH'); } catch(e){ return false; }
+  try { const t = winTier(rs); if (t && t.t <= 4) return true; return extraBets(rs).some(b => b.type === 'FIGURE' || b.type === 'ALLOWANCE' || b.type === 'BOTH' || b.type === 'CLEAR'); } catch(e){ return false; }
 }
 function secondLook(rs){
   if (winnerOnly()) return null;
@@ -9089,7 +9108,7 @@ function betSave(o){ try { localStorage.setItem('ob_bets', JSON.stringify(o)); }
 function betKindFor(rs){
   try {
     const pl = racePlan(rs); if (pl && pl.win && pl.v){ const t = pl.v.tier; return {kind: t === 'STRONG' ? 'Definitive' : t === 'SOLID' ? 'Solid pick' : 'Conditional', horse: pl.v.h}; }
-    const xb = extraBets(rs); if (xb.length) return {kind: xb[0].type === 'ALLOWANCE' ? 'Allowance pick' : xb[0].type === 'FIGURE' ? 'Figure leader' : xb[0].type === 'BOTH' ? 'Both engines' : 'Value', horse: xb[0].h};
+    const xb = extraBets(rs); if (xb.length) return {kind: xb[0].type === 'ALLOWANCE' ? 'Allowance pick' : xb[0].type === 'FIGURE' ? 'Figure leader' : xb[0].type === 'BOTH' ? 'Both engines' : xb[0].type === 'CLEAR' ? 'Clear leader' : 'Value', horse: xb[0].h};
   } catch(e){}
   return null;
 }
@@ -9139,7 +9158,7 @@ function tierHTML(rs){
   const pl0 = racePlan(rs); const exOnly = pl0 && pl0.play && !pl0.winOnly && !pl0.win;
   let xb = extraBets(rs).find(x => x.h === t.h);
   if (!xb && t.t >= 5){ const any = extraBets(rs)[0]; if (any){ xb = any; t = Object.assign({}, t, {h: any.h}); } }
-  if (xb){ t = Object.assign({}, t, {pct: xb.type === 'FIGURE' ? 43 : xb.type === 'ALLOWANCE' ? 41 : xb.type === 'BOTH' ? 52 : 18, what: xb.type === 'FIGURE' ? 'FIGURE LEADER' : xb.type === 'ALLOWANCE' ? 'ALLOWANCE PICK' : xb.type === 'BOTH' ? 'BOTH ENGINES' : 'VALUE DROPPER (long price)'}); }
+  if (xb){ t = Object.assign({}, t, {pct: xb.type === 'FIGURE' ? 43 : xb.type === 'ALLOWANCE' ? 41 : xb.type === 'BOTH' ? 52 : xb.type === 'CLEAR' ? 46 : 18, what: xb.type === 'FIGURE' ? 'FIGURE LEADER' : xb.type === 'ALLOWANCE' ? 'ALLOWANCE PICK' : xb.type === 'BOTH' ? 'BOTH ENGINES' : xb.type === 'CLEAR' ? 'CLEAR LEADER' : 'VALUE DROPPER (long price)'}); }
   // v4.22: with no win bet, the tier line names the same top pick as the summary (the reviewed #1)
   else if (t.t >= 5){ try { const rv = reviewedPick(rs); if (rv && rv.h !== t.h) t = Object.assign({}, t, {h: rv.h, what: t.what ? t.what + ' \u00b7 reviewed top pick' : ''}); } catch(e){} }
   const act = xb ? 'WIN BET \u2014 ' + xbWord(xb) + ' (see below)' : t.t <= 3 ? 'WIN BET' : t.t === 4 ? 'WIN BET ONLY AT 2-1 OR HIGHER' : exOnly ? 'NO WIN BET' : t.t === 5 ? 'NO WIN-BET EDGE \u2014 exotics or a small bet at most' : 'NO EDGE \u2014 PASS';
@@ -9354,7 +9373,7 @@ function sortedForDecisions(raceSummaries){
   // CONSIDER and LOW races, each in race order
   // v4.21: races with a win bet first (best tier first), then the others by their top pick's chance
   const out = L.map((rs, i) => { let t = 9, c = 0;
-    try { const x = winTier(rs); t = x ? x.t : 9; const xb = extraBets(rs); if (t > 4 && xb.length) t = xb.some(b => b.type === 'FIGURE') ? 4.5 : xb.some(b => b.type === 'BOTH') ? 4.55 : xb.some(b => b.type === 'ALLOWANCE') ? 4.6 : 4.8; } catch(e){}
+    try { const x = winTier(rs); t = x ? x.t : 9; const xb = extraBets(rs); if (t > 4 && xb.length) t = xb.some(b => b.type === 'FIGURE') ? 4.5 : xb.some(b => b.type === 'BOTH') ? 4.55 : xb.some(b => b.type === 'ALLOWANCE') ? 4.6 : xb.some(b => b.type === 'CLEAR') ? 4.65 : 4.8; } catch(e){}
     let lv = 0; try { const ch = rscsChances(rs); c = Math.max(0, ...ch.values()); } catch(e){} try { const cf = confidenceOf(rs); if (cf){ c = cf.p; lv = cf.level === 'HIGH' ? 3 : cf.level === 'MODERATE' ? 2 : 1; } } catch(e){}
     return {rs, i, t, c, lv, bet: t <= 4.6}; })   // v4.74 (Robert, 11 Nov: a win bet was ranked below a no-bet race): the allowance pick bet (4.6) counts as a bet in the order   // v4.23: a value-dropper-only race is a long-shot side bet, ordered by the race itself
     // v4.52 (Robert, 5 Nov, Belmont 10/4: a LOW race 4 was listed above a MODERATE race 2): confidence level first, then the blended number. Over the 62 cards the pick won
@@ -9446,7 +9465,7 @@ function playRaces(raceSummaries){
   raceSummaries.forEach(rs => {
     let pl = null, xb = []; try { pl = racePlan(rs); } catch(e){} try { xb = extraBets(rs); } catch(e){}
     const win = !!(pl && pl.win), fig = !win && xb.length > 0;
-    if (win || fig) out.push({rs, kind: win ? 'win bet' : (xb[0].type === 'ALLOWANCE' ? 'allowance win bet' : xb[0].type === 'BOTH' ? 'both-engine win bet' : 'figure-leader win bet')});
+    if (win || fig) out.push({rs, kind: win ? 'win bet' : (xb[0].type === 'ALLOWANCE' ? 'allowance win bet' : xb[0].type === 'BOTH' ? 'both-engine win bet' : xb[0].type === 'CLEAR' ? 'clear-leader win bet' : 'figure-leader win bet')});
   });
   return out;
 }
@@ -10864,7 +10883,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v4.98 · released 25 November 2026 · build 2026-11-25-a</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v5.00 · released 25 November 2026 · build 2026-11-25-c</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
