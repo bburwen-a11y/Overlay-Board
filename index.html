@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v5.00 — Race Card Reader</title>
+<title>Overlay Board v5.01 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1322,6 +1322,18 @@
 .hhd-agree.ag-no{color:#7a3b1f}
 .hhd-eng{font-size:14px;color:#4a473e;line-height:1.6;margin:6px 0 2px}
 .hhd-supp{font-size:13px;color:#2e5d43;margin:4px 0}
+.cc{margin:10px 0 14px;padding:10px 0}
+.cc-h{font-family:var(--mono);font-weight:800;font-size:12px;letter-spacing:.08em;color:#4a473e;margin-bottom:8px}
+.cc-row{display:grid;grid-template-columns:minmax(110px,38%) 1fr 40px;align-items:center;gap:8px;padding:3px 0}
+.cc-name{font-size:13px;color:#2a2822;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cc-track{position:relative;height:16px;border-left:1px solid #c9c0aa}
+.cc-bar{height:100%;border-radius:0 4px 4px 0;min-width:2px}
+.cc-pick{background:#1d5a35}.cc-chal{background:#6f9c7c}.cc-oth{background:#c9c0aa}
+.cc-tick{position:absolute;top:-3px;width:2px;height:22px;background:#2a2822;border-radius:1px}
+.cc-val{font-size:12px;font-variant-numeric:tabular-nums;color:#2a2822;text-align:right}
+.cc-leg{font-size:11.5px;color:#4a473e;margin-top:8px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.cc-sw{display:inline-block;width:12px;height:10px;border-radius:2px;margin-left:6px}
+.cc-swt{display:inline-block;width:2px;height:12px;background:#2a2822;margin-left:8px}
 .hhd-r1{display:flex;align-items:flex-start;gap:8px;justify-content:space-between}
 .hhd-chip{font-family:var(--mono);font-size:11px;font-weight:800;border:1px solid #8a8168;border-radius:999px;padding:2px 8px;background:#fff;white-space:nowrap}
 .hhd-sub{flex:1;font-size:11.5px;color:#6b6250;padding-top:3px}
@@ -1378,7 +1390,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v5.00</span> · released 25 November 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v5.01</span> · released 26 November 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a Brisnet data file (.DRF, .csv or .zip). Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -8169,6 +8181,28 @@ function overLineHTML(rs, sel){
   const c = challengersOf(rs, sel); if (!c.length) return '';
   return `<div class="hhd-over">Over ${c.map(h => `#${escHtml(h.post || '?')} ${escHtml(h.horse)}`).join(' \u00b7 ')}</div>`;
 }
+
+// v5.01 (Robert, 26 Nov: "use your analytics to create a bar graph for each race", after Equibase's Rating Analysis).
+// One bar per starter in program order: the board's chance, from zero. A thin tick marks the horse's morning-line share.
+function raceChanceChartHTML(rs, sel){
+  const live = (rs.horses || []).filter(x => !isScratchedNow(rs, x)); if (live.length < 2) return '';
+  const pc = chanceOf(rs);
+  const tot = live.reduce((a, x) => { const q = parseOdds(x.mlOddsStr); return a + (q ? 1 / q : 0); }, 0);
+  const mk = x => { const q = parseOdds(x.mlOddsStr); return (q && tot) ? (1 / q) / tot : null; };
+  const rows = live.slice().sort((a, b) => (parseInt(a.post, 10) || 99) - (parseInt(b.post, 10) || 99));
+  const mx = Math.max(0.05, ...rows.map(x => Math.max(pc(x) || 0, mk(x) || 0)));
+  const ch = sel ? challengersOf(rs, sel) : [];
+  const body = rows.map(h => {
+    const c = pc(h) || 0, m = mk(h); const role = h === sel ? 'cc-pick' : ch.includes(h) ? 'cc-chal' : 'cc-oth';
+    const tip = `#${h.post || '?'} ${h.horse}: board chance ${Math.round(c * 100)}%` + (m != null ? `, market ${Math.round(m * 100)}%` : '') + (h.mlOddsStr ? `, ML ${h.mlOddsStr}` : '');
+    return `<div class="cc-row" title="${escAttr(tip)}"><div class="cc-name">#${escHtml(h.post || '?')} ${escHtml(h.horse)}${h === sel ? ' <b>· PICK</b>' : ''}</div>`
+      + `<div class="cc-track"><div class="cc-bar ${role}" style="width:${(c / mx * 100).toFixed(1)}%"></div>`
+      + (m != null ? `<div class="cc-tick" style="left:${(m / mx * 100).toFixed(1)}%"></div>` : '')
+      + `</div><div class="cc-val">${Math.round(c * 100)}%</div></div>`;
+  }).join('');
+  return `<div class="cc"><div class="cc-h">CHANCE BY HORSE</div>${body}`
+    + `<div class="cc-leg"><span class="cc-sw cc-pick"></span>Pick <span class="cc-sw cc-chal"></span>Challenger <span class="cc-sw cc-oth"></span>Others <span class="cc-swt"></span>Market %</div></div>`;
+}
 function compareTableHTML(rs, sel){
   if (!sel) return '';
   const c = challengersOf(rs, sel); if (!c.length) return '';
@@ -8315,7 +8349,7 @@ function hhLayoutFacts(){
     let body = `<div class="hhf-body"><div class="hhf-head">${rl ? escHtml(rl.textContent.replace(/\s+/g, ' ').replace(/\s*\u00b7?\s*Board pick.*$/, '')) : 'Race ' + escHtml(race)}</div>`
       + (el.querySelector('.dc-type') ? el.querySelector('.dc-type').outerHTML : '')
       + `<div class="hhf-links"><a href="#" class="race-jump" data-goto-pick="${escAttr(race)}">\u25c2 Decision</a> <a href="#" class="race-jump" data-goto-card="${escAttr(race)}">Full field \u25b8</a></div>`;
-    try { const rsC = (window.__ccRaceSummaries || []).find(r => String(r.race).trim() === race); const selC = rsC ? finalSelection(rsC) : null; if (selC && (selC.ppRaces || []).length) body += compareTableHTML(rsC, selC); } catch(e){}
+    try { const rsC = (window.__ccRaceSummaries || []).find(r => String(r.race).trim() === race); const selC = rsC ? finalSelection(rsC) : null; if (rsC) body += raceChanceChartHTML(rsC, selC); if (selC && (selC.ppRaces || []).length) body += compareTableHTML(rsC, selC); } catch(e){}
     let oldRoot = null; if (old[race]){ const t = document.createElement('template'); t.innerHTML = old[race]; oldRoot = t.content.firstElementChild; }
     if (oldRoot){
       const keep = [];
@@ -10883,7 +10917,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v5.00 · released 25 November 2026 · build 2026-11-25-c</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v5.01 · released 26 November 2026 · build 2026-11-26-a</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
