@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v5.01 — Race Card Reader</title>
+<title>Overlay Board v5.02 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1322,18 +1322,23 @@
 .hhd-agree.ag-no{color:#7a3b1f}
 .hhd-eng{font-size:14px;color:#4a473e;line-height:1.6;margin:6px 0 2px}
 .hhd-supp{font-size:13px;color:#2e5d43;margin:4px 0}
-.cc{margin:10px 0 14px;padding:10px 0}
-.cc-h{font-family:var(--mono);font-weight:800;font-size:12px;letter-spacing:.08em;color:#4a473e;margin-bottom:8px}
-.cc-row{display:grid;grid-template-columns:minmax(110px,38%) 1fr 40px;align-items:center;gap:8px;padding:3px 0}
-.cc-name{font-size:13px;color:#2a2822;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.cc-track{position:relative;height:16px;border-left:1px solid #c9c0aa}
-.cc-bar{height:100%;border-radius:0 4px 4px 0;min-width:2px}
-.cc-pick{background:#1d5a35}.cc-chal{background:#6f9c7c}.cc-oth{background:#c9c0aa}
-.cc-tick{position:absolute;top:-3px;width:2px;height:22px;background:#2a2822;border-radius:1px}
-.cc-val{font-size:12px;font-variant-numeric:tabular-nums;color:#2a2822;text-align:right}
-.cc-leg{font-size:11.5px;color:#4a473e;margin-top:8px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
-.cc-sw{display:inline-block;width:12px;height:10px;border-radius:2px;margin-left:6px}
-.cc-swt{display:inline-block;width:2px;height:12px;background:#2a2822;margin-left:8px}
+.qv{margin:10px 0 14px;padding:12px 12px 10px;border:1.5px solid #ddd3bd;border-radius:14px;background:#fbf8f0}
+.qv-h{font-weight:900;font-size:19px;color:#173a2a;margin-bottom:6px}
+.qv-leg{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;font-weight:700;color:#2a2822;border-bottom:1px solid #ddd3bd;padding-bottom:6px;margin-bottom:4px}
+.qv-leg i{display:inline-block;margin-right:5px;vertical-align:middle;border-radius:2px}
+.qv-s1{width:12px;height:8px;background:#2e7d4f}.qv-s2{width:12px;height:5px;background:#3b63b8}.qv-st{width:2px;height:12px;background:#b3661a}
+.qv-row{padding:7px 0;border-bottom:1px solid #ebe3d1}
+.qv-top{display:flex;align-items:baseline;gap:8px;margin-bottom:5px}
+.qv-name{font-weight:800;font-size:14px;color:#173a2a;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qv-pk{font-family:var(--mono);font-size:10px;font-weight:900;background:#173a2a;color:#f2ead6;border-radius:4px;padding:1px 5px}
+.qv-n{font-family:var(--mono);font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums;min-width:48px;text-align:right;color:#2a2822}
+.qv-track{position:relative;height:17px;background:#efe8d8;border-radius:4px;overflow:hidden}
+.qv-grid{position:absolute;top:0;bottom:0;width:1px;background:#ddd3bd}
+.qv-b1{position:absolute;left:0;top:2px;height:8px;background:#2e7d4f;border-radius:0 4px 4px 0}
+.qv-b2{position:absolute;left:0;top:12px;height:4px;background:#3b63b8;border-radius:0 3px 3px 0}
+.qv-tk{position:absolute;top:0;width:2px;height:17px;background:#b3661a}
+.qv-ax{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:#6a665a;margin-top:6px}
+.qv-ft{font-size:11.5px;color:#6a665a;margin-top:4px}
 .hhd-r1{display:flex;align-items:flex-start;gap:8px;justify-content:space-between}
 .hhd-chip{font-family:var(--mono);font-size:11px;font-weight:800;border:1px solid #8a8168;border-radius:999px;padding:2px 8px;background:#fff;white-space:nowrap}
 .hhd-sub{flex:1;font-size:11.5px;color:#6b6250;padding-top:3px}
@@ -1390,7 +1395,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v5.01</span> · released 26 November 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v5.02</span> · released 27 November 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a Brisnet data file (.DRF, .csv or .zip). Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -8182,26 +8187,29 @@ function overLineHTML(rs, sel){
   return `<div class="hhd-over">Over ${c.map(h => `#${escHtml(h.post || '?')} ${escHtml(h.horse)}`).join(' \u00b7 ')}</div>`;
 }
 
-// v5.01 (Robert, 26 Nov: "use your analytics to create a bar graph for each race", after Equibase's Rating Analysis).
-// One bar per starter in program order: the board's chance, from zero. A thin tick marks the horse's morning-line share.
+// v5.02 (Robert: AI(2)'s "Quick View" reads better). Horses ranked by the board's chance. Each row: the three numbers, a thick bar for
+// AI(1)'s chance, a thin bar for AI(2)'s share when AI(2) is loaded, and a tick for the morning-line share, on a fixed 0-60% scale.
 function raceChanceChartHTML(rs, sel){
   const live = (rs.horses || []).filter(x => !isScratchedNow(rs, x)); if (live.length < 2) return '';
   const pc = chanceOf(rs);
   const tot = live.reduce((a, x) => { const q = parseOdds(x.mlOddsStr); return a + (q ? 1 / q : 0); }, 0);
   const mk = x => { const q = parseOdds(x.mlOddsStr); return (q && tot) ? (1 / q) / tot : null; };
-  const rows = live.slice().sort((a, b) => (parseInt(a.post, 10) || 99) - (parseInt(b.post, 10) || 99));
-  const mx = Math.max(0.05, ...rows.map(x => Math.max(pc(x) || 0, mk(x) || 0)));
-  const ch = sel ? challengersOf(rs, sel) : [];
+  const a2on = (typeof ai2Ready === 'function') && ai2Ready();
+  const sh = x => { try { return a2on ? ai2ShareOf(rs, x) : null; } catch(e){ return null; } };
+  const rows = live.slice().sort((a, b) => (pc(b) || 0) - (pc(a) || 0));
+  const all = rows.flatMap(x => [pc(x) || 0, mk(x) || 0, sh(x) || 0]);
+  const top = Math.max(0.6, Math.ceil(Math.max(...all) / 0.15) * 0.15); const W = v => Math.min(100, v / top * 100).toFixed(1);
+  const f = v => v == null ? '—' : (v * 100).toFixed(1) + '%';
+  const grid = [1, 2, 3].map(i => `<div class="qv-grid" style="left:${(i * 25).toFixed(0)}%"></div>`).join('');
   const body = rows.map(h => {
-    const c = pc(h) || 0, m = mk(h); const role = h === sel ? 'cc-pick' : ch.includes(h) ? 'cc-chal' : 'cc-oth';
-    const tip = `#${h.post || '?'} ${h.horse}: board chance ${Math.round(c * 100)}%` + (m != null ? `, market ${Math.round(m * 100)}%` : '') + (h.mlOddsStr ? `, ML ${h.mlOddsStr}` : '');
-    return `<div class="cc-row" title="${escAttr(tip)}"><div class="cc-name">#${escHtml(h.post || '?')} ${escHtml(h.horse)}${h === sel ? ' <b>· PICK</b>' : ''}</div>`
-      + `<div class="cc-track"><div class="cc-bar ${role}" style="width:${(c / mx * 100).toFixed(1)}%"></div>`
-      + (m != null ? `<div class="cc-tick" style="left:${(m / mx * 100).toFixed(1)}%"></div>` : '')
-      + `</div><div class="cc-val">${Math.round(c * 100)}%</div></div>`;
+    const c = pc(h), m = mk(h), z = sh(h);
+    return `<div class="qv-row"><div class="qv-top"><a href="#" class="pp-link qv-name" data-pp-race="${escAttr(String(rs.race).trim())}" data-pp-horse="${escAttr(h.horse)}">#${escHtml(h.post || '?')} ${escHtml(h.horse)}</a>${h === sel ? '<span class="qv-pk">PICK</span>' : ''}`
+      + `<span class="qv-n qv-c1">${c ? f(c) : '—'}</span>${a2on ? `<span class="qv-n qv-c2">${f(z)}</span>` : ''}<span class="qv-n qv-cm">${f(m)}</span></div>`
+      + `<div class="qv-track">${grid}${c ? `<div class="qv-b1" style="width:${W(c)}%"></div>` : ''}${z != null ? `<div class="qv-b2" style="width:${W(z)}%"></div>` : ''}${m != null ? `<div class="qv-tk" style="left:${W(m)}%"></div>` : ''}</div></div>`;
   }).join('');
-  return `<div class="cc"><div class="cc-h">CHANCE BY HORSE</div>${body}`
-    + `<div class="cc-leg"><span class="cc-sw cc-pick"></span>Pick <span class="cc-sw cc-chal"></span>Challenger <span class="cc-sw cc-oth"></span>Others <span class="cc-swt"></span>Market %</div></div>`;
+  const ax = [0, 1, 2, 3, 4].map(i => `<span>${Math.round(top * 25 * i)}%</span>`).join('');
+  return `<div class="qv"><div class="qv-h">QUICK VIEW</div><div class="qv-leg"><span><i class="qv-s1"></i>AI(1) Chance</span>${a2on ? '<span><i class="qv-s2"></i>AI(2) Share</span>' : ''}<span><i class="qv-st"></i>Market</span></div>${body}<div class="qv-ax">${ax}</div>`
+    + `<div class="qv-ft">Market is the morning-line share.${a2on ? ' AI(2) Share is its relative model strength, not a win chance.' : ''}</div></div>`;
 }
 function compareTableHTML(rs, sel){
   if (!sel) return '';
@@ -10917,7 +10925,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v5.01 · released 26 November 2026 · build 2026-11-26-a</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v5.02 · released 27 November 2026 · build 2026-11-27-a</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
