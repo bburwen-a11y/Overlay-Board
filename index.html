@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v5.04 — Race Card Reader</title>
+<title>Overlay Board v5.05 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -360,6 +360,9 @@
   html.rf-stack table.rf-t td:nth-child(1):before{content:'RANK '; display:inline; font-size:9.5px;}
   html.rf-stack table.rf-t td:nth-child(2){display:inline-block; width:auto; max-width:calc(100% - 78px); font-size:16px; font-weight:800;}
   html.rf-stack table.rf-t td:nth-child(2):before{display:none;}
+  /* v5.05 (Robert: RS ran into the horse name): RS sits on its own line under the name, label beside the number */
+  html.rf-stack table.rf-t td:nth-child(3){display:block; width:100%; margin:2px 0 4px; font-size:13px; font-weight:700;}
+  html.rf-stack table.rf-t td:nth-child(3):before{display:inline; margin-right:6px;}
   html.rf-stack table.rf-t td.rf-fa, html.rf-stack table.rf-t td.rf-edges, html.rf-stack table.rf-t td.rf-h2h, html.rf-stack table.rf-t td.rf-cls{display:block; width:100%;}
   html.rf-stack table.rf-t td.rf-none{display:none !important;}
   html.rf-stack .rf-sg b{white-space:normal;}
@@ -1396,7 +1399,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v5.04</span> · released 27 November 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v5.05</span> · released 27 November 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a Brisnet data file (.DRF, .csv or .zip). Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -8171,7 +8174,9 @@ function challengersOf(rs, sel){
   let out = others.filter(x => (pc(x) || 0) >= cs - 0.05);
   const a = live.map(x => ({x, v: avg3Of(x)})).filter(t => t.v != null).sort((p, q) => q.v - p.v);
   if (a.length && a[0].x !== sel && !out.includes(a[0].x)) out.push(a[0].x);
-  if (!out.length) out = [others[0]];
+  // v5.05 (Robert, GP 11/28 R10: "shouldn't Stick Talk show up?"): the next horse on board chance is always a challenger, so the
+  // comparison never skips the #2 on chance while showing horses rated below it.
+  if (!out.includes(others[0])) out.unshift(others[0]);
   // v4.86: the third horse on board chance joins when it has a sharp recent work. Third-choice horses with one won
   // clearly more often than third-choice horses without, in both halves, and the board chance underrated them.
   const ranked = live.slice().sort((a, b) => (pc(b) || 0) - (pc(a) || 0));
@@ -8182,6 +8187,7 @@ function challengersOf(rs, sel){
   const mk = x => { const q = parseOdds(x.mlOddsStr); return (q && tot) ? (1 / q) / tot : null; };
   let kept = out.filter(x => { const m = mk(x); return m == null || m > 0.08; });
   if (!kept.length){ const alt = others.find(x => { const m = mk(x); return m != null && m > 0.08; }); kept = [alt || others[0]]; }
+  kept.sort((a, b) => (pc(b) || 0) - (pc(a) || 0));
   return kept.slice(0, 4);
 }
 function overLineHTML(rs, sel){
@@ -8255,6 +8261,42 @@ function compareTableHTML(rs, sel){
     + (sg ? `<div class="cmp-n"><b>\u2605 Strong sign:</b> ${escHtml(sg)}</div>` : '')
     + `</div>`;
 }
+// v5.05 (Robert, GP 11/28 R10 Conviction: "why no bet is not clear"): with no bet, say which win-bet rules the pick
+// falls short of and by how much, instead of a bare "no qualifying win bet (tier 6)". Display only; no rule changes.
+function noBetReason(rs, h){
+  if (!h) return '';
+  const live = (rs.horses || []).filter(x => !isScratchedNow(rs, x));
+  const lab = x => '#' + (x.post || '?') + ' ' + x.horse;
+  const R = []; const o = h.decimalOdds != null ? h.decimalOdds - 1 : null; const mlS = h.mlOddsStr || '?';
+  let t = null; try { t = winTier(rs); } catch(e){}
+  let mlSaid = false;
+  if (t && t.h === h && t.down && t.what){
+    let w = String(t.what).replace(/^downgraded from Tier \d+ \([^)]*\):\s*/, '').replace(/^no win bet:\s*/i, '');
+    if (/under 2-1/.test(w)){ w = 'morning line ' + mlS + ' is under the 2-1 its ratings need'; mlSaid = true; }
+    R.push(w);
+  } else if (!t || t.t >= 5) R.push('its ratings fall short of a standard win bet');
+  let chm = null; try { chm = rscsChances(rs); } catch(e){}
+  if (chm){
+    const by = live.slice().sort((a, b) => (chm.get(b) || 0) - (chm.get(a) || 0)); const tot = live.reduce((a, x) => a + (chm.get(x) || 0), 0) || 1;
+    if (by[0] === h && by[1]){
+      const gap = Math.round(((chm.get(h) || 0) - (chm.get(by[1]) || 0)) / tot * 100);
+      if (gap < 30) R.push('leads ' + lab(by[1]) + ' by ' + gap + ' chance points (30 needed)');
+      else if (h.decimalOdds != null && h.decimalOdds < 2.5) R.push('morning line ' + mlS + ' is under 3-2');
+    } else if (by[0] && by[0] !== h) R.push('not the board’s top chance (' + lab(by[0]) + ' is)');
+    const a2on = (typeof ai2Ready === 'function') && ai2Ready(); let a2 = null; try { a2 = a2on ? ai2ModelPick(rs) : null; } catch(e){}
+    if (a2on && a2 === h){
+      const pc = chm.get(h) || 0, sh = ai2ShareOf(rs, h); const need = [];
+      if (pc < 0.35) need.push('chance ' + Math.round(pc * 100) + '% (35% needed)');
+      if (sh != null && sh < 0.65) need.push('AI(2) share ' + Math.round(sh * 100) + '% (65% needed)');
+      if (need.length) R.push('both engines agree, but ' + need.join(' and '));
+    } else if (a2on && a2) R.push('AI(2) picks ' + lab(a2) + ' instead');
+  }
+  try {
+    const rt = String((live[0] || {}).ai3RaceType || '').toUpperCase();
+    if (!mlSaid && ['A', 'AO', 'N', 'NO', 'R'].includes(rt) && o != null && o < 2) R.push('morning line ' + mlS + ' is under the 2-1 an allowance bet needs');
+  } catch(e){}
+  return R.join(' · ');
+}
 function hhDecision(html, rs){
   const t = document.createElement('template'); t.innerHTML = html; const root = t.content.firstElementChild;
   if (!root || !/^pick-r/.test(root.id || '')) return html;
@@ -8314,7 +8356,7 @@ function hhDecision(html, rs){
     let rv = ''; try { rv = fsh ? readinessVeto(fsh) : ''; } catch(e){}
     if (c0 && c0.hold) __why = c0.failed.join(' · ');
     else if (rv) __why = rv;
-    else __why = 'no qualifying win bet' + (__tN ? ' (tier ' + __tN + ')' : '');
+    else { let nr = ''; try { nr = noBetReason(rs, fsh); } catch(e){} __why = nr || 'no win-bet rule is met'; }
   }
   let __sg = ''; try { __sg = pickStrongSign(rs, fsh); } catch(e){}
   return `<div class="hhd hhd-${cls}${isFts ? ' hhd-fts' : ''}${livePass ? ' hhd-livepass' : ''} race-anchor-target" id="pick-r${escAttr(race)}">`
@@ -8332,7 +8374,7 @@ function hhDecision(html, rs){
         // Under 10 points the top two have won about equally often; 20+ points and the top horse has won about half its races.
         const fn = chanceOf(rs); const byC = lv.slice().sort((a, b) => (fn(b) || 0) - (fn(a) || 0)); const c1 = byC[0], c2 = byC[1];
         const gp = (c1 && c2 && fn(c1) != null && fn(c2) != null) ? Math.round((fn(c1) - fn(c2)) * 100) : null;
-        const gapTxt = gp == null ? '' : ` \u00b7 Chance #1 vs #2: ${Math.round(fn(c1) * 100)}% vs ${Math.round(fn(c2) * 100)}% (#${escHtml((c2 === fsh ? c1 : c2).post || '?')} ${escHtml((c2 === fsh ? c1 : c2).horse)}), gap ${gp} \u2014 ${gp < 10 ? 'close' : gp < 20 ? 'moderate' : 'clear'}`;
+        const gapTxt = gp == null ? '' : ` \u00b7 Chance #1 vs #2: ${Math.round(fn(c1) * 100)}% vs ${Math.round(fn(c2) * 100)}% (#${escHtml((c2 === fsh ? c1 : c2).post || '?')} ${escHtml((c2 === fsh ? c1 : c2).horse)}), gap ${gp} \u2014 ${gp < 10 ? 'close' : gp < 20 ? 'moderate' : gp < 30 ? 'wide' : 'clear'}`;
         return `<div class="hhd-supp">Chance ${pc != null ? Math.round(pc * 100) + '%' : '\u2014'} \u00b7 Market ${mk != null ? Math.round(mk * 100) + '%' : '\u2014'}${__a2on ? (__a2 === fsh ? ' \u00b7 AI(2) #1' : ' \u00b7 AI(2) prefers #' + escHtml((__a2 && __a2.post) || '?')) : ''}${gapTxt}</div>`; } catch(e){ return ''; } })() : '')
     + (__betNow ? xb : '')
     + `<a href="#" class="hhd-cmpbtn race-jump" data-goto-facts="${escAttr(race)}">Race Facts · Full comparison ▸</a>`
@@ -10931,7 +10973,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v5.04 · released 27 November 2026 · build 2026-11-27-c</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v5.05 · released 27 November 2026 · build 2026-11-27-d</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
