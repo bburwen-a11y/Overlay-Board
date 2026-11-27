@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v5.02 — Race Card Reader</title>
+<title>Overlay Board v5.03 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1395,7 +1395,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v5.02</span> · released 27 November 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v5.03</span> · released 27 November 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a Brisnet data file (.DRF, .csv or .zip). Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -1558,7 +1558,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
         <h3>BET — SOLID PICK</h3>
         <p>A win bet on the top-ranked horse when neither DEFINITIVE nor CONDITIONAL applies, and either (A) its morning line is 8-5 or shorter, it has the best Prime Power in the field, at most one no-finish trip comment in its last four, and the race is not low priority; or (B) its morning line is 2-1 or shorter, the field has 8 or fewer runners, it has the best last figure in the field, and its case tally is +4 or better.</p>
         <h3>Figure leader and value dropper</h3>
-        <p><b>PRE-BET CHECKS</b>: before any win bet the horse is checked four ways: is its chance below its morning-line share; are there 9 or more runners; does it carry 3 or more Against items; is the race a maiden special weight or claiming race. With 2 or more checks failed the win bet is held, and a morning line under 3-2 holds it on its own. AI(2) disagreeing is shown on the card but does not hold a bet. Further win bets, independent of the tiers. <b>BOTH ENGINES</b>: AI(1) and AI(2) pick the same horse, the board's chance is 35% or more and AI(2)'s share is 65% or more, when the race has no other bet. <b>ALLOWANCE PICK</b>: the top pick in an allowance race, at 2-1 or higher, when the race has no other bet. <b>CLEAR LEADER</b>: the board's top chance, ahead of the next horse by 30 points or more, at 3-2 or longer, when the race has no other bet. <b>VALUE DROPPER</b> was retired in v4.29: once the fair-odds comparison was corrected, it no longer paid. Both stand even in races otherwise marked SKIP; exactas in those races stay off.</p>
+        <p><b>PRE-BET CHECKS</b>: before any win bet the horse is checked four ways: is its chance below its morning-line share; are there 9 or more runners; does it carry 3 or more Against items; is the race a maiden special weight or claiming race (in an optional claimer, only a horse entered for the tag counts). With 2 or more checks failed the win bet is held, and a morning line under 3-2 holds it on its own. AI(2) disagreeing is shown on the card but does not hold a bet. Further win bets, independent of the tiers. <b>BOTH ENGINES</b>: AI(1) and AI(2) pick the same horse, the board's chance is 35% or more and AI(2)'s share is 65% or more, when the race has no other bet. <b>ALLOWANCE PICK</b>: the top pick in an allowance race, at 2-1 or higher, when the race has no other bet. <b>CLEAR LEADER</b>: the board's top chance, ahead of the next horse by 30 points or more, at 3-2 or longer, when the race has no other bet. <b>VALUE DROPPER</b> was retired in v4.29: once the fair-odds comparison was corrected, it no longer paid. Both stand even in races otherwise marked SKIP; exactas in those races stay off.</p>
         <h3>Value price (stake guide)</h3>
         <p>Every Tier 1–4 win bet shows a value price worked out from the board's own chance for the horse. At that price or longer the board suggests a double stake; below it a single stake. On past cards this kept every bet and returned more than flat staking, because the well-priced bets have paid best. The board never names dollar amounts.</p>
         <h3>Downgraded bets</h3>
@@ -2244,6 +2244,7 @@ function parseBrisnetSingleFile(text){
       return 'OTHER';
     };
     const todayClaim = num(14) || num(13) || null;
+    const entryTag = num(14) || null;   // v5.03: this horse's own tag (blank = protected in an optional claimer)
     // v2.45 (Robert, GP 27 Sep R5, Come On Teesha): a MAIDEN claiming tag is
     // not on the same scale as a winners' claiming tag. A filly that won a
     // $35,000 maiden claimer and today faces winners at a $25,000 option was
@@ -2444,7 +2445,7 @@ function parseBrisnetSingleFile(text){
       hadTrouble,
       recentWorks, sharpWork,
       lastSpd, bestSpd, avgSpd3,
-      todayClaim, firstTimeTagged, claimDropRatio, layoffDays, classFit, classFitWon, classSeen,
+      todayClaim, entryTag, firstTimeTagged, claimDropRatio, layoffDays, classFit, classFitWon, classSeen,
       classTxtToday: get(11),
       // TODAY'S PURSE AND THE WRITTEN CONDITIONS. Field 12 is the purse; the
       // eligibility text runs across 225-230 and is split mid-word, so the
@@ -3224,7 +3225,7 @@ document.getElementById('computeBtn').addEventListener('click', () => {
       racePurse: r.racePurse != null ? r.racePurse : null,
       raceConds: r.raceConds || '',
       classSeen: r.classSeen || 0,
-      todayClaim: r.todayClaim != null ? r.todayClaim : null,
+      todayClaim: r.todayClaim != null ? r.todayClaim : null, entryTag: r.entryTag || null,
       firstTimeTagged: !!r.firstTimeTagged,
       claimDropRatio: r.claimDropRatio != null ? r.claimDropRatio : null,
       layoffDays: r.layoffDays != null ? r.layoffDays : null,
@@ -8628,7 +8629,9 @@ function preBetChecks(rs, h){
     // The disagreement is still shown on the Decisions card.
     if (live.length >= 9) failed.push(live.length + ' runners');
     const A = (forAgainst(rs, h).A || []); if (A.length >= 3) failed.push(A.length + ' against items (' + A.join('; ') + ')');   // v4.94: name them, so they are not confused with the loss signs
-    const t = String((live[0] || {}).ai3RaceType || '').toUpperCase(); if (t === 'S') failed.push('maiden special weight'); else if (['C', 'CO'].includes(t)) failed.push('claiming race');
+    const t = String((live[0] || {}).ai3RaceType || '').toUpperCase(); if (t === 'S') failed.push('maiden special weight'); else if (t === 'C' || (t === 'CO' && h.entryTag)) failed.push(t === 'CO' ? 'entered for the tag in an optional claimer' : 'claiming race');
+    // v5.03 (Robert's optional-claimer notes): a protected horse (no tag) in an optional claimer is not a claiming-race risk. In the pool, protected
+    // Picks in optional claimers won 59% (both halves profitable); tagged runners won 9% against 12% implied, and tagged top-figure horses 7% against 16%.
   } catch(e){} finally { __chkGuard = false; }
   // v4.85 (Robert, 20 Nov: Sum of Success at 4-5 "too low to bet"): a morning line under 3-2 holds the win bet on its own.
   // Picks at that price won often but lost money in both halves of the pool; 3-2 or longer returned a profit.
@@ -10925,7 +10928,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v5.02 · released 27 November 2026 · build 2026-11-27-a</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v5.03 · released 27 November 2026 · build 2026-11-27-b</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
