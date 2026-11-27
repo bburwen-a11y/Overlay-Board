@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Board v5.03 — Race Card Reader</title>
+<title>Overlay Board v5.04 — Race Card Reader</title>
 <!-- crossorigin lets the browser hand us the REAL message if this script
      throws. Without it every failure inside it arrives as a bare
      "Script error." with no file or line, which is what the red bar was
@@ -1300,6 +1300,7 @@
 .hhd-badge-bet{background:#dcefe2;color:#1d5a35}
 .hhd-badge-pass{background:#f6e3df;color:#9a2f22}
 .hhd-over{font-size:14px;color:#5d5a4f;margin:0 0 4px;letter-spacing:.02em}
+.hhd-dq{font-size:12px;color:#a5531a}
 .hhd-cmpbtn{display:inline-block;margin:10px 0 2px;padding:9px 14px;border:1.5px solid #2e5d43;border-radius:10px;font-weight:800;text-decoration:none;color:#173a2a;background:#f3f8f4}
 .cmp{margin:10px 0 12px;border-left:4px solid #2e5d43;padding-left:8px}
 .cmp-h{font-weight:800;font-size:13px;margin-bottom:6px}
@@ -1395,7 +1396,7 @@ details.hhf>summary::-webkit-details-marker{display:none}details.hhf>summary::be
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Handicapping utility · <span class="ver">v5.03</span> · released 27 November 2026</p>
+    <p class="eyebrow">Handicapping utility · <span class="ver">v5.04</span> · released 27 November 2026</p>
     <h1><span class="flap">O</span><span class="flap">v</span><span class="flap">e</span><span class="flap">r</span><span class="flap">l</span><span class="flap">a</span><span class="flap">y</span> <span class="flap">B</span><span class="flap">o</span><span class="flap">a</span><span class="flap">r</span><span class="flap">d</span></h1>
     <p class="tagline">Upload a Brisnet data file (.DRF, .csv or .zip). Overlay Board lays out the whole card: past performances, scratches, money moves, and where the board likes a horse.</p>
   </header>
@@ -8185,7 +8186,9 @@ function challengersOf(rs, sel){
 }
 function overLineHTML(rs, sel){
   const c = challengersOf(rs, sel); if (!c.length) return '';
-  return `<div class="hhd-over">Over ${c.map(h => `#${escHtml(h.post || '?')} ${escHtml(h.horse)}`).join(' \u00b7 ')}</div>`;
+  // v5.04 (GP 11/28 R8, AI(2) picked #1 R Island Jewel): a challenger with strong figures but off 60+ days, stretching out or tiring late is marked doubtful
+  const dq = h => { try { const d = doubtfulFigureHorse(rs, h); return d ? ` <span class="hhd-dq">(doubtful: ${escHtml(d.join(', '))})</span>` : ''; } catch(e){ return ''; } };
+  return `<div class="hhd-over">Over ${c.map(h => `#${escHtml(h.post || '?')} ${escHtml(h.horse)}${dq(h)}`).join(' \u00b7 ')}</div>`;
 }
 
 // v5.02 (Robert: AI(2)'s "Quick View" reads better). Horses ranked by the board's chance. Each row: the three numbers, a thick bar for
@@ -10928,7 +10931,7 @@ renderRows();
 
 ;window.__obMainLoaded=true;
 </script>
-  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v5.03 · released 27 November 2026 · build 2026-11-27-b</div>
+  <div style="text-align:center; padding:14px 0 24px; font-family:var(--mono); font-size:10px; color:var(--paper-line); opacity:.7;">Overlay Board v5.04 · released 27 November 2026 · build 2026-11-27-c</div>
 <div id="errBar" class="no-print">
   <div id="errBarMsg"></div>
   <div class="eb-actions">
